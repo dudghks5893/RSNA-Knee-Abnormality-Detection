@@ -377,6 +377,116 @@
   - Effusion
 - Gold가 총 58명뿐이므로 target별 AUC와 bootstrap 구간의 불확실성이 상당하다.
 
+
+---
+
+## Experiment 11 — V2.2 Gold / Pseudo Loss Split
+
+### 변경 사항
+V2.1의 model, preprocessing, optimizer, learning rate, batch, epoch, fold split은 그대로 유지하고 loss 계산만 변경했다.
+
+- Gold:
+  - binary Gold label 사용
+  - Gold training subset에서 계산한 `pos_weight` 적용
+- Pseudo:
+  - V4 soft pseudo-label 유지
+  - `pos_weight` 적용 제거
+  - 기존 `pseudo_weight × confidence` 유지
+- Gold / pseudo 전체 상대 weight와 global normalization 방식은 V2.1과 동일
+- Gold oversampling / source balancing은 적용하지 않음
+
+### Loss 검증
+실제 학습 전 sanity check에서 loss 분리가 의도대로 동작하는지 확인했다.
+
+```text
+LOSS CONTRACT: PASS
+Gold loss responds to pos_weight : YES
+Pseudo loss responds to pos_weight: NO
+```
+
+### 학습 결과
+
+| Fold | Best Epoch | Best Validation Macro AUC |
+|---|---:|---:|
+| Fold 0 | 3 | 0.722421 |
+| Fold 1 | 3 | 0.828822 |
+| Fold 2 | 3 | 0.792196 |
+| Fold 3 | 3 | 0.770208 |
+| Fold 4 | 3 | 0.842416 |
+
+### 실행 특성
+- 전체 Fold training time: 약 **63.74분**
+- 4,407-study precache: **37.08분**
+- Cache files: 4,407
+- Cache errors: 0
+- 평균 valid slots: 6.0
+
+### Full 58-Gold OOF 결과
+- **Macro ROC-AUC: 0.793107**
+- V2.1 Full OOF: 0.784485
+- 변화: **+0.008622**
+
+### Target별 Full OOF AUC
+
+| Target | V2.1 | V2.2 | 변화 |
+|---|---:|---:|---:|
+| Medial Meniscus | 0.6707 | **0.6911** | **+0.0204** |
+| MCL | 0.7075 | **0.7098** | +0.0023 |
+| PF OA | **0.7336** | 0.7284 | -0.0052 |
+| Lateral Meniscus | 0.7354 | **0.7391** | +0.0037 |
+| ACL | 0.7561 | **0.7684** | **+0.0123** |
+| Synovitis | 0.7407 | **0.7969** | **+0.0562** |
+| Contusion | **0.8124** | 0.8043 | -0.0081 |
+| Fracture | 0.8042 | **0.8083** | +0.0041 |
+| Lateral OA | **0.8221** | 0.8143 | -0.0078 |
+| Baker's | **0.8714** | 0.8496 | -0.0218 |
+| Effusion | 0.8621 | **0.8969** | **+0.0348** |
+| Medial OA | 0.8977 | **0.9101** | **+0.0124** |
+
+### Loss 진단
+Gold loss와 pseudo loss를 별도로 기록했다.
+
+예: Fold 0 Epoch 3
+
+```text
+train_loss  = 0.47412
+gold_loss   = 0.78675
+pseudo_loss = 0.46633
+```
+
+전체 train loss가 pseudo loss에 매우 가까웠고, Gold supervision의 유효 loss 기여 비중은 약 **2~3% 수준**이었다.
+
+### 5-Fold Ensemble Submission
+
+#### 구성
+- Fold 0~4 V2.2 best checkpoint 사용
+- V2.1과 동일한 inference preprocessing / architecture
+- **Equal-weight arithmetic mean of sigmoid probabilities**
+
+#### Test inference 진단
+- Prediction stack: `(5, 3, 12)`
+- Mean model disagreement: **0.05523**
+- Ensemble probability range: 약 **0.0745 ~ 0.7565**
+
+#### Submission 결과
+- **Public LB: 0.816**
+
+### 비교
+
+| Version | Full 58-Gold OOF | Public LB |
+|---|---:|---:|
+| V2.1 5-Fold | 0.784485 | **0.816** |
+| V2.2 Loss-Split 5-Fold | **0.793107** | **0.816** |
+
+### 인사이트
+- pseudo-label에 Gold-derived `pos_weight`를 제거한 뒤 **Full OOF가 0.784485 → 0.793107로 개선**됐다.
+- 특히 Synovitis, Effusion, Medial Meniscus, ACL에서 OOF 개선 폭이 컸다.
+- 일부 target은 하락했지만 전체 Macro AUC는 상승했다.
+- Public LB는 0.816으로 V2.1과 동일했다.
+- visible test가 3 studies뿐이므로 확률값이 바뀌어도 study ranking이 동일하면 ROC-AUC가 유지될 수 있다.
+- 내부 OOF는 개선되고 Public LB는 하락하지 않아, loss split 변경은 내부 검증 기준으로 유효했다.
+- Gold와 pseudo loss를 분리해보니 Gold supervision의 전체 loss 기여가 여전히 매우 작다는 점도 확인됐다.
+
 ---
 
 ## Completed Experiment Scoreboard
@@ -389,14 +499,18 @@
 | 07 | V2.1 Fold3~4 Partial OOF | 0.805944 | - |
 | 08 | V2.1 3-Fold Ensemble | - | 0.810 |
 | 09 | V2.1 5-Fold Ensemble | - | **0.816** |
-| 10 | V2.1 Full 58-Gold OOF | **0.784485** | - |
+| 10 | V2.1 Full 58-Gold OOF | 0.784485 | - |
+| 11 | V2.2 Loss-Split 5-Fold | **Full OOF 0.793107** | **0.816** |
 
 ---
 
 ## Current Best Completed Submission
 
-- **V2.1 5-Fold Ensemble**
+- **Public LB 공동 최고: V2.1 5-Fold / V2.2 Loss-Split 5-Fold**
+- **Public LB: 0.816**
+- Full 58-Gold OOF:
+  - V2.1: 0.784485
+  - V2.2 Loss-Split: **0.793107**
 - Backbone: DINOv2-S
 - V4 Consensus fold-aware pseudo supervision
 - Equal-weight probability mean
-- **Public LB: 0.816**
