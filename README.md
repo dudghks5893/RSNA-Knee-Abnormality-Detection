@@ -697,6 +697,143 @@ V2.5:
 
 ---
 
+## Experiment 15 — V2.6A Meniscus Hybrid Controlled 5-Fold
+
+### 목적
+V2.5에서 확인된 **Meniscus adjacent-context 개선 신호**를 전체 target에 적용하지 않고, Medial / Lateral Meniscus에만 선택적으로 적용했다.
+
+### 구성
+- Shared backbone: **DINOv2 Small**
+- Shared `GroupAttention` / `LabelSpecificSlotHead`
+- Target routing:
+  - Medial Meniscus → Adjacent branch
+  - Lateral Meniscus → Adjacent branch
+  - 나머지 10 targets → V2.2 Wide branch
+- 두 branch는 동일한 backbone / pooling / head parameter를 공유
+- Batch 4 / Grad Accum 1 / Effective batch 4
+- Head LR `1e-4` / Backbone LR `1e-5`
+- Max epoch 3
+- V2.2 Gold / pseudo loss split 유지
+- Gold oversampling 없음
+
+### 학습 결과
+
+| Fold | Best Epoch | Best Validation Macro AUC |
+|---|---:|---:|
+| Fold 0 | 3 | 0.731316 |
+| Fold 1 | 3 | 0.781917 |
+| Fold 2 | 3 | 0.799206 |
+| Fold 3 | 3 | 0.762621 |
+| Fold 4 | 2 | **0.863803** |
+
+### Full 58-Gold OOF 결과
+- **Macro ROC-AUC: 0.784614**
+- V2.2 baseline: 0.793107
+- 변화: **-0.008493**
+
+### Target별 Full OOF AUC
+
+| Target | V2.2 | V2.6A | 변화 |
+|---|---:|---:|---:|
+| MCL | 0.709751 | 0.664399 | -0.045352 |
+| PF OA | 0.728443 | 0.740026 | +0.011583 |
+| **Medial Meniscus** | 0.691106 | **0.751202** | **+0.060096** |
+| Contusion | 0.804318 | 0.754386 | -0.049932 |
+| **Lateral Meniscus** | 0.739130 | **0.763975** | **+0.024845** |
+| Synovitis | 0.796894 | 0.765830 | -0.031064 |
+| Fracture | 0.808333 | 0.766667 | -0.041666 |
+| ACL | 0.768382 | 0.775735 | +0.007353 |
+| Lateral OA | 0.814313 | 0.789168 | -0.025145 |
+| Baker's | 0.849638 | 0.858696 | +0.009058 |
+| Medial OA | 0.910078 | 0.875969 | -0.034109 |
+| Effusion | 0.896894 | 0.909317 | +0.012423 |
+
+### 인사이트
+- Hybrid routing을 적용했지만 **전체 Macro AUC는 V2.2보다 하락**했다.
+- 반면 Medial Meniscus는 +0.0601, Lateral Meniscus는 +0.0248 상승해 adjacent local-context가 Meniscus 계열에 유효하다는 신호가 다시 확인됐다.
+- 두 branch가 backbone / pooling / head를 공유하므로 Meniscus용 adjacent branch의 gradient가 다른 target representation에도 영향을 줄 수 있다.
+- 여러 non-Meniscus target이 동시에 하락한 결과는 **shared-gradient interference 가능성과 일치**하지만, Gold 58개 기준 실험만으로 인과관계를 확정할 수는 없다.
+- Public LB 제출은 진행하지 않았다.
+
+---
+
+## Experiment 16 — V2.6B Meniscus Hybrid Long-Horizon 5-Fold
+
+### 목적
+V2.6A와 동일한 Meniscus hybrid routing을 유지하면서, 더 큰 effective batch와 긴 학습 horizon, step-wise warmup / linear decay를 적용했다.
+
+### 구성
+- Target routing:
+  - Medial Meniscus / Lateral Meniscus → Adjacent branch
+  - 나머지 10 targets → Wide branch
+- Shared DINOv2-S backbone / pooling / head
+- Physical batch: **32**
+- Gradient accumulation: **2**
+- Effective batch: **64**
+- Peak Head LR: **2e-4**
+- Peak Backbone LR: **1e-5**
+- Max epoch: **48**
+- Early stopping patience: **6**
+- Warmup: 전체 optimizer-step budget의 **5%**
+- Scheduler: optimizer update 기준 **linear decay**
+- V2.2 Gold / pseudo loss split 유지
+- Gold oversampling 없음
+
+### 학습 결과
+
+| Fold | Best Epoch | Best Validation Macro AUC |
+|---|---:|---:|
+| Fold 0 | 15 | 0.773082 |
+| Fold 1 | 8 | 0.793510 |
+| Fold 2 | 11 | **0.844907** |
+| Fold 3 | 12 | 0.810232 |
+| Fold 4 | 9 | **0.885863** |
+
+- Best epoch가 모든 Fold에서 **8~15 epoch** 범위에 형성됐다.
+- 기존 3-epoch 실험보다 긴 training horizon이 실제 checkpoint 선택에 영향을 주는 것을 확인했다.
+
+### Full 58-Gold OOF 결과
+- **Macro ROC-AUC: 0.807992**
+- V2.2 baseline: 0.793107
+- 변화: **+0.014885**
+- 현재 완료된 Full 58-Gold 실험 중 **최고 OOF**
+
+### Target별 Full OOF AUC
+
+| Target | V2.2 | V2.6B | 변화 |
+|---|---:|---:|---:|
+| MCL | 0.709751 | 0.691610 | -0.018141 |
+| Synovitis | 0.796894 | 0.734767 | -0.062127 |
+| Lateral Meniscus | 0.739130 | 0.737888 | -0.001242 |
+| **Medial Meniscus** | 0.691106 | **0.743990** | **+0.052884** |
+| PF OA | 0.728443 | **0.760618** | **+0.032175** |
+| Fracture | 0.808333 | 0.776389 | -0.031944 |
+| ACL | 0.768382 | **0.818627** | **+0.050245** |
+| Lateral OA | 0.814313 | **0.820116** | +0.005803 |
+| Contusion | 0.804318 | **0.855601** | **+0.051283** |
+| Baker's | 0.849638 | **0.902174** | **+0.052536** |
+| Effusion | 0.896894 | **0.906832** | +0.009938 |
+| Medial OA | 0.910078 | **0.947287** | **+0.037209** |
+
+### 5-Fold Ensemble Submission
+- Fold 0~4 V2.6B best checkpoint
+- 학습과 동일한 static target routing 유지
+- Fold별 sigmoid probability를 **equal-weight arithmetic mean**
+
+### Submission 결과
+- **Public LB: 0.814**
+- 기존 Public 최고: 0.816
+- 변화: **-0.002**
+
+### 인사이트
+- 내부 Full OOF는 **0.807992로 최고 기록**을 갱신했지만, Public LB는 **0.814**로 기존 최고 0.816보다 소폭 낮았다.
+- 따라서 58-Gold OOF는 실험 방향을 비교하는 내부 지표로는 유용하지만, 작은 validation population 특성상 Public LB의 절대 점수를 정밀하게 대변하지는 못한다.
+- V2.6A에서 Hybrid만 적용했을 때는 전체 OOF가 하락했지만, V2.6B에서는 batch / effective batch / LR / scheduler / training horizon을 함께 변경한 뒤 OOF가 상승했다.
+- 따라서 V2.6B의 상승을 **Hybrid 단독 효과로 해석할 수 없으며**, long-horizon optimization package의 영향이 포함된 결과로 해석한다.
+- Medial Meniscus는 V2.6A와 V2.6B에서 반복적으로 개선되어 local adjacent-context 활용 가치가 다시 확인됐다.
+- 반면 MCL, Synovitis, Fracture 등은 여전히 약하거나 하락해 target별 representation / expert 구조 개선 필요성이 남았다.
+---
+
 ## Completed Experiment Scoreboard
 
 | ID | Experiment | Internal Metric | Public LB |
@@ -708,24 +845,28 @@ V2.5:
 | 08 | V2.1 3-Fold Ensemble | - | 0.810 |
 | 09 | V2.1 5-Fold Ensemble | - | **0.816** |
 | 10 | V2.1 Full 58-Gold OOF | 0.784485 | - |
-| 11 | V2.2 Loss-Split 5-Fold | **Full OOF 0.793107** | **0.816** |
+| 11 | V2.2 Loss-Split 5-Fold | Full OOF 0.793107 | **0.816** |
 | 12 | V2.3 Gold Oversampling ×10 | Full OOF 0.773342 | - |
 | 13 | V2.4 Batch / LR Search | 35-Gold Search AUC 0.795854 | - |
 | 14 | V2.5 Adjacent Triplet 5-Fold | Full OOF 0.778191 | 0.807 |
+| 15 | V2.6A Meniscus Hybrid Controlled | Full OOF 0.784614 | - |
+| 16 | V2.6B Meniscus Hybrid Long-Horizon | **Full OOF 0.807992** | 0.814 |
 
 ---
 
-## Current Best Completed Submission
+## Current Best Completed Results
 
-- **Public LB 공동 최고: V2.1 5-Fold / V2.2 Loss-Split 5-Fold**
-- **Public LB: 0.816**
-- Full 58-Gold OOF:
+- **Public LB 최고: 0.816**
+  - V2.1 5-Fold Ensemble
+  - V2.2 Loss-Split 5-Fold
+- **Full 58-Gold OOF 최고: V2.6B — 0.807992**
+- 주요 Full OOF:
   - V2.1: 0.784485
-  - V2.2 Loss-Split: **0.793107**
+  - V2.2 Loss-Split: 0.793107
   - V2.3 Gold ×10: 0.773342
   - V2.5 Adjacent Triplet: 0.778191
-- 현재 완료된 Full 58-Gold 실험 중 **V2.2 Loss-Split이 최고 OOF**
-- Backbone: DINOv2-S
-- V4 Consensus fold-aware pseudo supervision
-- 5-Fold equal-weight probability mean
-- V2.5에서 **Medial / Lateral Meniscus에 대한 adjacent local-context 개선 신호** 확인
+  - V2.6A Hybrid Controlled: 0.784614
+  - **V2.6B Hybrid Long-Horizon: 0.807992**
+- V2.6B는 내부 OOF 최고를 기록했지만 Public LB는 0.814로, 내부 OOF 향상이 Public LB 향상으로 동일하게 이어지지는 않았다.
+- Meniscus adjacent-context는 Medial Meniscus에서 반복적인 개선 신호를 보였다.
+- 현재 Public 최고 checkpoint family는 여전히 V2.1 / V2.2 5-Fold ensemble이다.
