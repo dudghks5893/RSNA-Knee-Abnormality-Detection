@@ -834,6 +834,116 @@ V2.6A와 동일한 Meniscus hybrid routing을 유지하면서, 더 큰 effective
 - 반면 MCL, Synovitis, Fracture 등은 여전히 약하거나 하락해 target별 representation / expert 구조 개선 필요성이 남았다.
 ---
 
+## Experiment 17 — Exp1A DINOv2 Last4 Layer-wise LR, Fold2 Screening
+
+### 목적
+V2.2 Wide-only MRI input과 V2.6B의 long-horizon optimization을 유지하면서, DINOv2-S의 fine-tuning 범위를 Last2에서 **Last4 blocks**로 확장했다.
+
+### 구성
+- Validation: **Fold 2 Gold 11 studies**
+- Input: V2.2 **Wide-only**
+- DINOv2-Small
+- Fine-tuning: **Last4**
+- Layer-wise LR: 이전 2 blocks `3e-6`, 마지막 2 blocks `1e-5`, Head `2e-4`
+- Physical batch: **64**
+- Gradient accumulation: **1**
+- Effective batch: **64**
+- Warmup: optimizer-step budget의 5%
+- Scheduler: step-wise linear decay
+- Max epoch: 48
+- Early stopping patience: 6
+- V2.2 Gold / pseudo loss split 유지
+
+### Fold2 결과
+- **Best Macro ROC-AUC: 0.818585**
+- Best epoch: **7**
+- Weak-6 Macro AUC: **0.753571**
+- V2.6B Fold2 reference: 0.844907
+- 변화: **-0.026323**
+- Training time: 약 **34.58분**
+
+### Target별 Fold2 AUC
+
+| Target | AUC |
+|---|---:|
+| Fracture | 0.333333 |
+| Medial Meniscus | 0.607143 |
+| Contusion | 0.750000 |
+| PF OA | 0.785714 |
+| ACL | 0.833333 |
+| Effusion | 0.857143 |
+| Synovitis | 0.866667 |
+| Medial OA | 0.916667 |
+| Lateral Meniscus | 0.928571 |
+| Baker's | 0.944444 |
+| Lateral OA | 1.000000 |
+| MCL | 1.000000 |
+
+### 인사이트
+- Last4로 fine-tuning 범위를 확장했지만 기존 V2.6B Fold2 기준보다 성능이 낮았다.
+- Best epoch가 7로 형성되어, 3-epoch 제한보다 long-horizon 학습이 유효하다는 신호는 유지됐다.
+- Lateral Meniscus / MCL 등 일부 target은 높았지만 Fracture와 Medial Meniscus가 크게 낮아 전체 Macro를 제한했다.
+- 이 결과만으로 Last4 자체의 효과를 분리할 수는 없으며, 현재 Fold2 screening 기준에서는 승격하지 않았다.
+
+---
+
+## Experiment 18 — Exp1B DINOv2 Full Fine-tuning + Layer-wise LR, Fold2 Screening
+
+### 목적
+동일한 Wide-only input과 long-horizon optimization을 유지하면서, DINOv2-S의 **전체 12 blocks를 fine-tuning**하고 conservative layer-wise LR을 적용했다.
+
+### 구성
+- Validation: **Fold 2 Gold 11 studies**
+- Input: V2.2 **Wide-only**
+- DINOv2-Small
+- Fine-tuning: **Full 12 blocks**
+- Layer-wise LR: Early third `1e-6`, Middle third `3e-6`, Late third `1e-5`, Head `2e-4`
+- Gradient checkpointing: **ON**
+- Physical batch: **16**
+- Gradient accumulation: **4**
+- Effective batch: **64**
+- Warmup: optimizer-step budget의 5%
+- Scheduler: step-wise linear decay
+- Max epoch: 48
+- Early stopping patience: 6
+- V2.2 Gold / pseudo loss split 유지
+
+### Fold2 결과
+- **Best Macro ROC-AUC: 0.884127**
+- Best epoch: **18**
+- Weak-6 Macro AUC: **0.839484**
+- V2.6B Fold2 reference: 0.844907
+- 변화: **+0.039220**
+- Exp1A 대비 변화: **+0.065542**
+- Training time: 약 **127.96분**
+- Early stop: epoch 24
+
+### Target별 Fold2 AUC
+
+| Target | AUC |
+|---|---:|
+| Fracture | 0.708333 |
+| PF OA | 0.714286 |
+| Contusion | 0.750000 |
+| Medial Meniscus | 0.785714 |
+| ACL | 0.900000 |
+| Synovitis | 0.900000 |
+| Lateral Meniscus | 0.928571 |
+| Medial OA | 0.958333 |
+| Effusion | 0.964286 |
+| MCL | 1.000000 |
+| Lateral OA | 1.000000 |
+| Baker's | 1.000000 |
+
+### 인사이트
+- Full fine-tuning은 Fold2에서 **0.884127**을 기록해 현재 완료된 단일 Fold2 screening 중 최고 성능을 기록했다.
+- V2.6B Fold2 0.844907 대비 **+0.039220** 개선됐다.
+- Weak-6 Macro도 **0.839484**로 Exp1A보다 크게 개선됐다.
+- Best epoch가 18에 형성되어 deeper fine-tuning에서도 long-horizon 학습이 필요했다.
+- Full fine-tuning + layer-wise LR 조합은 이후 단일-Fold 구조 실험의 기준 backbone 설정으로 채택할 근거를 제공했다.
+- Fold2 validation은 11 Gold에 불과하므로 이 점수는 internal screening metric이며 Public LB와 직접 대응하지 않는다.
+---
+
 ## Completed Experiment Scoreboard
 
 | ID | Experiment | Internal Metric | Public LB |
@@ -851,6 +961,8 @@ V2.6A와 동일한 Meniscus hybrid routing을 유지하면서, 더 큰 effective
 | 14 | V2.5 Adjacent Triplet 5-Fold | Full OOF 0.778191 | 0.807 |
 | 15 | V2.6A Meniscus Hybrid Controlled | Full OOF 0.784614 | - |
 | 16 | V2.6B Meniscus Hybrid Long-Horizon | **Full OOF 0.807992** | 0.814 |
+| 17 | Exp1A Last4 Layer-wise LR | Fold2 AUC 0.818585 | - |
+| 18 | Exp1B Full Fine-tuning + Layer-wise LR | **Fold2 AUC 0.884127** | - |
 
 ---
 
@@ -860,6 +972,8 @@ V2.6A와 동일한 Meniscus hybrid routing을 유지하면서, 더 큰 effective
   - V2.1 5-Fold Ensemble
   - V2.2 Loss-Split 5-Fold
 - **Full 58-Gold OOF 최고: V2.6B — 0.807992**
+- **Single Fold2 screening 최고: Exp1B Full Fine-tuning — 0.884127**
+- Exp1B Weak-6 Fold2 Macro: **0.839484**
 - 주요 Full OOF:
   - V2.1: 0.784485
   - V2.2 Loss-Split: 0.793107
@@ -867,6 +981,9 @@ V2.6A와 동일한 Meniscus hybrid routing을 유지하면서, 더 큰 effective
   - V2.5 Adjacent Triplet: 0.778191
   - V2.6A Hybrid Controlled: 0.784614
   - **V2.6B Hybrid Long-Horizon: 0.807992**
-- V2.6B는 내부 OOF 최고를 기록했지만 Public LB는 0.814로, 내부 OOF 향상이 Public LB 향상으로 동일하게 이어지지는 않았다.
-- Meniscus adjacent-context는 Medial Meniscus에서 반복적인 개선 신호를 보였다.
+- 최근 Fold2 screening:
+  - Exp1A Last4: 0.818585
+  - **Exp1B Full Fine-tuning: 0.884127**
+- V2.6B는 내부 Full OOF 최고를 기록했지만 Public LB는 0.814로, 내부 OOF 향상이 Public LB 향상으로 동일하게 이어지지는 않았다.
+- Exp1B는 단일 Fold2 screening에서 기존 V2.6B Fold2 0.844907보다 **+0.039220** 개선됐다.
 - 현재 Public 최고 checkpoint family는 여전히 V2.1 / V2.2 5-Fold ensemble이다.
