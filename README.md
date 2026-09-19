@@ -942,6 +942,130 @@ V2.2 Wide-only MRI input과 V2.6B의 long-horizon optimization을 유지하면�
 - Best epoch가 18에 형성되어 deeper fine-tuning에서도 long-horizon 학습이 필요했다.
 - Full fine-tuning + layer-wise LR 조합은 이후 단일-Fold 구조 실험의 기준 backbone 설정으로 채택할 근거를 제공했다.
 - Fold2 validation은 11 Gold에 불과하므로 이 점수는 internal screening metric이며 Public LB와 직접 대응하지 않는다.
+
+---
+
+## Experiment 19 — Exp2A Full FT + Target-specific Patch-token Spatial Attention, Fold2 Screening
+
+### 목적
+Exp1B의 Full DINOv2-S fine-tuning + layer-wise LR을 유지하면서, 기존 `CLS + patch_mean` 압축 대신 **target별 patch-token spatial attention**을 적용해 각 target이 서로 다른 spatial evidence를 선택하도록 했다.
+
+### 구성
+- Validation: **Fold 2 Gold 11 studies**
+- Persistent Wide224 cache 사용
+- DINOv2-Small **Full fine-tuning**
+- Target-specific patch-token spatial attention
+- Physical batch: **64**
+- Gradient accumulation: **1**
+- Effective batch: **64**
+- Layer-wise LR: Early `1e-6` / Middle `3e-6` / Late `1e-5`
+- Head LR: `2e-4`
+- Gradient checkpointing: ON
+- Max epoch: 48
+- Early stopping patience: 6
+- V2.2 Gold / pseudo loss split 유지
+
+### Fold2 결과
+- **Best Macro ROC-AUC: 0.889120**
+- Best epoch: **14**
+- Early stop: epoch **20**
+- Weak-6 Macro AUC: **0.847421**
+- Exp1B Fold2: 0.884127
+- 변화: **+0.004993**
+- Weak-6 변화: **+0.007937**
+- Training time: 약 **105.75분**
+- Persistent cache contract: PASS
+- Runtime DICOM precache: 없음
+- T4 ×2에서 Batch64 정상 실행
+
+### Target별 Fold2 AUC
+
+| Target | AUC | Exp1B 대비 |
+|---|---:|---:|
+| Lateral Meniscus | 0.607143 | -0.321428 |
+| Fracture | 0.791667 | +0.083334 |
+| PF OA | 0.857143 | +0.142857 |
+| ACL | 0.866667 | -0.033333 |
+| Effusion | 0.892857 | -0.071429 |
+| MCL | 0.900000 | -0.100000 |
+| Medial OA | 0.916667 | -0.041666 |
+| Medial Meniscus | 0.928571 | +0.142857 |
+| Lateral OA | 0.944444 | -0.055556 |
+| Contusion | 0.964286 | +0.214286 |
+| Baker's | 1.000000 | 0.000000 |
+| Synovitis | 1.000000 | +0.100000 |
+
+### 인사이트
+- 전체 Fold2 Macro는 Exp1B 대비 **+0.004993** 상승해 현재 완료된 단일 Fold2 screening 최고 기록을 갱신했다.
+- Weak-6 Macro도 **0.847421**로 상승했다.
+- Fracture / PF OA / Medial Meniscus / Contusion / Synovitis는 개선되어 patch-level spatial evidence 활용 가치가 확인됐다.
+- 반면 Lateral Meniscus가 0.928571 → 0.607143으로 크게 하락했고, 여러 강한 target도 함께 낮아졌다.
+- 따라서 patch-token spatial attention을 기존 global feature의 완전한 대체로 사용하는 방식보다는, **global representation을 보존하면서 spatial context를 residual/gated 형태로 추가하는 구조**가 더 적합할 가능성을 시사한다.
+- Fold2 Gold가 11명뿐이므로 target별 변화와 +0.004993 차이는 불확실성이 크며, Public LB 향상을 의미하지 않는다.
+
+---
+
+## Experiment 20 — Exp2B Full FT + Target-specific Low-rank Expert Head, Fold2 Screening
+
+### 목적
+Exp1B의 global image representation을 유지하고 upper head에 **12개 target-specific low-rank residual experts**를 추가해 target 간 representation interference를 줄일 수 있는지 확인했다.
+
+### 구성
+- Validation: **Fold 2 Gold 11 studies**
+- Persistent Wide224 cache 사용
+- DINOv2-Small **Full fine-tuning**
+- 기존 `CLS + patch_mean` 유지
+- Target-specific low-rank residual expert head
+- Expert rank: **64**
+- Expert up-projection zero initialization
+- Physical batch: **64**
+- Gradient accumulation: **1**
+- Effective batch: **64**
+- Layer-wise LR: Early `1e-6` / Middle `3e-6` / Late `1e-5`
+- Head LR: `2e-4`
+- Gradient checkpointing: ON
+- Max epoch: 48
+- Early stopping patience: 6
+- V2.2 Gold / pseudo loss split 유지
+
+### Fold2 결과
+- **Best Macro ROC-AUC: 0.862765**
+- Best epoch: **5**
+- Early stop: epoch **11**
+- Weak-6 Macro AUC: **0.847222**
+- Exp1B Fold2: 0.884127
+- 변화: **-0.021362**
+- Weak-6 변화: **+0.007738**
+- Training time: 약 **55.33분**
+- Persistent cache contract: PASS
+- Runtime DICOM precache: 없음
+- T4 ×2에서 Batch64 정상 실행
+
+### Target별 Fold2 AUC
+
+| Target | AUC | Exp1B 대비 |
+|---|---:|---:|
+| Fracture | 0.583333 | -0.125000 |
+| Medial Meniscus | 0.678571 | -0.107143 |
+| Effusion | 0.821429 | -0.142857 |
+| Medial OA | 0.833333 | -0.125000 |
+| ACL | 0.833333 | -0.066667 |
+| Baker's | 0.888889 | -0.111111 |
+| PF OA | 0.892857 | +0.178571 |
+| Contusion | 0.892857 | +0.142857 |
+| Lateral Meniscus | 0.928571 | 0.000000 |
+| MCL | 1.000000 | 0.000000 |
+| Lateral OA | 1.000000 | 0.000000 |
+| Synovitis | 1.000000 | +0.100000 |
+
+### 인사이트
+- Weak-6 Macro는 Exp1B보다 상승했지만 전체 Macro는 **-0.021362** 하락해 현재 구조는 승격하지 않았다.
+- PF OA / Contusion / Synovitis는 개선됐지만 Fracture / Medial Meniscus / Effusion / Medial OA / ACL / Baker's가 하락했다.
+- target-specific expert를 추가하는 것만으로는 전체 representation interference 문제가 해결되지 않았고, 일부 target 개선과 다른 target 하락이 동시에 나타났다.
+- Best epoch가 5로 비교적 이르게 형성돼 Exp1B/Exp2A보다 빠르게 peak에 도달했다.
+- Fold2 Gold가 11명뿐이므로 target별 변화의 인과는 확정할 수 없지만, 현재 screening 기준에서는 Exp2B를 다음 기준 구조로 채택하지 않는다.
+
+
 ---
 
 ## Completed Experiment Scoreboard
@@ -962,7 +1086,9 @@ V2.2 Wide-only MRI input과 V2.6B의 long-horizon optimization을 유지하면�
 | 15 | V2.6A Meniscus Hybrid Controlled | Full OOF 0.784614 | - |
 | 16 | V2.6B Meniscus Hybrid Long-Horizon | **Full OOF 0.807992** | 0.814 |
 | 17 | Exp1A Last4 Layer-wise LR | Fold2 AUC 0.818585 | - |
-| 18 | Exp1B Full Fine-tuning + Layer-wise LR | **Fold2 AUC 0.884127** | - |
+| 18 | Exp1B Full Fine-tuning + Layer-wise LR | Fold2 AUC 0.884127 | - |
+| 19 | Exp2A Full FT + Target Spatial Attention | **Fold2 AUC 0.889120** | - |
+| 20 | Exp2B Full FT + Target Expert Head | Fold2 AUC 0.862765 | - |
 
 ---
 
@@ -972,8 +1098,8 @@ V2.2 Wide-only MRI input과 V2.6B의 long-horizon optimization을 유지하면�
   - V2.1 5-Fold Ensemble
   - V2.2 Loss-Split 5-Fold
 - **Full 58-Gold OOF 최고: V2.6B — 0.807992**
-- **Single Fold2 screening 최고: Exp1B Full Fine-tuning — 0.884127**
-- Exp1B Weak-6 Fold2 Macro: **0.839484**
+- **Single Fold2 screening 최고: Exp2A Spatial Attention — 0.889120**
+- **Single Fold2 Weak-6 최고: Exp2A — 0.847421**
 - 주요 Full OOF:
   - V2.1: 0.784485
   - V2.2 Loss-Split: 0.793107
@@ -983,7 +1109,11 @@ V2.2 Wide-only MRI input과 V2.6B의 long-horizon optimization을 유지하면�
   - **V2.6B Hybrid Long-Horizon: 0.807992**
 - 최근 Fold2 screening:
   - Exp1A Last4: 0.818585
-  - **Exp1B Full Fine-tuning: 0.884127**
-- V2.6B는 내부 Full OOF 최고를 기록했지만 Public LB는 0.814로, 내부 OOF 향상이 Public LB 향상으로 동일하게 이어지지는 않았다.
-- Exp1B는 단일 Fold2 screening에서 기존 V2.6B Fold2 0.844907보다 **+0.039220** 개선됐다.
+  - Exp1B Full Fine-tuning: 0.884127
+  - **Exp2A Spatial Attention: 0.889120**
+  - Exp2B Target Expert: 0.862765
+- Exp2A는 Exp1B 대비 Macro **+0.004993**, Weak-6 **+0.007937** 개선됐다.
+- Exp2B는 Weak-6는 개선됐지만 전체 Macro가 Exp1B 대비 **-0.021362** 하락했다.
+- 현재 완료된 single-Fold screening 중 0.900을 넘은 실험은 아직 없다.
+- Fold2 validation은 11 Gold에 불과하므로 single-Fold 점수는 구조 탐색용이며 Public LB 절대점수와 직접 대응하지 않는다.
 - 현재 Public 최고 checkpoint family는 여전히 V2.1 / V2.2 5-Fold ensemble이다.
