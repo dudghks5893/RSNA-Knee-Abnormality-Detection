@@ -1195,6 +1195,45 @@ Exp3A의 global-preserving residual fusion을 유지하면서, target당 spatial
 - 현재 구조 탐색 결과는 **Full FT + global representation + gated spatial residual** 계열이 가장 일관된 개선 방향임을 지지한다.
 
 
+
+---
+
+## Experiment 23 — Exp3B Fold2 Single-Model Public LB Check
+
+### 목적
+Fold2 내부 validation에서 최고 성능을 기록한 **Exp3B Multi-query Global/Spatial Residual** checkpoint를 재학습하지 않고 그대로 hidden test에 inference하여, 단일 Fold 모델의 실제 Public LB 일반화 성능을 확인했다.
+
+### 구성
+- 사용 checkpoint: **Exp3B Fold2 best**
+- Fold2 internal Macro ROC-AUC: **0.898710**
+- Best epoch: **12**
+- Training studies:
+  - report-only pseudo: 4,349
+  - Gold train: 47
+  - Fold2 validation Gold: 11 제외
+  - 총 train: **4,396 studies**
+- DINOv2-Small Full fine-tuning
+- Global path: `CLS + patch_mean`
+- Spatial path: target당 query 4개
+- Gated residual fusion
+- Hidden test preprocessing: Wide224 / 130mm / 9 slices / 6 slots
+- Submission: **Fold2 단일 모델 1개**, ensemble 없음
+
+### Submission 결과
+- **Public LB: 0.824**
+- 기존 Public 최고: **0.816**
+- 변화: **+0.008**
+- 기존 최고는 V2.1 / V2.2의 **5-Fold ensemble**이었음
+- 이번 결과는 **단일 Fold Exp3B 모델 하나가 기존 5-Fold 최고 기록을 넘어선 첫 결과**
+
+### 인사이트
+- Fold2 내부 성능 상승이 Public LB에서도 실제 개선으로 이어졌다.
+- Exp3B의 Full FT + global representation + multi-query gated spatial residual 구조가 hidden test에서도 유효하다는 강한 근거를 확보했다.
+- 단일 Fold 모델만으로 0.824를 기록했기 때문에, 이후 Fold ensemble에는 추가 상승 여지가 있을 수 있으나 상승 폭은 사전에 확정할 수 없다.
+- 현재 단계에서는 5-Fold 전체 학습보다 단일 Fold screening + 선택적 LB 확인을 계속 사용하고, 최종 후보가 좁혀진 뒤 5-Fold ensemble을 수행하는 것이 계산 효율이 높다.
+- Fold2 internal AUC 0.898710과 Public LB 0.824는 서로 다른 population / metric sample에 대한 값이므로 수치 자체를 직접 변환해 해석하지 않는다.
+
+
 ---
 
 ## Completed Experiment Scoreboard
@@ -1206,48 +1245,45 @@ Exp3A의 global-preserving residual fusion을 유지하면서, target당 spatial
 | 06 | V2.1 Fold0~2 Partial OOF | 0.779997 | - |
 | 07 | V2.1 Fold3~4 Partial OOF | 0.805944 | - |
 | 08 | V2.1 3-Fold Ensemble | - | 0.810 |
-| 09 | V2.1 5-Fold Ensemble | - | **0.816** |
+| 09 | V2.1 5-Fold Ensemble | - | 0.816 |
 | 10 | V2.1 Full 58-Gold OOF | 0.784485 | - |
-| 11 | V2.2 Loss-Split 5-Fold | Full OOF 0.793107 | **0.816** |
+| 11 | V2.2 Loss-Split 5-Fold | Full OOF 0.793107 | 0.816 |
 | 12 | V2.3 Gold Oversampling ×10 | Full OOF 0.773342 | - |
 | 13 | V2.4 Batch / LR Search | 35-Gold Search AUC 0.795854 | - |
 | 14 | V2.5 Adjacent Triplet 5-Fold | Full OOF 0.778191 | 0.807 |
 | 15 | V2.6A Meniscus Hybrid Controlled | Full OOF 0.784614 | - |
-| 16 | V2.6B Meniscus Hybrid Long-Horizon | **Full OOF 0.807992** | 0.814 |
+| 16 | V2.6B Meniscus Hybrid Long-Horizon | Full OOF 0.807992 | 0.814 |
 | 17 | Exp1A Last4 Layer-wise LR | Fold2 AUC 0.818585 | - |
 | 18 | Exp1B Full Fine-tuning + Layer-wise LR | Fold2 AUC 0.884127 | - |
 | 19 | Exp2A Full FT + Target Spatial Attention | Fold2 AUC 0.889120 | - |
 | 20 | Exp2B Full FT + Target Expert Head | Fold2 AUC 0.862765 | - |
 | 21 | Exp3A Global/Spatial Gated Residual | Fold2 AUC 0.895437 | - |
 | 22 | Exp3B Multi-query Global/Spatial Residual | **Fold2 AUC 0.898710** | - |
+| 23 | Exp3B Fold2 Single-Model LB Check | Fold2 AUC 0.898710 | **0.824** |
 
 ---
 
 ## Current Best Completed Results
 
-- **Public LB 최고: 0.816**
-  - V2.1 5-Fold Ensemble
-  - V2.2 Loss-Split 5-Fold
+- **Public LB 최고: Exp3B Fold2 Single Model — 0.824**
+  - 이전 최고 0.816 대비 **+0.008**
+  - 기존 0.816은 V2.1 / V2.2 5-Fold ensemble
 - **Full 58-Gold OOF 최고: V2.6B — 0.807992**
 - **Single Fold2 screening 최고: Exp3B Multi-query Spatial Residual — 0.898710**
 - **Single Fold2 Weak-6 최고: Exp3A Global/Spatial Residual — 0.873810**
-- 주요 Full OOF:
-  - V2.1: 0.784485
-  - V2.2 Loss-Split: 0.793107
-  - V2.3 Gold ×10: 0.773342
-  - V2.5 Adjacent Triplet: 0.778191
-  - V2.6A Hybrid Controlled: 0.784614
-  - **V2.6B Hybrid Long-Horizon: 0.807992**
 - 최근 Fold2 screening:
   - Exp1A Last4: 0.818585
-  - Exp1B Full Fine-tuning: 0.884127
+  - Exp1B Full fine-tuning: 0.884127
   - Exp2A Spatial Attention: 0.889120
   - Exp2B Target Expert: 0.862765
   - Exp3A Global/Spatial Residual: 0.895437
   - **Exp3B Multi-query Spatial Residual: 0.898710**
-- Exp3A는 Exp2A 대비 Macro **+0.006316**, Weak-6 **+0.026389** 개선됐다.
-- Exp3B는 Exp2A 대비 Macro **+0.009590**, Weak-6 **+0.020437** 개선됐다.
-- Exp3B는 Exp3A 대비 Macro **+0.003274** 높지만 Weak-6는 **-0.005952** 낮다.
-- 현재 완료된 single-Fold screening 중 0.900을 넘은 실험은 아직 없으며, Exp3B가 0.900까지 약 **0.001290** 남아 있다.
-- Fold2 validation은 11 Gold에 불과하므로 single-Fold 점수는 구조 탐색용이며 Public LB 절대점수와 직접 대응하지 않는다.
-- 현재 Public 최고 checkpoint family는 여전히 V2.1 / V2.2 5-Fold ensemble이다.
+- Public LB 흐름:
+  - V2 Fold0 single: 0.804
+  - V2.1 3-Fold: 0.810
+  - V2.1 / V2.2 5-Fold: 0.816
+  - V2.6B 5-Fold: 0.814
+  - **Exp3B Fold2 single: 0.824**
+- Exp3B는 현재 처음으로 **단일 Fold 모델이 이전 5-Fold Public 최고를 넘어선 구조**다.
+- Fold2 validation은 11 Gold에 불과하므로 구조 탐색용으로 사용하고, Public LB는 선택된 후보의 실제 일반화 확인용으로 사용한다.
+- 5-Fold 전체 학습은 최종 후보가 좁혀진 뒤 수행한다.
