@@ -1066,6 +1066,135 @@ Exp1B의 global image representation을 유지하고 upper head에 **12개 targe
 - Fold2 Gold가 11명뿐이므로 target별 변화의 인과는 확정할 수 없지만, 현재 screening 기준에서는 Exp2B를 다음 기준 구조로 채택하지 않는다.
 
 
+
+---
+
+## Experiment 21 — Exp3A Full FT + Global/Spatial Gated Residual, Fold2 Screening
+
+### 목적
+Exp1B의 안정적인 `CLS + patch_mean` global representation을 유지하면서, Exp2A의 target-specific patch attention을 **zero-initialized gated residual**로 추가했다.
+
+Exp2A에서 spatial information 자체는 유효했지만 global representation을 완전히 대체하면서 Lateral Meniscus 등 일부 강한 target이 크게 하락했기 때문에, 이번 실험은 global path를 보존한 상태에서 spatial evidence를 보조 신호로 사용하는 구조를 검증했다.
+
+### 구성
+- Validation: **Fold 2 Gold 11 studies**
+- Persistent Wide224 cache 사용
+- DINOv2-Small **Full fine-tuning**
+- Global path: `CLS + patch_mean`
+- Spatial path: target당 patch query **1개**
+- Fusion: `global + tanh(spatial_scale) × spatial_delta`
+- Spatial scale initialization: **0.0**
+- Global group-attention weight를 spatial branch에도 재사용
+- Physical batch: **64**
+- Gradient accumulation: **1**
+- Effective batch: **64**
+- Layer-wise LR: Early `1e-6` / Middle `3e-6` / Late `1e-5`
+- Head LR: `2e-4`
+- Gradient checkpointing: ON
+- Max epoch: 48
+- Early stopping patience: 6
+- V2.2 Gold / pseudo loss split 유지
+
+### Fold2 결과
+- **Best Macro ROC-AUC: 0.895437**
+- Best epoch: **12**
+- Early stop: epoch **18**
+- Weak-6 Macro AUC: **0.873810**
+- Exp2A Fold2: 0.889120
+- Macro 변화: **+0.006316**
+- Weak-6 변화: **+0.026389**
+- Training time: 약 **96.44분**
+
+### Target별 Fold2 AUC
+
+| Target | AUC | Exp2A 대비 | Learned Spatial Scale |
+|---|---:|---:|---:|
+| Fracture | 0.666667 | -0.125000 | -0.028865 |
+| ACL | 0.800000 | -0.066667 | -0.024719 |
+| PF OA | 0.821429 | -0.035714 | +0.016051 |
+| Medial Meniscus | 0.821429 | -0.107142 | +0.009690 |
+| Contusion | 0.821429 | -0.142857 | -0.011182 |
+| Medial OA | 0.916667 | 0.000000 | +0.028468 |
+| Synovitis | 0.933333 | -0.066667 | -0.018021 |
+| Effusion | 0.964286 | +0.071429 | -0.032652 |
+| Lateral OA | 1.000000 | +0.055556 | +0.028285 |
+| Lateral Meniscus | 1.000000 | +0.392857 | -0.006233 |
+| MCL | 1.000000 | +0.100000 | +0.017506 |
+| Baker's | 1.000000 | 0.000000 | +0.012386 |
+
+### 인사이트
+- Global representation을 보존하고 spatial context를 residual로 추가하자 Fold2 Macro가 **0.895437**로 다시 상승했다.
+- Exp2A에서 크게 무너졌던 Lateral Meniscus가 **0.607143 → 1.000000**으로 회복됐고, MCL / Effusion / Lateral OA도 개선됐다.
+- 반면 Exp2A에서 높았던 Fracture / Medial Meniscus / Contusion은 다시 하락했다.
+- Learned spatial scale은 target별로 서로 다른 부호와 크기를 학습해 spatial branch를 target-specific residual로 실제 사용했다.
+- 현재 결과는 global-only와 spatial-only의 장점이 서로 보완적일 가능성을 보여주지만, Fold2 Gold 11명 기준이므로 target별 수치의 불확실성은 크다.
+
+---
+
+## Experiment 22 — Exp3B Full FT + Multi-query Global/Spatial Residual, Fold2 Screening
+
+### 목적
+Exp3A의 global-preserving residual fusion을 유지하면서, target당 spatial query를 **1개 → 4개**로 확장했다. 하나의 target이 서로 다른 위치/형태의 병변 evidence를 여러 spatial prototype으로 표현할 수 있는지 확인했다.
+
+### 구성
+- Validation: **Fold 2 Gold 11 studies**
+- Persistent Wide224 cache 사용
+- DINOv2-Small **Full fine-tuning**
+- Global path: `CLS + patch_mean`
+- Spatial path: target당 patch query **4개**
+- 4개 spatial context를 target-specific learned softmax로 혼합
+- Fusion: `global + tanh(spatial_scale) × spatial_delta`
+- Spatial scale initialization: **0.0**
+- Global group-attention weight를 spatial branch에도 재사용
+- Physical batch: **64**
+- Gradient accumulation: **1**
+- Effective batch: **64**
+- Layer-wise LR: Early `1e-6` / Middle `3e-6` / Late `1e-5`
+- Head LR: `2e-4`
+- Gradient checkpointing: ON
+- Max epoch: 48
+- Early stopping patience: 6
+- V2.2 Gold / pseudo loss split 유지
+
+### Fold2 결과
+- **Best Macro ROC-AUC: 0.898710**
+- Best epoch: **12**
+- Early stop: epoch **18**
+- Weak-6 Macro AUC: **0.867857**
+- Exp2A Fold2: 0.889120
+- Macro 변화: **+0.009590**
+- Weak-6 변화: **+0.020437**
+- Exp3A 대비 Macro: **+0.003274**
+- Exp3A 대비 Weak-6: **-0.005952**
+- Training time: 약 **94.84분**
+- 0.900 marker까지 차이: **0.001290**
+
+### Target별 Fold2 AUC
+
+| Target | AUC | Exp2A 대비 | Learned Spatial Scale |
+|---|---:|---:|---:|
+| Fracture | 0.666667 | -0.125000 | -0.029620 |
+| Medial Meniscus | 0.750000 | -0.178571 | +0.009878 |
+| Contusion | 0.821429 | -0.142857 | -0.011205 |
+| ACL | 0.833333 | -0.033334 | -0.023650 |
+| PF OA | 0.892857 | +0.035714 | +0.016199 |
+| Synovitis | 0.933333 | -0.066667 | -0.016917 |
+| Medial OA | 0.958333 | +0.041666 | +0.028135 |
+| Effusion | 0.964286 | +0.071429 | -0.030756 |
+| Lateral Meniscus | 0.964286 | +0.357143 | -0.006041 |
+| MCL | 1.000000 | +0.100000 | +0.016207 |
+| Lateral OA | 1.000000 | +0.055556 | +0.028305 |
+| Baker's | 1.000000 | 0.000000 | +0.011656 |
+
+### 인사이트
+- Multi-query residual은 Fold2 Macro를 **0.898710**까지 높여 현재 완료된 single-Fold screening 최고 기록을 갱신했다.
+- Exp3A 대비 Macro는 +0.003274 개선됐지만 Weak-6는 -0.005952 낮아졌다.
+- Exp3A와 비교하면 ACL / PF OA / Medial OA가 개선됐고, Medial / Lateral Meniscus는 낮아졌다.
+- Exp3A와 Exp3B의 learned spatial scale 패턴이 매우 유사해, query 수 증가가 residual 사용량 자체보다 spatial context의 세부 표현을 변화시킨 것으로 보인다.
+- 0.900 marker까지 차이는 약 0.00129로 매우 작지만, validation이 11 Gold에 불과하므로 이 차이를 절대적인 threshold로 해석해서는 안 된다.
+- 현재 구조 탐색 결과는 **Full FT + global representation + gated spatial residual** 계열이 가장 일관된 개선 방향임을 지지한다.
+
+
 ---
 
 ## Completed Experiment Scoreboard
@@ -1087,8 +1216,10 @@ Exp1B의 global image representation을 유지하고 upper head에 **12개 targe
 | 16 | V2.6B Meniscus Hybrid Long-Horizon | **Full OOF 0.807992** | 0.814 |
 | 17 | Exp1A Last4 Layer-wise LR | Fold2 AUC 0.818585 | - |
 | 18 | Exp1B Full Fine-tuning + Layer-wise LR | Fold2 AUC 0.884127 | - |
-| 19 | Exp2A Full FT + Target Spatial Attention | **Fold2 AUC 0.889120** | - |
+| 19 | Exp2A Full FT + Target Spatial Attention | Fold2 AUC 0.889120 | - |
 | 20 | Exp2B Full FT + Target Expert Head | Fold2 AUC 0.862765 | - |
+| 21 | Exp3A Global/Spatial Gated Residual | Fold2 AUC 0.895437 | - |
+| 22 | Exp3B Multi-query Global/Spatial Residual | **Fold2 AUC 0.898710** | - |
 
 ---
 
@@ -1098,8 +1229,8 @@ Exp1B의 global image representation을 유지하고 upper head에 **12개 targe
   - V2.1 5-Fold Ensemble
   - V2.2 Loss-Split 5-Fold
 - **Full 58-Gold OOF 최고: V2.6B — 0.807992**
-- **Single Fold2 screening 최고: Exp2A Spatial Attention — 0.889120**
-- **Single Fold2 Weak-6 최고: Exp2A — 0.847421**
+- **Single Fold2 screening 최고: Exp3B Multi-query Spatial Residual — 0.898710**
+- **Single Fold2 Weak-6 최고: Exp3A Global/Spatial Residual — 0.873810**
 - 주요 Full OOF:
   - V2.1: 0.784485
   - V2.2 Loss-Split: 0.793107
@@ -1110,10 +1241,13 @@ Exp1B의 global image representation을 유지하고 upper head에 **12개 targe
 - 최근 Fold2 screening:
   - Exp1A Last4: 0.818585
   - Exp1B Full Fine-tuning: 0.884127
-  - **Exp2A Spatial Attention: 0.889120**
+  - Exp2A Spatial Attention: 0.889120
   - Exp2B Target Expert: 0.862765
-- Exp2A는 Exp1B 대비 Macro **+0.004993**, Weak-6 **+0.007937** 개선됐다.
-- Exp2B는 Weak-6는 개선됐지만 전체 Macro가 Exp1B 대비 **-0.021362** 하락했다.
-- 현재 완료된 single-Fold screening 중 0.900을 넘은 실험은 아직 없다.
+  - Exp3A Global/Spatial Residual: 0.895437
+  - **Exp3B Multi-query Spatial Residual: 0.898710**
+- Exp3A는 Exp2A 대비 Macro **+0.006316**, Weak-6 **+0.026389** 개선됐다.
+- Exp3B는 Exp2A 대비 Macro **+0.009590**, Weak-6 **+0.020437** 개선됐다.
+- Exp3B는 Exp3A 대비 Macro **+0.003274** 높지만 Weak-6는 **-0.005952** 낮다.
+- 현재 완료된 single-Fold screening 중 0.900을 넘은 실험은 아직 없으며, Exp3B가 0.900까지 약 **0.001290** 남아 있다.
 - Fold2 validation은 11 Gold에 불과하므로 single-Fold 점수는 구조 탐색용이며 Public LB 절대점수와 직접 대응하지 않는다.
 - 현재 Public 최고 checkpoint family는 여전히 V2.1 / V2.2 5-Fold ensemble이다.
