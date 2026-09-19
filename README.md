@@ -1234,6 +1234,134 @@ Fold2 내부 validation에서 최고 성능을 기록한 **Exp3B Multi-query Glo
 - Fold2 internal AUC 0.898710과 Public LB 0.824는 서로 다른 population / metric sample에 대한 값이므로 수치 자체를 직접 변환해 해석하지 않는다.
 
 
+
+---
+
+## Experiment 24 — Exp4A Target-specific Spatial Group Attention, Fold2 Screening
+
+### 목적
+Exp3B의 global path와 4-query spatial residual 구조는 유지하면서, spatial branch가 3개 slice group을 합칠 때 target별로 서로 다른 group weighting을 학습할 수 있는지 확인했다.
+
+### 구성
+- Validation: **Fold 2 Gold 11 studies**
+- Persistent Wide224 cache 사용
+- DINOv2-Small Full fine-tuning
+- Global path: `CLS + patch_mean`
+- Spatial queries: target당 4개
+- 기존 target-level zero-init spatial residual gate 유지
+- **추가:** global group-attention을 기준으로 target-specific group correction 학습
+- target-specific correction은 0으로 초기화
+- Batch64 / Accum1 / Effective64
+- Max48 / Patience6
+- V2.2 Gold / pseudo loss split 유지
+
+### Fold2 결과
+- **Best Macro ROC-AUC: 0.864021**
+- Best epoch: **8**
+- Early stop: epoch **14**
+- Weak-6 Macro AUC: **0.857540**
+- Exp3B Fold2: 0.898710
+- Macro 변화: **-0.034689**
+- Exp3B Weak-6: 0.867857
+- Weak-6 변화: **-0.010317**
+- Training time: 약 **67.83분**
+
+### Target별 변화 vs Exp3B
+- 개선:
+  - Medial Meniscus: 0.750000 → **0.857143**
+  - Synovitis: 0.933333 → **0.966667**
+  - Lateral Meniscus: 0.964286 → **1.000000**
+- 주요 하락:
+  - Fracture: 0.666667 → **0.500000**
+  - Medial OA: 0.958333 → **0.833333**
+  - PF OA: 0.892857 → **0.821429**
+  - ACL: 0.833333 → **0.766667**
+
+### Group-routing 진단
+Validation 평균 target-specific spatial group attention은 대부분 target에서 거의 동일한 패턴을 보였다.
+
+- Group 1: 약 **0.159**
+- Group 2: 약 **0.475~0.479**
+- Group 3: 약 **0.360~0.366**
+
+Target-specific group-query norm은 target마다 달랐지만, 최종 group attention 분포는 크게 분리되지 않았다.
+
+### 인사이트
+- target별 slice-group correction을 추가했지만 전체 Macro와 Weak-6 모두 Exp3B보다 하락했다.
+- target별 group routing이 실제로 크게 분화되지 않아, 현재 방식은 유의미한 specialization을 만들지 못했다.
+- Meniscus 계열 일부는 개선됐으므로 local expert 아이디어로는 참고할 수 있으나, 전체 baseline으로는 승격하지 않는다.
+- Public LB 제출은 진행하지 않는다.
+
+---
+
+## Experiment 25 — Exp4B Target × MRI-Slot Spatial Gate, Fold2 Screening
+
+### 목적
+Exp3B의 spatial residual gate를 target당 1개에서 **target × MRI-slot 12×6**으로 세분화해, 질병별로 Sagittal / Coronal / Axial 및 fluid / non-fluid slot별 spatial residual 사용량을 다르게 학습할 수 있는지 확인했다.
+
+### 구성
+- Validation: **Fold 2 Gold 11 studies**
+- Persistent Wide224 cache 사용
+- DINOv2-Small Full fine-tuning
+- Global path: `CLS + patch_mean`
+- Spatial queries: target당 4개
+- Exp3B spatial group routing 유지
+- Spatial residual gate:
+  - Exp3B: target당 1개
+  - Exp4B: **12 targets × 6 MRI slots = 72개**
+- 모든 target-slot gate는 0으로 초기화
+- Batch64 / Accum1 / Effective64
+- Max48 / Patience6
+- V2.2 Gold / pseudo loss split 유지
+
+### Fold2 결과
+- **Best Macro ROC-AUC: 0.896726**
+- Best epoch: **16**
+- Early stop: epoch **22**
+- Weak-6 Macro AUC: **0.868056**
+- Exp3B Fold2: 0.898710
+- Macro 변화: **-0.001984**
+- Exp3B Weak-6: 0.867857
+- Weak-6 변화: **+0.000198**
+- Training time: 약 **104.23분**
+
+### Target별 변화 vs Exp3B
+- 개선:
+  - ACL: 0.833333 → **0.933333**
+  - Medial Meniscus: 0.750000 → **0.821429**
+  - Synovitis: 0.933333 → **1.000000**
+  - Fracture: 0.666667 → **0.708333**
+- 유지:
+  - MCL: 1.000000
+  - Lateral Meniscus: 0.964286
+  - Lateral OA: 1.000000
+  - Effusion: 0.964286
+  - Baker's: 1.000000
+  - Contusion: 0.821429
+- 주요 하락:
+  - PF OA: 0.892857 → **0.714286**
+  - Medial OA: 0.958333 → **0.833333**
+
+### Target × MRI-slot gate 진단
+- ACL은 Sagittal fluid에서 가장 큰 음의 gate를 학습: 약 **-0.0739**
+- MCL은 Coronal / Axial 계열에서 양의 gate가 상대적으로 큼
+- Effusion은 Sagittal fluid에서 약 **-0.0803**
+- Fracture는 전반적으로 음의 gate를 학습
+- gate 사용량(mean absolute scale)이 큰 target:
+  - MCL: **0.03796**
+  - Fracture: **0.03583**
+  - Lateral OA: **0.03233**
+  - ACL: **0.03007**
+
+### 인사이트
+- 전체 Macro는 Exp3B보다 아주 소폭 낮았지만 **-0.001984** 차이로 사실상 근접했다.
+- Weak-6는 **+0.000198**로 거의 동일하다.
+- A와 달리 target별/slot별 gate가 실제로 서로 다른 부호와 크기를 학습해 specialization 신호는 확인됐다.
+- ACL / Medial Meniscus / Synovitis / Fracture가 동시에 개선됐다는 점은 약한 target 보완 관점에서 의미가 있다.
+- 그러나 PF OA와 Medial OA가 크게 하락해 전체 Macro는 Exp3B를 넘지 못했다.
+- 현재 기준에서는 Exp3B를 baseline으로 유지하고, Exp4B의 slot-specific gate 아이디어는 선택적으로 제한 적용하는 후속 실험 후보로 남긴다.
+- Public LB 제출은 진행하지 않는다.
+
 ---
 
 ## Completed Experiment Scoreboard
@@ -1260,6 +1388,8 @@ Fold2 내부 validation에서 최고 성능을 기록한 **Exp3B Multi-query Glo
 | 21 | Exp3A Global/Spatial Gated Residual | Fold2 AUC 0.895437 | - |
 | 22 | Exp3B Multi-query Global/Spatial Residual | **Fold2 AUC 0.898710** | - |
 | 23 | Exp3B Fold2 Single-Model LB Check | Fold2 AUC 0.898710 | **0.824** |
+| 24 | Exp4A Target-specific Spatial Group Attention | Fold2 AUC 0.864021 | - |
+| 25 | Exp4B Target × MRI-Slot Spatial Gate | Fold2 AUC 0.896726 | - |
 
 ---
 
@@ -1278,6 +1408,8 @@ Fold2 내부 validation에서 최고 성능을 기록한 **Exp3B Multi-query Glo
   - Exp2B Target Expert: 0.862765
   - Exp3A Global/Spatial Residual: 0.895437
   - **Exp3B Multi-query Spatial Residual: 0.898710**
+  - Exp4A Target-specific Group Attention: 0.864021
+  - Exp4B Target × MRI-Slot Gate: 0.896726
 - Public LB 흐름:
   - V2 Fold0 single: 0.804
   - V2.1 3-Fold: 0.810
@@ -1286,4 +1418,6 @@ Fold2 내부 validation에서 최고 성능을 기록한 **Exp3B Multi-query Glo
   - **Exp3B Fold2 single: 0.824**
 - Exp3B는 현재 처음으로 **단일 Fold 모델이 이전 5-Fold Public 최고를 넘어선 구조**다.
 - Fold2 validation은 11 Gold에 불과하므로 구조 탐색용으로 사용하고, Public LB는 선택된 후보의 실제 일반화 확인용으로 사용한다.
+- Exp4A는 Macro -0.034689 / Weak-6 -0.010317로 승격하지 않는다.
+- Exp4B는 Macro -0.001984 / Weak-6 +0.000198로 Exp3B에 매우 근접했고, 일부 약한 target이 개선되어 slot-specific gating 아이디어는 후속 제한 적용 후보로 유지한다.
 - 5-Fold 전체 학습은 최종 후보가 좁혀진 뒤 수행한다.
