@@ -1869,6 +1869,73 @@ Exp8A와 동일한 선택적 slot 보정 구조에서 correction strength를 **0
 - Exp9A는 승격하지 않으며, **현재 최고 Public LB는 Exp7A 0.863 유지**다.
 - 다음 단계는 Fold2 target 단위 교체보다 Exp7A 자체를 개선하는 학습 실험 또는 5-Fold 검증을 우선한다.
 
+
+---
+
+## Experiment 36 — Exp10A Exp7A Batch4 5-Fold + Mean Ensemble
+
+### 목적
+Exp7A Batch4 Long-Horizon 학습 방식을 Fold 0~4 전체에 적용해 Gold 58개 전체 OOF를 확인하고, 5개 best checkpoint의 hidden-test 예측을 동일 가중치로 평균해 실제 Public LB를 확인했다.
+
+### 구성
+- Architecture: Exp7A / Exp3B Multi-query Global/Spatial Gated Residual
+- DINOv2-Small Full fine-tuning
+- Persistent Wide224 cache
+- Physical batch: **4**
+- Gradient accumulation: **1**
+- Max epoch: **12**
+- Early stopping patience: **4 epoch-end checks**
+- Head LR: **2e-4**
+- Backbone Early / Mid / Late LR: **1e-6 / 3e-6 / 1e-5**
+- Fold 0~4 각각 best checkpoint 저장
+- Test ensemble: **5개 Fold probability 동일 가중치 산술평균**
+- Fold별/target별 LB 기반 가중치 조정 없음
+
+### Full 58-Gold OOF 결과
+- **Pooled Macro ROC-AUC: 0.856496**
+- **Weak-6 Macro AUC: 0.806387**
+- 5개 Fold Macro AUC 평균: **0.871575**
+- Fold Macro 표준편차: **0.029390**
+- 이전 Full58 최고 V2.6B 0.807992 대비: **+0.048505**
+
+### Fold별 결과
+| Fold | Gold | Macro AUC | Weak-6 |
+|---|---:|---:|---:|
+| 0 | 11 | 0.820238 | 0.731746 |
+| 1 | 12 | 0.878954 | 0.867708 |
+| 2 | 11 | 0.880258 | 0.819444 |
+| 3 | 12 | 0.867634 | 0.804167 |
+| 4 | 12 | **0.910791** | 0.857738 |
+
+### Full58 Target별 AUC
+| Target | AUC | Positive / Negative |
+|---|---:|---:|
+| Lateral Meniscus | **0.695652** | 23 / 35 |
+| Synovitis | **0.753883** | 27 / 31 |
+| PF OA | **0.779923** | 21 / 37 |
+| Fracture | 0.813889 | 18 / 40 |
+| Lateral OA | 0.829787 | 11 / 47 |
+| Contusion | 0.856950 | 19 / 39 |
+| ACL | 0.868873 | 24 / 34 |
+| Medial Meniscus | 0.883413 | 26 / 32 |
+| MCL | 0.911565 | 9 / 49 |
+| Effusion | 0.952795 | 35 / 23 |
+| Medial OA | 0.956589 | 15 / 43 |
+| Baker's | **0.974638** | 12 / 46 |
+
+### Public LB 결과
+- **Public LB: 0.873**
+- Exp7A Fold2 single 0.863 대비: **+0.010**
+- 기존 V2.1 / V2.2 5-Fold 최고 0.816 대비: **+0.057**
+- 현재 프로젝트 **최고 Public LB 갱신**
+
+### 인사이트
+- Exp7A의 개선은 Fold2 한 분할에만 국한되지 않았다. 5-Fold 전체 학습의 pooled OOF가 기존 Full58 최고를 크게 넘어섰고, 5-Fold ensemble Public LB도 0.873으로 상승했다.
+- 단일 Fold2 모델 0.863 → 5-Fold ensemble 0.873으로 **+0.010** 상승해 Fold diversity가 실제 hidden test에서도 추가 이득을 만들었다.
+- Fold2 단독 AUC 0.900860과 새 Fold2 재학습 AUC 0.880258은 11 Gold 기준 변동성이 크다는 점을 다시 보여준다. 따라서 이후 구조 비교는 단일 Fold 수치만으로 확정하지 않는다.
+- Full58에서 Lateral Meniscus / Synovitis / PF OA가 상대적으로 약하고, Medial Meniscus / MCL / Effusion / Medial OA / Baker's는 이전보다 강하게 회복됐다.
+- 다음 입력 데이터 실험에서는 현재 Exp7A 5-Fold를 기준선으로 유지하고, slice / series / 해상도 / backbone 변경을 한 번에 여러 개 섞지 않고 분리해 검증한다.
+
 ---
 
 ## Completed Experiment Scoreboard
@@ -1907,15 +1974,16 @@ Exp8A와 동일한 선택적 slot 보정 구조에서 correction strength를 **0
 | 33 | Exp8A Selective Slot Repair α0.25 | Fold2 AUC 0.877149 | - |
 | 34 | Exp8B Selective Slot Repair α0.125 | Fold2 AUC 0.888029 | - |
 | 35 | Exp9A Exp7A + Exp8A Medial Meniscus Target Swap | Fold2 calc. 0.912765 | Public LB 0.862 |
+| 36 | Exp10A Exp7A Batch4 5-Fold + Mean Ensemble | **Full OOF 0.856496** | **Public LB 0.873** |
 
 ---
 
 ## Current Best Completed Results
 
-- **Public LB 최고: Exp3B Fold2 Single Model — 0.824**
-  - 이전 최고 0.816 대비 **+0.008**
-  - 기존 0.816은 V2.1 / V2.2 5-Fold ensemble
-- **Full 58-Gold OOF 최고: V2.6B — 0.807992**
+- **Public LB 최고: Exp10A Exp7A 5-Fold Mean Ensemble — 0.873**
+  - 이전 최고 Exp7A Fold2 single 0.863 대비 **+0.010**
+  - V2.1 / V2.2 5-Fold 0.816 대비 **+0.057**
+- **Full 58-Gold OOF 최고: Exp10A — 0.856496**
 - **Single Fold2 screening 최고: Exp7A Exp3B Batch4 Long-Horizon — 0.900860**
 - **Single Fold2 Weak-6 최고: Exp5B Hierarchical Target+Slot Gate α0.25 — 0.879365**
 - 최근 Fold2 screening:
@@ -1940,7 +2008,10 @@ Exp8A와 동일한 선택적 slot 보정 구조에서 correction strength를 **0
   - V2.1 3-Fold: 0.810
   - V2.1 / V2.2 5-Fold: 0.816
   - V2.6B 5-Fold: 0.814
-  - **Exp3B Fold2 single: 0.824**
+  - Exp3B Fold2 single: 0.824
+  - Exp7A Fold2 single: 0.863
+  - Exp9A target swap: 0.862
+  - **Exp10A Exp7A 5-Fold mean: 0.873**
 - Exp3B는 현재 처음으로 **단일 Fold 모델이 이전 5-Fold Public 최고를 넘어선 구조**다.
 - Fold2 validation은 11 Gold에 불과하므로 구조 탐색용으로 사용하고, Public LB는 선택된 후보의 실제 일반화 확인용으로 사용한다.
 - Exp4A는 Macro -0.034689 / Weak-6 -0.010317로 승격하지 않는다.
@@ -1953,4 +2024,4 @@ Exp8A와 동일한 선택적 slot 보정 구조에서 correction strength를 **0
 - Exp7B Batch96은 동일 12 data passes에서 Macro 0.835483으로 크게 낮았고, throughput 이점만으로 채택하지 않는다.
 - Exp8A/B는 Medial Meniscus를 개선했지만 Synovitis와 다른 shared target들이 하락해 Exp7A를 넘지 못했다.
 - Exp9A는 Medial Meniscus만 Exp8A 예측으로 교체했지만 Public LB가 **0.862**로 Exp7A 0.863보다 낮았다. Fold2 target-level 개선을 그대로 hidden test에 적용하는 전략은 채택하지 않는다.
-- 5-Fold 전체 학습은 최종 후보가 좁혀진 뒤 수행한다.
+- Exp10A에서 Exp7A의 5-Fold 전체 학습과 equal-weight ensemble을 완료했고, **Full58 OOF 0.856496 / Public LB 0.873**으로 현재 내부·외부 최고 기록을 동시에 갱신했다.
