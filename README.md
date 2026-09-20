@@ -1604,6 +1604,110 @@ Exp6A와 동일한 Batch128 / 100-epoch-cap 설정에서 learning rate를 Exp3B 
 - Public LB 제출은 진행하지 않는다.
 - Exp6A와 동일하게 마지막 run-manifest 셀의 오래된 reference 변수로 NameError가 발생했으나, 학습/평가/checkpoint 산출물은 이미 정상 생성됐다.
 
+
+---
+
+## Experiment 30 — Exp7A Exp3B Batch4 Long-Horizon, Fold2 Screening
+
+### 목적
+Exp3B architecture와 원래 learning rate를 그대로 유지한 상태에서 physical batch를 **4**로 낮추고 최대 12 data passes까지 학습해, small-batch의 빈번한 optimizer update가 Exp3B 성능에 도움이 되는지 확인했다.
+
+### 구성
+- Validation: **Fold 2 Gold 11 studies**
+- Architecture: **Exp3B 그대로**
+- Persistent Wide224 cache
+- DINOv2-Small Full fine-tuning
+- Physical batch: **4**
+- Gradient accumulation: **1**
+- Effective batch: **4**
+- Max epoch: **12**
+- Early stopping patience: **4 epoch-end checks**
+- Head LR: **2e-4**
+- Backbone Early / Mid / Late LR: **1e-6 / 3e-6 / 1e-5**
+- Warmup 5% + optimizer-step linear decay
+- Batch4 only: 약 275 optimizer updates마다 intra-epoch validation
+- Early stopping clock은 A/B 공정 비교를 위해 epoch-end 기준 유지
+
+### Fold2 결과
+- **Macro ROC-AUC: 0.900860**
+- Weak-6 Macro AUC: **0.873810**
+- Best epoch: **4**
+- Best checkpoint optimizer updates: **4,396**
+- Early stop: epoch **8**
+- Training time: 약 **52.94분**
+- Mean throughput: **11.09 studies/s**
+- Exp3B 대비:
+  - Macro: **+0.002149**
+  - Weak-6: **+0.005952**
+
+### Target별 주요 변화 vs Exp3B
+- 개선:
+  - Fracture: 0.666667 → **0.833333**
+  - Contusion: 0.821429 → **0.964286**
+  - PF OA: 0.892857 → **0.928571**
+- 유지:
+  - ACL: 약 0.833333
+  - Medial Meniscus: 0.750000
+  - Lateral Meniscus: 약 0.964286
+  - Effusion: 약 0.964286
+  - MCL / Lateral OA: 1.000000
+- 하락:
+  - Synovitis: 0.933333 → **0.766667**
+  - Baker's: 1.000000 → **0.888889**
+  - Medial OA: 0.958333 → **0.916667**
+
+### 인사이트
+- Exp3B와 동일한 architecture/LR에서 Batch4 long-horizon이 **Macro와 Weak-6를 동시에 개선**했다.
+- 현재 완료된 single-Fold screening 중 **최고 Macro 0.900860**이다.
+- 개선 폭은 작고 Fold2 validation이 11 Gold에 불과하므로, 수치 자체만으로 일반화 개선을 확정하지 않는다.
+- Fracture / Contusion / PF OA는 개선됐지만 Synovitis / Baker's는 하락해 Exp3B와 prediction profile이 다르다.
+- 단일 Fold Public LB 확인 가치가 있는 후보로 승격한다.
+
+---
+
+## Experiment 31 — Exp7B Exp3B Batch96 Long-Horizon, Fold2 Screening
+
+### 목적
+Exp7A와 동일한 architecture / LR / 최대 12 data passes 조건에서 physical batch만 **96**으로 변경해 throughput과 성능을 비교했다.
+
+### 구성
+- Validation: **Fold 2 Gold 11 studies**
+- Architecture: **Exp3B 그대로**
+- Physical batch: **96**
+- Gradient accumulation: **1**
+- Effective batch: **96**
+- Max epoch: **12**
+- Early stopping patience: **4 epoch-end checks**
+- Head LR: **2e-4**
+- Backbone Early / Mid / Late LR: **1e-6 / 3e-6 / 1e-5**
+- Warmup 5% + optimizer-step linear decay
+
+### Fold2 결과
+- **Macro ROC-AUC: 0.835483**
+- Weak-6 Macro AUC: **0.849206**
+- Best epoch: **12**
+- Best checkpoint optimizer updates: **552**
+- 12 epoch 모두 수행
+- Training time: 약 **59.28분**
+- Mean throughput: **14.86 studies/s**
+- Exp3B 대비:
+  - Macro: **-0.063228**
+  - Weak-6: **-0.018651**
+
+### Validation trajectory
+- Epoch 6: 0.796594
+- Epoch 8: 0.817989
+- Epoch 9: 0.829729
+- Epoch 11: 0.832507
+- Epoch 12: **0.835483**
+
+### 인사이트
+- Batch96은 Batch4보다 throughput이 높았지만 동일 12 data passes에서 성능이 크게 낮았다.
+- Epoch 12까지 validation AUC가 상승 중이어서 optimizer-update 관점에서는 아직 덜 학습된 상태일 가능성이 있다.
+- 그러나 Batch96을 더 많은 epoch까지 연장하면 wall-clock 절감 이점이 빠르게 줄어든다.
+- 현재 결과에서는 최종 5-Fold speed recipe로 Batch96을 채택할 근거가 없다.
+- Public LB 제출은 진행하지 않는다.
+
 ---
 
 ## Completed Experiment Scoreboard
@@ -1636,6 +1740,8 @@ Exp6A와 동일한 Batch128 / 100-epoch-cap 설정에서 learning rate를 Exp3B 
 | 27 | Exp5B Hierarchical Target+Slot Gate α0.25 | Fold2 AUC 0.894742 | - |
 | 28 | Exp6A Exp3B + Batch128 Strong LR 1.5× | Fold2 AUC 0.856548 | - |
 | 29 | Exp6B Exp3B + Batch128 Strong LR 2.0× | Fold2 AUC 0.849008 | - |
+| 30 | Exp7A Exp3B Batch4 Long-Horizon | **Fold2 AUC 0.900860** | - |
+| 31 | Exp7B Exp3B Batch96 Long-Horizon | Fold2 AUC 0.835483 | - |
 
 ---
 
@@ -1645,7 +1751,7 @@ Exp6A와 동일한 Batch128 / 100-epoch-cap 설정에서 learning rate를 Exp3B 
   - 이전 최고 0.816 대비 **+0.008**
   - 기존 0.816은 V2.1 / V2.2 5-Fold ensemble
 - **Full 58-Gold OOF 최고: V2.6B — 0.807992**
-- **Single Fold2 screening 최고: Exp3B Multi-query Spatial Residual — 0.898710**
+- **Single Fold2 screening 최고: Exp7A Exp3B Batch4 Long-Horizon — 0.900860**
 - **Single Fold2 Weak-6 최고: Exp5B Hierarchical Target+Slot Gate α0.25 — 0.879365**
 - 최근 Fold2 screening:
   - Exp1A Last4: 0.818585
@@ -1660,6 +1766,8 @@ Exp6A와 동일한 Batch128 / 100-epoch-cap 설정에서 learning rate를 Exp3B 
   - Exp5B Hierarchical Gate α0.25: 0.894742
   - Exp6A Batch128 + LR 1.5×: 0.856548
   - Exp6B Batch128 + LR 2.0×: 0.849008
+  - **Exp7A Batch4 Long-Horizon: 0.900860**
+  - Exp7B Batch96 Long-Horizon: 0.835483
 - Public LB 흐름:
   - V2 Fold0 single: 0.804
   - V2.1 3-Fold: 0.810
@@ -1673,4 +1781,6 @@ Exp6A와 동일한 Batch128 / 100-epoch-cap 설정에서 learning rate를 Exp3B 
 - Exp5A α0.50은 Macro/Weak-6 모두 하락해 승격하지 않는다.
 - Exp5B α0.25는 Macro 0.894742로 Exp3B보다 낮지만 **Weak-6 0.879365로 새 최고 기록**을 만들었다. 다음 단계에서는 slot correction을 모든 target에 주기보다 약한 target에 선택적으로 제한하는 방향을 검증한다.
 - Exp6A/B에서 Batch128은 T4×2에 물리적으로 들어갔지만 LR 1.5× / 2.0× 모두 Exp3B보다 크게 하락했다. 다음 optimization 검증에서는 batch size와 LR을 동시에 바꾸지 않고 분리해 확인한다.
+- Exp7A Batch4 long-horizon은 Macro 0.900860 / Weak-6 0.873810으로 Exp3B를 둘 다 넘어 새 Fold2 Macro 최고를 기록했다. 단일 Fold Public LB 확인 후보로 승격한다.
+- Exp7B Batch96은 동일 12 data passes에서 Macro 0.835483으로 크게 낮았고, throughput 이점만으로 채택하지 않는다.
 - 5-Fold 전체 학습은 최종 후보가 좁혀진 뒤 수행한다.
