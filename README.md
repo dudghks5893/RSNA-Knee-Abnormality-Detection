@@ -1738,6 +1738,104 @@ Exp7A Batch4 Long-Horizon Fold2에서 기록한 best checkpoint를 재학습하�
 - 다음 구조/학습 실험은 Exp7A Batch4 recipe를 새로운 기본 학습 방식으로 두고 진행한다.
 - 단, Public LB는 전체 hidden test의 일부이므로 최종 5-Fold 성능을 보장하지는 않는다.
 
+
+---
+
+## Experiment 33 — Exp8A Exp7A + Selective Slot Repair α0.25, Fold2 Screening
+
+### 목적
+Exp7A Batch4 학습 방식과 기본 구조를 유지하면서, Exp7A에서 약했던 **Medial Meniscus / Synovitis 두 target에만 MRI-slot별 보정**을 추가했다. 전체 target에 자유도를 늘렸던 이전 실험의 부작용을 피하기 위해 선택적 보정만 허용했다.
+
+### 구성
+- Validation: **Fold 2 Gold 11 studies**
+- Architecture base: **Exp7A**
+- Physical batch: **4**
+- Gradient accumulation: **1**
+- Max epoch: **12**
+- Early stopping patience: **4 epoch-end checks**
+- Head LR: **2e-4**
+- Backbone Early / Mid / Late LR: **1e-6 / 3e-6 / 1e-5**
+- Selective slot targets:
+  - Medial Meniscus
+  - Synovitis
+- Slot correction strength: **0.25**
+- 약 275 optimizer updates마다 intra-epoch validation
+
+### Fold2 결과
+- **Macro ROC-AUC: 0.877149**
+- Weak-6 Macro AUC: **0.815278**
+- Best epoch: **6**
+- Best checkpoint optimizer updates: **6,594**
+- Early stop: epoch **10**
+- Training time: 약 **61.82분**
+- Mean throughput: **11.87 studies/s**
+- Exp7A 대비:
+  - Macro: **-0.023710**
+  - Weak-6: **-0.058532**
+
+### Target별 주요 변화 vs Exp7A
+- Medial Meniscus: 0.750000 → **0.892857**
+- ACL: 0.833333 → **0.900000**
+- Synovitis: 0.766667 → **0.600000**
+- Lateral Meniscus: 0.964286 → **0.750000**
+- PF OA: 0.928571 → **0.857143**
+- Fracture: 0.833333 → **0.791667**
+
+### 인사이트
+- 선택적 slot 보정은 Medial Meniscus에는 강한 개선 신호를 만들었지만 Synovitis는 오히려 크게 하락했다.
+- 선택되지 않은 target도 shared backbone / shared head gradient를 통해 간접적으로 영향을 받아 Lateral Meniscus, PF OA 등이 하락했다.
+- α0.25는 Exp7A 대비 전체 Macro / Weak-6 모두 크게 낮아 승격하지 않는다.
+- Public LB 제출은 진행하지 않는다.
+
+---
+
+## Experiment 34 — Exp8B Exp7A + Selective Slot Repair α0.125, Fold2 Screening
+
+### 목적
+Exp8A와 동일한 선택적 slot 보정 구조에서 correction strength를 **0.125**로 절반 낮춰 부작용을 줄일 수 있는지 확인했다.
+
+### 구성
+- Validation: **Fold 2 Gold 11 studies**
+- Architecture base: **Exp7A**
+- Physical batch: **4**
+- Gradient accumulation: **1**
+- Max epoch: **12**
+- Early stopping patience: **4 epoch-end checks**
+- Head LR: **2e-4**
+- Backbone Early / Mid / Late LR: **1e-6 / 3e-6 / 1e-5**
+- Selective slot targets:
+  - Medial Meniscus
+  - Synovitis
+- Slot correction strength: **0.125**
+
+### Fold2 결과
+- **Macro ROC-AUC: 0.888029**
+- Weak-6 Macro AUC: **0.837698**
+- Best checkpoint: **epoch 5 초반 (epoch fraction 4.004)**
+- Best checkpoint optimizer updates: **4,400**
+- Early stop: epoch **8**
+- Training time: 약 **50.21분**
+- Mean throughput: **11.69 studies/s**
+- Exp7A 대비:
+  - Macro: **-0.012831**
+  - Weak-6: **-0.036111**
+
+### Target별 주요 변화 vs Exp7A
+- Medial Meniscus: 0.750000 → **0.857143**
+- ACL: 0.833333 → **0.900000**
+- Medial OA: 0.916667 → **1.000000**
+- Baker's: 0.888889 → **0.944444**
+- Synovitis: 0.766667 → **0.633333**
+- Lateral Meniscus: 0.964286 → **0.857143**
+- Contusion: 0.964286 → **0.857143**
+- Fracture: 0.833333 → **0.750000**
+
+### 인사이트
+- α0.125는 α0.25보다 Macro / Weak-6 모두 회복했지만 Exp7A에는 못 미쳤다.
+- 두 실험 모두 **Medial Meniscus 개선 / Synovitis 악화**라는 동일한 방향을 보였다.
+- 따라서 다음 보정 실험이 필요하다면 두 target을 묶기보다 **Medial Meniscus만 단독 보정**하는 것이 더 직접적인 가설이다.
+- Public LB 제출은 진행하지 않는다.
+
 ---
 
 ## Completed Experiment Scoreboard
@@ -1773,6 +1871,8 @@ Exp7A Batch4 Long-Horizon Fold2에서 기록한 best checkpoint를 재학습하�
 | 30 | Exp7A Exp3B Batch4 Long-Horizon | **Fold2 AUC 0.900860** | - |
 | 31 | Exp7B Exp3B Batch96 Long-Horizon | Fold2 AUC 0.835483 | - |
 | 32 | Exp7A Fold2 Exact-Checkpoint LB Check | Fold2 AUC 0.900860 | **Public LB 0.863** |
+| 33 | Exp8A Selective Slot Repair α0.25 | Fold2 AUC 0.877149 | - |
+| 34 | Exp8B Selective Slot Repair α0.125 | Fold2 AUC 0.888029 | - |
 
 ---
 
@@ -1799,6 +1899,8 @@ Exp7A Batch4 Long-Horizon Fold2에서 기록한 best checkpoint를 재학습하�
   - Exp6B Batch128 + LR 2.0×: 0.849008
   - **Exp7A Batch4 Long-Horizon: 0.900860**
   - Exp7B Batch96 Long-Horizon: 0.835483
+- Exp8A Selective Slot Repair α0.25: 0.877149
+- Exp8B Selective Slot Repair α0.125: 0.888029
 - Public LB 흐름:
   - V2 Fold0 single: 0.804
   - V2.1 3-Fold: 0.810
@@ -1815,4 +1917,5 @@ Exp7A Batch4 Long-Horizon Fold2에서 기록한 best checkpoint를 재학습하�
 - Exp7A Batch4 long-horizon은 Macro 0.900860 / Weak-6 0.873810으로 Exp3B를 둘 다 넘어 새 Fold2 Macro 최고를 기록했다.
 - Exp7A exact checkpoint의 Public LB는 **0.863**으로, 기존 Exp3B 0.824 대비 **+0.039** 상승했다. 앞으로의 기본 학습 recipe는 Exp7A Batch4 long-horizon으로 전환한다.
 - Exp7B Batch96은 동일 12 data passes에서 Macro 0.835483으로 크게 낮았고, throughput 이점만으로 채택하지 않는다.
+- Exp8A/B는 Medial Meniscus를 개선했지만 Synovitis와 다른 shared target들이 하락해 Exp7A를 넘지 못했다. 다음 slot 보정 실험은 필요하다면 Medial Meniscus 단독 보정을 우선 검토한다.
 - 5-Fold 전체 학습은 최종 후보가 좁혀진 뒤 수행한다.
