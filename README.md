@@ -1836,6 +1836,39 @@ Exp8A와 동일한 선택적 slot 보정 구조에서 correction strength를 **0
 - 따라서 다음 보정 실험이 필요하다면 두 target을 묶기보다 **Medial Meniscus만 단독 보정**하는 것이 더 직접적인 가설이다.
 - Public LB 제출은 진행하지 않는다.
 
+
+---
+
+## Experiment 35 — Exp9A Exp7A + Exp8A Medial Meniscus Target Swap Public LB
+
+### 목적
+현재 최고 Public LB 모델인 Exp7A의 예측을 기본으로 유지하고, Fold2에서 Medial Meniscus AUC가 더 높았던 Exp8A의 해당 target 예측만 교체해 target-wise 결합이 실제 hidden test에서도 유효한지 확인했다.
+
+### 제출 구성
+- 11 targets: **Exp7A**
+- Medial Meniscus: **Exp8A**
+- 두 모델 모두 Fold2 exact checkpoint 사용
+- 재학습 없음
+
+### 사전 Fold2 근거
+- Exp7A Fold2 Macro: **0.900860**
+- Exp7A Medial Meniscus: **0.750000**
+- Exp8A Fold2 Macro: **0.877149**
+- Exp8A Medial Meniscus: **0.892857**
+- 단순 target-swap 계산상 Fold2 Macro: **0.912765**
+
+### Public LB 결과
+- **Exp9A Public LB: 0.862**
+- Exp7A 단일 모델 Public LB: **0.863**
+- 표시 점수 기준 변화: **-0.001**
+
+### 해석
+- Fold2의 Medial Meniscus 개선은 hidden test에서 전체 점수 향상으로 이어지지 않았다.
+- Fold2 validation이 Gold 11개뿐이므로 target 하나의 AUC 개선을 그대로 hidden test에 적용하는 것은 불안정하다는 점을 확인했다.
+- Exp7A의 11개 target은 그대로 유지했기 때문에, 이번 하락은 Medial Meniscus 교체가 Public LB 기준으로 이득이 아니었다는 신호다.
+- Exp9A는 승격하지 않으며, **현재 최고 Public LB는 Exp7A 0.863 유지**다.
+- 다음 단계는 Fold2 target 단위 교체보다 Exp7A 자체를 개선하는 학습 실험 또는 5-Fold 검증을 우선한다.
+
 ---
 
 ## Completed Experiment Scoreboard
@@ -1873,6 +1906,7 @@ Exp8A와 동일한 선택적 slot 보정 구조에서 correction strength를 **0
 | 32 | Exp7A Fold2 Exact-Checkpoint LB Check | Fold2 AUC 0.900860 | **Public LB 0.863** |
 | 33 | Exp8A Selective Slot Repair α0.25 | Fold2 AUC 0.877149 | - |
 | 34 | Exp8B Selective Slot Repair α0.125 | Fold2 AUC 0.888029 | - |
+| 35 | Exp9A Exp7A + Exp8A Medial Meniscus Target Swap | Fold2 calc. 0.912765 | Public LB 0.862 |
 
 ---
 
@@ -1917,5 +1951,6 @@ Exp8A와 동일한 선택적 slot 보정 구조에서 correction strength를 **0
 - Exp7A Batch4 long-horizon은 Macro 0.900860 / Weak-6 0.873810으로 Exp3B를 둘 다 넘어 새 Fold2 Macro 최고를 기록했다.
 - Exp7A exact checkpoint의 Public LB는 **0.863**으로, 기존 Exp3B 0.824 대비 **+0.039** 상승했다. 앞으로의 기본 학습 recipe는 Exp7A Batch4 long-horizon으로 전환한다.
 - Exp7B Batch96은 동일 12 data passes에서 Macro 0.835483으로 크게 낮았고, throughput 이점만으로 채택하지 않는다.
-- Exp8A/B는 Medial Meniscus를 개선했지만 Synovitis와 다른 shared target들이 하락해 Exp7A를 넘지 못했다. 다음 slot 보정 실험은 필요하다면 Medial Meniscus 단독 보정을 우선 검토한다.
+- Exp8A/B는 Medial Meniscus를 개선했지만 Synovitis와 다른 shared target들이 하락해 Exp7A를 넘지 못했다.
+- Exp9A는 Medial Meniscus만 Exp8A 예측으로 교체했지만 Public LB가 **0.862**로 Exp7A 0.863보다 낮았다. Fold2 target-level 개선을 그대로 hidden test에 적용하는 전략은 채택하지 않는다.
 - 5-Fold 전체 학습은 최종 후보가 좁혀진 뒤 수행한다.
