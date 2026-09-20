@@ -1362,6 +1362,114 @@ Exp3B의 spatial residual gate를 target당 1개에서 **target × MRI-slot 12×
 - 현재 기준에서는 Exp3B를 baseline으로 유지하고, Exp4B의 slot-specific gate 아이디어는 선택적으로 제한 적용하는 후속 실험 후보로 남긴다.
 - Public LB 제출은 진행하지 않는다.
 
+
+---
+
+## Experiment 26 — Exp5A Hierarchical Target + MRI-Slot Gate (alpha=0.50), Fold2 Screening
+
+### 목적
+Exp4B의 target × MRI-slot specialization 신호는 유지하되, 72개 free gate의 자유도를 줄이기 위해 **target-level base gate + zero-mean slot correction** 구조를 적용했다. Exp5A는 slot correction strength를 **0.50**으로 설정했다.
+
+### 구성
+- Validation: **Fold 2 Gold 11 studies**
+- Persistent Wide224 cache
+- DINOv2-Small Full fine-tuning
+- Global path: `CLS + patch_mean`
+- Spatial queries: target당 4개
+- Hierarchical spatial gate:
+  - target-level base gate
+  - 6개 MRI-slot zero-mean correction
+  - correction strength: **0.50**
+- Batch64 / Accum1 / Effective64
+- Max48 / Patience6
+- V2.2 Gold / pseudo loss split 유지
+
+### Fold2 결과
+- **Macro ROC-AUC: 0.877778**
+- Weak-6 Macro AUC: **0.850992**
+- Best epoch: **12**
+- Early stop: epoch **18**
+- Training time: 약 **82.29분**
+- Exp3B 대비:
+  - Macro: **-0.020933**
+  - Weak-6: **-0.016865**
+- Exp4B 대비:
+  - Macro: **-0.018948**
+  - Weak-6: **-0.017063**
+
+### Target별 주요 변화 vs Exp3B
+- 개선:
+  - Fracture: 0.666667 → **0.708333**
+  - Medial Meniscus: 0.750000 → **0.785714**
+- 주요 하락:
+  - PF OA: 0.892857 → **0.750000**
+  - Medial OA: 0.958333 → **0.875000**
+  - ACL: 0.833333 → **0.766667**
+  - Lateral Meniscus: 0.964286 → **0.928571**
+
+### 인사이트
+- alpha=0.50은 correction 자유도를 충분히 제한하지 못했고 전체 Macro와 Weak-6가 모두 하락했다.
+- Hierarchical decomposition 자체가 Exp4B의 약점을 자동으로 해결하지는 못했다.
+- Public LB 제출 없이 종료한다.
+
+---
+
+## Experiment 27 — Exp5B Hierarchical Target + MRI-Slot Gate (alpha=0.25), Fold2 Screening
+
+### 목적
+Exp5A와 동일한 hierarchical gate를 사용하되 slot correction strength를 **0.25**로 낮춰 더 보수적인 slot specialization을 검증했다.
+
+### 구성
+- Validation: **Fold 2 Gold 11 studies**
+- Persistent Wide224 cache
+- DINOv2-Small Full fine-tuning
+- Global path: `CLS + patch_mean`
+- Spatial queries: target당 4개
+- Hierarchical spatial gate:
+  - target-level base gate
+  - 6개 MRI-slot zero-mean correction
+  - correction strength: **0.25**
+- Batch64 / Accum1 / Effective64
+- Max48 / Patience6
+- V2.2 Gold / pseudo loss split 유지
+
+### Fold2 결과
+- **Macro ROC-AUC: 0.894742**
+- Weak-6 Macro AUC: **0.879365**
+- Best epoch: **12**
+- Early stop: epoch **18**
+- Training time: 약 **84.44분**
+- Exp3B 대비:
+  - Macro: **-0.003968**
+  - Weak-6: **+0.011508**
+- Exp4B 대비:
+  - Macro: **-0.001984**
+  - Weak-6: **+0.011310**
+
+### Target별 주요 변화 vs Exp3B
+- 개선:
+  - Medial Meniscus: 0.750000 → **0.821429**
+  - Synovitis: 0.933333 → **0.966667**
+- 유지:
+  - MCL: 1.000000
+  - Lateral Meniscus: 0.964286
+  - Lateral OA: 1.000000
+  - Effusion: 0.964286
+  - Baker's: 1.000000
+  - Contusion: 0.821429
+  - Fracture: 약 0.666667
+- 하락:
+  - Medial OA: 0.958333 → **0.875000**
+  - PF OA: 0.892857 → **0.857143**
+  - ACL: 0.833333 → **0.800000**
+
+### 인사이트
+- alpha를 0.50 → 0.25로 줄이자 Exp5A보다 크게 회복됐고 Exp3B Macro에 다시 근접했다.
+- **Weak-6 0.879365는 현재 완료된 Fold2 실험 중 최고 Weak-6 기록**이다.
+- 개선은 특히 Medial Meniscus / Synovitis에서 나타났으며, Macro 손실은 주로 Medial OA / ACL / PF OA에서 발생했다.
+- 따라서 slot correction을 모든 target에 동일하게 허용하기보다, 기존에 약한 target에만 제한적으로 적용하는 후속 실험이 더 적합하다.
+- 전체 Macro가 Exp3B를 넘지 못했으므로 현재 baseline은 Exp3B를 유지하고 Public LB 제출은 보류한다.
+
 ---
 
 ## Completed Experiment Scoreboard
@@ -1390,6 +1498,8 @@ Exp3B의 spatial residual gate를 target당 1개에서 **target × MRI-slot 12×
 | 23 | Exp3B Fold2 Single-Model LB Check | Fold2 AUC 0.898710 | **0.824** |
 | 24 | Exp4A Target-specific Spatial Group Attention | Fold2 AUC 0.864021 | - |
 | 25 | Exp4B Target × MRI-Slot Spatial Gate | Fold2 AUC 0.896726 | - |
+| 26 | Exp5A Hierarchical Target+Slot Gate α0.50 | Fold2 AUC 0.877778 | - |
+| 27 | Exp5B Hierarchical Target+Slot Gate α0.25 | Fold2 AUC 0.894742 | - |
 
 ---
 
@@ -1400,7 +1510,7 @@ Exp3B의 spatial residual gate를 target당 1개에서 **target × MRI-slot 12×
   - 기존 0.816은 V2.1 / V2.2 5-Fold ensemble
 - **Full 58-Gold OOF 최고: V2.6B — 0.807992**
 - **Single Fold2 screening 최고: Exp3B Multi-query Spatial Residual — 0.898710**
-- **Single Fold2 Weak-6 최고: Exp3A Global/Spatial Residual — 0.873810**
+- **Single Fold2 Weak-6 최고: Exp5B Hierarchical Target+Slot Gate α0.25 — 0.879365**
 - 최근 Fold2 screening:
   - Exp1A Last4: 0.818585
   - Exp1B Full fine-tuning: 0.884127
@@ -1410,6 +1520,8 @@ Exp3B의 spatial residual gate를 target당 1개에서 **target × MRI-slot 12×
   - **Exp3B Multi-query Spatial Residual: 0.898710**
   - Exp4A Target-specific Group Attention: 0.864021
   - Exp4B Target × MRI-Slot Gate: 0.896726
+  - Exp5A Hierarchical Gate α0.50: 0.877778
+  - Exp5B Hierarchical Gate α0.25: 0.894742
 - Public LB 흐름:
   - V2 Fold0 single: 0.804
   - V2.1 3-Fold: 0.810
@@ -1420,4 +1532,6 @@ Exp3B의 spatial residual gate를 target당 1개에서 **target × MRI-slot 12×
 - Fold2 validation은 11 Gold에 불과하므로 구조 탐색용으로 사용하고, Public LB는 선택된 후보의 실제 일반화 확인용으로 사용한다.
 - Exp4A는 Macro -0.034689 / Weak-6 -0.010317로 승격하지 않는다.
 - Exp4B는 Macro -0.001984 / Weak-6 +0.000198로 Exp3B에 매우 근접했고, 일부 약한 target이 개선되어 slot-specific gating 아이디어는 후속 제한 적용 후보로 유지한다.
+- Exp5A α0.50은 Macro/Weak-6 모두 하락해 승격하지 않는다.
+- Exp5B α0.25는 Macro 0.894742로 Exp3B보다 낮지만 **Weak-6 0.879365로 새 최고 기록**을 만들었다. 다음 단계에서는 slot correction을 모든 target에 주기보다 약한 target에 선택적으로 제한하는 방향을 검증한다.
 - 5-Fold 전체 학습은 최종 후보가 좁혀진 뒤 수행한다.
