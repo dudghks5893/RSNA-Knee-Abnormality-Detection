@@ -1470,6 +1470,140 @@ Exp5A와 동일한 hierarchical gate를 사용하되 slot correction strength를
 - 따라서 slot correction을 모든 target에 동일하게 허용하기보다, 기존에 약한 target에만 제한적으로 적용하는 후속 실험이 더 적합하다.
 - 전체 Macro가 Exp3B를 넘지 못했으므로 현재 baseline은 Exp3B를 유지하고 Public LB 제출은 보류한다.
 
+
+---
+
+## Experiment 28 — Exp6A Exp3B + Batch128 Strong LR 1.5×, Fold2 Screening
+
+### 목적
+Exp3B architecture를 고정하고 physical batch를 64 → 128로 확대한 뒤, learning rate를 1.5× 강화해 optimization 자체가 성능 병목인지 확인했다. Max epoch은 100, early stopping patience는 8로 확장했다.
+
+### 구성
+- Validation: **Fold 2 Gold 11 studies**
+- Architecture: **Exp3B 그대로**
+- Persistent Wide224 cache
+- DINOv2-Small Full fine-tuning
+- Physical batch: **128**
+- Gradient accumulation: **1**
+- Effective batch: **128**
+- Max epoch: **100**
+- Early stopping patience: **8**
+- Head LR: **3e-4**
+- Backbone Early / Mid / Late LR: **1.5e-6 / 4.5e-6 / 1.5e-5**
+- Warmup 5% + optimizer-step linear decay
+- Gradient clipping 1.0
+- Gradient checkpointing ON
+- V2.2 Gold / pseudo loss split 유지
+
+### Batch128 실행 검증
+- T4 ×2 실제 forward / backward / AdamW step preflight: **PASS**
+- Preflight step time: 약 **10.79초**
+- Preflight throughput: 약 **11.86 studies/s**
+- Peak allocated VRAM:
+  - GPU0: **11.78 GB**
+  - GPU1: **11.46 GB**
+- Peak reserved VRAM:
+  - GPU0: **14.30 GB**
+  - GPU1: **14.14 GB**
+
+### Fold2 결과
+- **Macro ROC-AUC: 0.856548**
+- Weak-6 Macro AUC: **0.862698**
+- Best epoch: **18**
+- Early stop: epoch **26**
+- Best checkpoint optimizer updates: **630**
+- Training time: 약 **123.30분**
+- Exp3B 대비:
+  - Macro: **-0.042163**
+  - Weak-6: **-0.005159**
+
+### Target별 주요 변화 vs Exp3B
+- 개선:
+  - Medial Meniscus: 0.750000 → **0.892857**
+- 유지:
+  - Fracture: 약 0.666667
+  - Lateral Meniscus: 약 0.964286
+  - MCL / Lateral OA / Baker's: 1.000000
+- 주요 하락:
+  - Contusion: 0.821429 → **0.678571**
+  - Medial OA: 0.958333 → **0.833333**
+  - PF OA: 0.892857 → **0.785714**
+  - Effusion: 0.964286 → **0.857143**
+  - ACL: 0.833333 → **0.733333**
+  - Synovitis: 0.933333 → **0.866667**
+
+### 인사이트
+- Batch128은 T4×2에서 실제 학습까지 가능했지만 VRAM 여유는 크지 않았다.
+- Batch128 + LR 1.5× 조합은 Exp3B 대비 Macro가 크게 하락해 승격하지 않는다.
+- 큰 batch와 높은 LR을 동시에 변경했으므로 하락 원인을 batch size와 LR 중 하나로 단정하지 않는다.
+- Public LB 제출은 진행하지 않는다.
+- 학습/평가/checkpoint 저장은 정상 완료됐으나 마지막 run-manifest 생성 셀에서 오래된 reference 변수명이 남아 NameError가 발생했다. 이 오류는 계산된 metric과 best checkpoint에는 영향을 주지 않는다.
+
+---
+
+## Experiment 29 — Exp6B Exp3B + Batch128 Strong LR 2.0×, Fold2 Screening
+
+### 목적
+Exp6A와 동일한 Batch128 / 100-epoch-cap 설정에서 learning rate를 Exp3B 대비 2×로 더 강화해 aggressive optimization의 상한을 확인했다.
+
+### 구성
+- Validation: **Fold 2 Gold 11 studies**
+- Architecture: **Exp3B 그대로**
+- Persistent Wide224 cache
+- DINOv2-Small Full fine-tuning
+- Physical batch: **128**
+- Gradient accumulation: **1**
+- Effective batch: **128**
+- Max epoch: **100**
+- Early stopping patience: **8**
+- Head LR: **4e-4**
+- Backbone Early / Mid / Late LR: **2e-6 / 6e-6 / 2e-5**
+- Warmup 5% + optimizer-step linear decay
+- Gradient clipping 1.0
+- Gradient checkpointing ON
+- V2.2 Gold / pseudo loss split 유지
+
+### Batch128 실행 검증
+- T4 ×2 실제 forward / backward / AdamW step preflight: **PASS**
+- Preflight step time: 약 **10.94초**
+- Preflight throughput: 약 **11.70 studies/s**
+- Peak allocated VRAM:
+  - GPU0: **11.78 GB**
+  - GPU1: **11.46 GB**
+- Peak reserved VRAM:
+  - GPU0: **14.30 GB**
+  - GPU1: **14.14 GB**
+
+### Fold2 결과
+- **Macro ROC-AUC: 0.849008**
+- Weak-6 Macro AUC: **0.819643**
+- Best epoch: **14**
+- Early stop: epoch **22**
+- Best checkpoint optimizer updates: **490**
+- Training time: 약 **112.81분**
+- Exp3B 대비:
+  - Macro: **-0.049702**
+  - Weak-6: **-0.048214**
+
+### Target별 주요 변화 vs Exp3B
+- 유지:
+  - MCL / Lateral OA / Baker's: 1.000000
+- 주요 하락:
+  - Medial OA: 0.958333 → **0.791667**
+  - Medial Meniscus: 0.750000 → **0.678571**
+  - Contusion: 0.821429 → **0.750000**
+  - PF OA: 0.892857 → **0.821429**
+  - Lateral Meniscus: 0.964286 → **0.892857**
+  - Fracture: 0.666667 → **0.625000**
+  - Effusion: 0.964286 → **0.928571**
+
+### 인사이트
+- 2× LR은 1.5× LR보다 Macro / Weak-6 모두 더 낮아졌다.
+- 현재 Exp3B에서는 LR을 공격적으로 올리는 방향이 유효하지 않다는 신호가 강하다.
+- Batch128 자체가 나쁜지, 높은 LR과의 조합이 나쁜지는 별도 control이 필요하다.
+- Public LB 제출은 진행하지 않는다.
+- Exp6A와 동일하게 마지막 run-manifest 셀의 오래된 reference 변수로 NameError가 발생했으나, 학습/평가/checkpoint 산출물은 이미 정상 생성됐다.
+
 ---
 
 ## Completed Experiment Scoreboard
@@ -1500,6 +1634,8 @@ Exp5A와 동일한 hierarchical gate를 사용하되 slot correction strength를
 | 25 | Exp4B Target × MRI-Slot Spatial Gate | Fold2 AUC 0.896726 | - |
 | 26 | Exp5A Hierarchical Target+Slot Gate α0.50 | Fold2 AUC 0.877778 | - |
 | 27 | Exp5B Hierarchical Target+Slot Gate α0.25 | Fold2 AUC 0.894742 | - |
+| 28 | Exp6A Exp3B + Batch128 Strong LR 1.5× | Fold2 AUC 0.856548 | - |
+| 29 | Exp6B Exp3B + Batch128 Strong LR 2.0× | Fold2 AUC 0.849008 | - |
 
 ---
 
@@ -1522,6 +1658,8 @@ Exp5A와 동일한 hierarchical gate를 사용하되 slot correction strength를
   - Exp4B Target × MRI-Slot Gate: 0.896726
   - Exp5A Hierarchical Gate α0.50: 0.877778
   - Exp5B Hierarchical Gate α0.25: 0.894742
+  - Exp6A Batch128 + LR 1.5×: 0.856548
+  - Exp6B Batch128 + LR 2.0×: 0.849008
 - Public LB 흐름:
   - V2 Fold0 single: 0.804
   - V2.1 3-Fold: 0.810
@@ -1534,4 +1672,5 @@ Exp5A와 동일한 hierarchical gate를 사용하되 slot correction strength를
 - Exp4B는 Macro -0.001984 / Weak-6 +0.000198로 Exp3B에 매우 근접했고, 일부 약한 target이 개선되어 slot-specific gating 아이디어는 후속 제한 적용 후보로 유지한다.
 - Exp5A α0.50은 Macro/Weak-6 모두 하락해 승격하지 않는다.
 - Exp5B α0.25는 Macro 0.894742로 Exp3B보다 낮지만 **Weak-6 0.879365로 새 최고 기록**을 만들었다. 다음 단계에서는 slot correction을 모든 target에 주기보다 약한 target에 선택적으로 제한하는 방향을 검증한다.
+- Exp6A/B에서 Batch128은 T4×2에 물리적으로 들어갔지만 LR 1.5× / 2.0× 모두 Exp3B보다 크게 하락했다. 다음 optimization 검증에서는 batch size와 LR을 동시에 바꾸지 않고 분리해 확인한다.
 - 5-Fold 전체 학습은 최종 후보가 좁혀진 뒤 수행한다.
