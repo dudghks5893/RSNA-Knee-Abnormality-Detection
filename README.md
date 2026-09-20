@@ -1708,6 +1708,36 @@ Exp7A와 동일한 architecture / LR / 최대 12 data passes 조건에서 physic
 - 현재 결과에서는 최종 5-Fold speed recipe로 Batch96을 채택할 근거가 없다.
 - Public LB 제출은 진행하지 않는다.
 
+
+---
+
+## Experiment 32 — Exp7A Fold2 Exact-Checkpoint Public LB Check
+
+### 목적
+Exp7A Batch4 Long-Horizon Fold2에서 기록한 best checkpoint를 재학습하지 않고 그대로 사용해 hidden test에 대한 실제 Public LB를 확인했다.
+
+### Exact checkpoint
+- Fold: **2**
+- Best epoch: **4**
+- Best step in epoch: **1099**
+- Optimizer updates at best: **4,396**
+- Internal Fold2 Macro AUC: **0.900860**
+- Architecture: Exp3B Multi-query Global/Spatial Gated Residual
+- Training physical batch: **4**
+- Original Exp3B learning rates 유지
+
+### Public LB 결과
+- **Public LB: 0.863**
+- 이전 최고 Exp3B single-Fold Public LB: **0.824**
+- 개선폭: **+0.039**
+
+### 해석
+- Fold2 내부 개선폭은 +0.002149로 작았지만, 실제 Public LB에서는 +0.039의 큰 상승이 확인됐다.
+- 따라서 Batch4 long-horizon 학습 방식은 단순 Fold2 과적합 신호로 보기 어렵고, 실제 hidden-test 일반화 개선 가능성을 강하게 지지한다.
+- 현재 프로젝트의 **최고 Public LB는 Exp7A 0.863**이다.
+- 다음 구조/학습 실험은 Exp7A Batch4 recipe를 새로운 기본 학습 방식으로 두고 진행한다.
+- 단, Public LB는 전체 hidden test의 일부이므로 최종 5-Fold 성능을 보장하지는 않는다.
+
 ---
 
 ## Completed Experiment Scoreboard
@@ -1742,6 +1772,7 @@ Exp7A와 동일한 architecture / LR / 최대 12 data passes 조건에서 physic
 | 29 | Exp6B Exp3B + Batch128 Strong LR 2.0× | Fold2 AUC 0.849008 | - |
 | 30 | Exp7A Exp3B Batch4 Long-Horizon | **Fold2 AUC 0.900860** | - |
 | 31 | Exp7B Exp3B Batch96 Long-Horizon | Fold2 AUC 0.835483 | - |
+| 32 | Exp7A Fold2 Exact-Checkpoint LB Check | Fold2 AUC 0.900860 | **Public LB 0.863** |
 
 ---
 
@@ -1781,6 +1812,7 @@ Exp7A와 동일한 architecture / LR / 최대 12 data passes 조건에서 physic
 - Exp5A α0.50은 Macro/Weak-6 모두 하락해 승격하지 않는다.
 - Exp5B α0.25는 Macro 0.894742로 Exp3B보다 낮지만 **Weak-6 0.879365로 새 최고 기록**을 만들었다. 다음 단계에서는 slot correction을 모든 target에 주기보다 약한 target에 선택적으로 제한하는 방향을 검증한다.
 - Exp6A/B에서 Batch128은 T4×2에 물리적으로 들어갔지만 LR 1.5× / 2.0× 모두 Exp3B보다 크게 하락했다. 다음 optimization 검증에서는 batch size와 LR을 동시에 바꾸지 않고 분리해 확인한다.
-- Exp7A Batch4 long-horizon은 Macro 0.900860 / Weak-6 0.873810으로 Exp3B를 둘 다 넘어 새 Fold2 Macro 최고를 기록했다. 단일 Fold Public LB 확인 후보로 승격한다.
+- Exp7A Batch4 long-horizon은 Macro 0.900860 / Weak-6 0.873810으로 Exp3B를 둘 다 넘어 새 Fold2 Macro 최고를 기록했다.
+- Exp7A exact checkpoint의 Public LB는 **0.863**으로, 기존 Exp3B 0.824 대비 **+0.039** 상승했다. 앞으로의 기본 학습 recipe는 Exp7A Batch4 long-horizon으로 전환한다.
 - Exp7B Batch96은 동일 12 data passes에서 Macro 0.835483으로 크게 낮았고, throughput 이점만으로 채택하지 않는다.
 - 5-Fold 전체 학습은 최종 후보가 좁혀진 뒤 수행한다.
