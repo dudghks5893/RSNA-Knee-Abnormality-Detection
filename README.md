@@ -1936,6 +1936,65 @@ Exp7A Batch4 Long-Horizon 학습 방식을 Fold 0~4 전체에 적용해 Gold 58�
 - Full58에서 Lateral Meniscus / Synovitis / PF OA가 상대적으로 약하고, Medial Meniscus / MCL / Effusion / Medial OA / Baker's는 이전보다 강하게 회복됐다.
 - 다음 입력 데이터 실험에서는 현재 Exp7A 5-Fold를 기준선으로 유지하고, slice / series / 해상도 / backbone 변경을 한 번에 여러 개 섞지 않고 분리해 검증한다.
 
+
+---
+
+## Experiment 37 — Exp11B DINOv2-Base + Head768 Fold2
+
+### 목적
+현재 최고 계열인 Exp7A의 입력과 학습 recipe를 유지하면서 backbone을 DINOv2-Small에서 **DINOv2-Base**로 키우고, Head hidden도 **384 → 768**로 확장해 더 큰 모델의 실제 잠재력을 확인했다.
+
+### 구성
+- Validation: **Fold 2 Gold 11 studies**
+- Input: 기존 **Wide224 / 6 slots / slot당 9 slices / 130 mm crop**
+- Architecture: Exp3B Multi-query Global/Spatial Gated Residual
+- Backbone: **DINOv2-Base**
+- Backbone hidden: **768**
+- Head hidden: **768**
+- Full fine-tuning
+- Physical batch: **4**
+- Gradient accumulation: **1**
+- Effective batch: **4**
+- Max epoch: **12**
+- Early stopping patience: **4 epoch-end checks**
+- Head LR: **2e-4**
+- Backbone Early / Mid / Late LR: **1e-6 / 3e-6 / 1e-5**
+- V2.2 Gold / pseudo loss 유지
+- V4 fold-safe pseudo labels 유지
+
+### Fold2 결과
+- **Macro ROC-AUC: 0.942758**
+- **Weak-6 Macro AUC: 0.905357**
+- Best checkpoint: **epoch 5 / step 279**
+- Optimizer updates at best: **4,675**
+- Training time: **140.50분**
+- Mean throughput: **5.22 studies/s**
+
+### Exp7A Small 대비
+- Fold2 Macro: 0.900860 → **0.942758** (**+0.041898**)
+- Weak-6: 0.873810 → **0.905357** (**+0.031548**)
+
+### 주요 target 변화
+- ACL: 0.833333 → **1.000000**
+- Medial Meniscus: 0.750000 → **0.892857**
+- Synovitis: 0.766667 → **0.866667**
+- Fracture: 0.833333 → **0.958333**
+- Baker's: 0.888889 → **1.000000**
+- Lateral Meniscus: 0.964286 → **0.821429**
+- PF OA: 0.928571 → **0.892857**
+
+### Public LB 결과
+- **Exp11B Fold2 single Public LB: 0.872**
+- Exp7A Small Fold2 single 0.863 대비: **+0.009**
+- Exp10A Small 5-Fold mean 0.873 대비: **-0.001**
+
+### 인사이트
+- 더 큰 backbone + head의 효과는 Fold2 내부뿐 아니라 Public LB에서도 일부 일반화됐다. 같은 single-Fold 비교에서 0.863 → 0.872로 상승했다.
+- 다만 Fold2 내부 개선폭 +0.0419가 Public에서는 +0.009로 크게 축소됐다. Gold 11개 Fold2 수치를 최종 일반화 성능으로 직접 해석하면 안 된다는 점을 다시 확인했다.
+- Exp11B single model은 Small 5-Fold ensemble 0.873에 사실상 근접했지만 표시 점수 기준으로는 0.001 낮아 현재 Public 최고는 Exp10A 0.873을 유지한다.
+- Base는 Small보다 학습 속도가 약 절반이며 Fold당 약 2.3시간이 필요해 5-Fold 비용이 크다.
+- 다음 단계에서는 Base를 즉시 최종 baseline으로 교체하기보다, 별도 축인 All-Series Wide9 입력 실험으로 데이터 선택 효과를 먼저 분리 확인한 뒤 Base와 결합할지 판단한다.
+
 ---
 
 ## Completed Experiment Scoreboard
@@ -1975,6 +2034,7 @@ Exp7A Batch4 Long-Horizon 학습 방식을 Fold 0~4 전체에 적용해 Gold 58�
 | 34 | Exp8B Selective Slot Repair α0.125 | Fold2 AUC 0.888029 | - |
 | 35 | Exp9A Exp7A + Exp8A Medial Meniscus Target Swap | Fold2 calc. 0.912765 | Public LB 0.862 |
 | 36 | Exp10A Exp7A Batch4 5-Fold + Mean Ensemble | **Full OOF 0.856496** | **Public LB 0.873** |
+| 37 | Exp11B DINOv2-Base + Head768 Fold2 | **Fold2 AUC 0.942758 / Weak-6 0.905357** | **Public LB 0.872** |
 
 ---
 
@@ -1984,8 +2044,8 @@ Exp7A Batch4 Long-Horizon 학습 방식을 Fold 0~4 전체에 적용해 Gold 58�
   - 이전 최고 Exp7A Fold2 single 0.863 대비 **+0.010**
   - V2.1 / V2.2 5-Fold 0.816 대비 **+0.057**
 - **Full 58-Gold OOF 최고: Exp10A — 0.856496**
-- **Single Fold2 screening 최고: Exp7A Exp3B Batch4 Long-Horizon — 0.900860**
-- **Single Fold2 Weak-6 최고: Exp5B Hierarchical Target+Slot Gate α0.25 — 0.879365**
+- **Single Fold2 screening 최고: Exp11B DINOv2-Base + Head768 — 0.942758**
+- **Single Fold2 Weak-6 최고: Exp11B DINOv2-Base + Head768 — 0.905357**
 - 최근 Fold2 screening:
   - Exp1A Last4: 0.818585
   - Exp1B Full fine-tuning: 0.884127
@@ -2011,6 +2071,7 @@ Exp7A Batch4 Long-Horizon 학습 방식을 Fold 0~4 전체에 적용해 Gold 58�
   - Exp3B Fold2 single: 0.824
   - Exp7A Fold2 single: 0.863
   - Exp9A target swap: 0.862
+  - Exp11B Base + Head768 Fold2 single: 0.872
   - **Exp10A Exp7A 5-Fold mean: 0.873**
 - Exp3B는 현재 처음으로 **단일 Fold 모델이 이전 5-Fold Public 최고를 넘어선 구조**다.
 - Fold2 validation은 11 Gold에 불과하므로 구조 탐색용으로 사용하고, Public LB는 선택된 후보의 실제 일반화 확인용으로 사용한다.
@@ -2025,3 +2086,4 @@ Exp7A Batch4 Long-Horizon 학습 방식을 Fold 0~4 전체에 적용해 Gold 58�
 - Exp8A/B는 Medial Meniscus를 개선했지만 Synovitis와 다른 shared target들이 하락해 Exp7A를 넘지 못했다.
 - Exp9A는 Medial Meniscus만 Exp8A 예측으로 교체했지만 Public LB가 **0.862**로 Exp7A 0.863보다 낮았다. Fold2 target-level 개선을 그대로 hidden test에 적용하는 전략은 채택하지 않는다.
 - Exp10A에서 Exp7A의 5-Fold 전체 학습과 equal-weight ensemble을 완료했고, **Full58 OOF 0.856496 / Public LB 0.873**으로 현재 내부·외부 최고 기록을 동시에 갱신했다.
+- Exp11B는 Fold2 Macro 0.942758 / Weak-6 0.905357로 내부 single-Fold 최고를 크게 갱신했고, Public LB도 **0.872**로 Exp7A Small single 0.863보다 +0.009 높았다. 다만 Exp10A Small 5-Fold 0.873에는 표시 점수 기준 0.001 못 미쳐 현재 Public 최고는 유지된다.
