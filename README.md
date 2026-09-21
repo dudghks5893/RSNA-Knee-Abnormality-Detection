@@ -1995,6 +1995,124 @@ Exp7A Batch4 Long-Horizon 학습 방식을 Fold 0~4 전체에 적용해 Gold 58�
 - Base는 Small보다 학습 속도가 약 절반이며 Fold당 약 2.3시간이 필요해 5-Fold 비용이 크다.
 - 다음 단계에서는 Base를 즉시 최종 baseline으로 교체하기보다, 별도 축인 All-Series Wide9 입력 실험으로 데이터 선택 효과를 먼저 분리 확인한 뒤 Base와 결합할지 판단한다.
 
+
+---
+
+## Experiment 38 — Exp12A Selector v2 + Wide9, DINOv2-Small Fold2
+
+### 목적
+Exp7A의 Wide9 입력과 학습 recipe를 유지하면서 **Series 선택 규칙만 Exp12A Selector v2로 변경**해 metadata 기반의 안전한 Series 품질 선택이 성능에 도움이 되는지 확인했다.
+
+### 구성
+- Backbone: **DINOv2-Small**
+- Validation: **Fold 2 Gold 11 studies**
+- Input: **Wide224 / 6 slots / slot당 9 slices / 130 mm crop**
+- Slice band: **12~88%**
+- Architecture: Exp3B Multi-query Global/Spatial Gated Residual
+- Physical batch: **4**
+- Max epoch: **12**
+- Head LR: **2e-4**
+- Backbone Early / Mid / Late LR: **1e-6 / 3e-6 / 1e-5**
+- Exp12A Selector v2:
+  - baseline coverage의 **75% 이상**
+  - through-plane step은 baseline의 **1.25배 이하**
+  - in-plane spacing은 baseline의 **1.25배 이하**
+  - quality score = in-plane 40% + through-plane 30% + coverage 25% + slice count 5%
+- Train 전체에서 baseline 대비 **767 slots 변경**
+
+### Fold2 결과
+- **Macro ROC-AUC: 0.901984**
+- **Weak-6 Macro AUC: 0.849603**
+- Best checkpoint: **epoch 5 / step 829**
+- Optimizer updates at best: **5,225**
+- Exp7A Fold2 Macro 0.900860 대비: **+0.001124**
+
+### Target별 변화 vs Exp7A
+- Baker's: 0.888889 → **1.000000** (+0.111111)
+- Medial OA: 0.916667 → **1.000000** (+0.083333)
+- Synovitis: 0.766667 → **0.800000** (+0.033333)
+- Effusion: 0.964286 → **0.964286** (동일)
+- ACL: 0.833333 → **0.833333** (동일)
+- MCL: 1.000000 → **1.000000** (동일)
+- Lateral OA: 1.000000 → **1.000000** (동일)
+- Fracture: 0.833333 → **0.833333** (동일)
+- Medial Meniscus: 0.750000 → **0.714286** (-0.035714)
+- Contusion: 0.964286 → **0.928571** (-0.035715)
+- Lateral Meniscus: 0.964286 → **0.892857** (-0.071429)
+- PF OA: 0.928571 → **0.857143** (-0.071428)
+
+### Hidden-test selector audit
+- Test studies: **3**
+- 총 slot: **18**
+- Exp7A baseline 대비 Selector v2가 실제로 변경한 test slot: **0 / 18**
+- Missing selection: **0**
+
+즉 hidden test에서는 A와 baseline이 동일한 Series를 선택했다. A의 차이는 주로 **train 시 Series 선택 변화로 학습 데이터 구성이 달라진 효과**로 해석해야 한다.
+
+### Public LB 결과
+- **Exp12A Public LB: 0.866**
+- Exp7A Fold2 single 0.863 대비: **+0.003**
+
+### 인사이트
+- CV와 Public LB가 모두 아주 작게 상승해 **weak positive** 신호는 확인됐다.
+- 다만 Weak-6는 Exp7A 0.873810보다 낮아졌고, Lateral Meniscus / PF OA / Medial Meniscus가 하락했다.
+- hidden test에서는 Selector v2가 Series를 하나도 바꾸지 않아, LB +0.003을 test-time Series 선택 개선으로 볼 수는 없다.
+- Exp12A는 **HOLD**로 유지하며 canonical baseline을 즉시 교체하지 않는다.
+
+---
+
+## Experiment 39 — Exp12B Slice15 Wide224, DINOv2-Small Fold2
+
+### 목적
+Exp7A의 Series selector / 해상도 / crop / slice band / 모델 / 학습 recipe를 그대로 유지하고 **slot당 slice 수만 9 → 15로 증가**시켜 더 많은 MRI slice evidence가 성능을 높이는지 확인했다.
+
+### 구성
+- Series selector: **Exp7A baseline selector**
+- Backbone: **DINOv2-Small**
+- Validation: **Fold 2 Gold 11 studies**
+- Resolution: **224×224**
+- Crop: **130 mm**
+- Slice band: **12~88%**
+- Slices per slot: **9 → 15**
+- Group channels: **3 유지**
+- Groups per slot: **3 → 5**
+- Architecture / optimizer / LR / pseudo-label / validation 방식은 Exp7A와 동일
+
+### Fold2 결과
+- **Macro ROC-AUC: 0.926687**
+- **Weak-6 Macro AUC: 0.898016**
+- Best checkpoint: **epoch 8 / epoch-end**
+- Optimizer updates at best: **8,792**
+- Exp7A Fold2 Macro 0.900860 대비: **+0.025827**
+
+### Target별 변화 vs Exp7A
+- ACL: 0.833333 → **1.000000** (+0.166667)
+- Synovitis: 0.766667 → **0.900000** (+0.133333)
+- Baker's: 0.888889 → **1.000000** (+0.111111)
+- Medial Meniscus: 0.750000 → **0.857143** (+0.107143)
+- Fracture: 0.833333 → **0.916667** (+0.083334)
+- Contusion: 0.964286 → **1.000000** (+0.035714)
+- MCL: 1.000000 → **1.000000** (동일)
+- Lateral OA: 1.000000 → **1.000000** (동일)
+- PF OA: 0.928571 → **0.892857** (-0.035714)
+- Medial OA: 0.916667 → **0.875000** (-0.041667)
+- Effusion: 0.964286 → **0.857143** (-0.107143)
+- Lateral Meniscus: 0.964286 → **0.821429** (-0.142857)
+
+### Public LB 결과
+- **Exp12B Public LB: 0.822**
+- Exp7A Fold2 single 0.863 대비: **-0.041**
+
+### 인사이트
+- Fold2 Macro는 +0.0258, Weak-6도 상승해 내부 검증만 보면 매우 강한 개선처럼 보였다.
+- 그러나 Public LB는 0.863 → **0.822**로 크게 하락해 개선이 hidden test로 일반화되지 않았다.
+- 특히 기존 강한 target이던 **Lateral Meniscus (-0.1429)**, **Effusion (-0.1071)**의 Fold2 하락이 매우 컸다.
+- Full58 Gold 분포에서도 Effusion은 35 / 58 positive, Lateral Meniscus는 23 / 58 positive로 비교적 관측이 많은 target이다. 다만 competition metric은 12 target의 Macro AUC이므로 sample 수가 target weight를 직접 높이는 것은 아니다.
+- 이번 결과는 **단순히 equal-spaced slice 수를 9 → 15로 늘리는 방식은 채택하지 않는다**는 근거다.
+- 더 많은 slice 자체의 잠재력을 부정하는 결과는 아니며, 이후에는 추가 slice를 모두 넣기보다 **학습 가능한 slice 선택 / attention** 방향을 별도 검증한다.
+- Exp12B는 **REJECT**. canonical input은 Wide9를 유지한다.
+
+
 ---
 
 ## Completed Experiment Scoreboard
@@ -2035,6 +2153,8 @@ Exp7A Batch4 Long-Horizon 학습 방식을 Fold 0~4 전체에 적용해 Gold 58�
 | 35 | Exp9A Exp7A + Exp8A Medial Meniscus Target Swap | Fold2 calc. 0.912765 | Public LB 0.862 |
 | 36 | Exp10A Exp7A Batch4 5-Fold + Mean Ensemble | **Full OOF 0.856496** | **Public LB 0.873** |
 | 37 | Exp11B DINOv2-Base + Head768 Fold2 | **Fold2 AUC 0.942758 / Weak-6 0.905357** | **Public LB 0.872** |
+| 38 | Exp12A Selector v2 + Wide9 Small Fold2 | Fold2 AUC 0.901984 / Weak-6 0.849603 | Public LB 0.866 |
+| 39 | Exp12B Slice15 Wide224 Small Fold2 | Fold2 AUC 0.926687 / Weak-6 0.898016 | Public LB 0.822 |
 
 ---
 
@@ -2087,3 +2207,5 @@ Exp7A Batch4 Long-Horizon 학습 방식을 Fold 0~4 전체에 적용해 Gold 58�
 - Exp9A는 Medial Meniscus만 Exp8A 예측으로 교체했지만 Public LB가 **0.862**로 Exp7A 0.863보다 낮았다. Fold2 target-level 개선을 그대로 hidden test에 적용하는 전략은 채택하지 않는다.
 - Exp10A에서 Exp7A의 5-Fold 전체 학습과 equal-weight ensemble을 완료했고, **Full58 OOF 0.856496 / Public LB 0.873**으로 현재 내부·외부 최고 기록을 동시에 갱신했다.
 - Exp11B는 Fold2 Macro 0.942758 / Weak-6 0.905357로 내부 single-Fold 최고를 크게 갱신했고, Public LB도 **0.872**로 Exp7A Small single 0.863보다 +0.009 높았다. 다만 Exp10A Small 5-Fold 0.873에는 표시 점수 기준 0.001 못 미쳐 현재 Public 최고는 유지된다.
+- Exp12A Selector v2는 Fold2 Macro 0.901984 / Public LB **0.866**으로 Exp7A single 대비 각각 소폭 상승했지만 Weak-6는 낮아져 **HOLD**로 유지한다. Hidden test 18 slots에서는 baseline 대비 실제 Series 변경이 0건이었다.
+- Exp12B Slice15는 Fold2 Macro 0.926687로 크게 상승했지만 Public LB가 **0.822**로 급락했다. 특히 Lateral Meniscus / Effusion degradation이 컸으며, 단순 9→15 equal-spaced slice 증가는 **REJECT**한다. 이후 canonical input은 Wide9를 유지한다.
