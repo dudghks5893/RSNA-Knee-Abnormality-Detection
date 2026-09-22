@@ -2115,6 +2115,168 @@ Exp7A의 Series selector / 해상도 / crop / slice band / 모델 / 학습 recip
 
 ---
 
+
+---
+
+## Experiment 40 — Exp13A Resolution336, DINOv2-Small Fold2
+
+### 목적
+현재 Wide9 구조에서 해상도만 **224 → 336**으로 높였을 때 실제 일반화 성능이 개선되는지 확인했다.
+
+### 구성
+- Backbone: **DINOv2-Small**
+- Head hidden: **384**
+- Validation: **Fold 2 Gold 11 studies**
+- Series selector: **Exp12A Selector v2**
+- Slice sampling: **Wide9 / 12~88%**
+- Crop: **130 mm**
+- Resolution: **336×336**
+- Physical batch: **4**
+- 기존 loss / LR / pseudo-label / early stopping recipe 유지
+- DICOM preprocessing은 raw DICOM on-the-fly로 재현
+
+### Fold2 결과
+- **Macro ROC-AUC: 0.889683**
+- **Weak-6 Macro AUC: 0.836508**
+- Best checkpoint: **epoch 4 / step 278**
+- Optimizer updates at best: **3,575**
+
+### Exp12A 224 대비
+- Macro: 0.901984 → **0.889683** (**-0.012302**)
+- Weak-6: 0.849603 → **0.836508** (**-0.013095**)
+
+### Public LB 결과
+- **Exp13A Public LB: 0.861**
+- Exp12A 224 Public LB 0.866 대비: **-0.005**
+
+### 인사이트
+- Fold2 validation과 Public LB가 모두 하락해 현재 Small + Wide9 구조에서는 336 해상도 확장이 이득이 아니었다.
+- Lateral / Medial Meniscus는 소폭 개선됐지만 ACL, Effusion, Synovitis, Fracture가 하락했다.
+- 현재 canonical resolution은 **224 유지**.
+- Exp13A는 **REJECT**한다.
+
+---
+
+## Experiment 41 — Exp13B DINOv2-Large + Head1024 Fold2
+
+### 목적
+Exp11B의 Wide224 / Wide9 입력과 학습 recipe를 유지하면서 backbone을 **DINOv2-Large**, head hidden을 **1024**로 확장해 capacity 증가가 실제 Public LB까지 이어지는지 확인했다.
+
+### 구성
+- Validation: **Fold 2 Gold 11 studies**
+- Input: **Wide224 / 6 slots / slot당 9 slices / 130 mm crop**
+- Series selector: **Exp7A / Exp11B baseline selector**
+- Architecture: Exp3B Multi-query Global/Spatial Gated Residual
+- Backbone: **DINOv2-Large**
+- Backbone hidden: **1024**
+- Encoder blocks: **24**
+- Head hidden: **1024**
+- Full fine-tuning
+- Physical batch: **4**
+- Gradient accumulation: **1**
+- Max epoch: **12**
+- Head LR: **2e-4**
+- Backbone Early / Mid / Late LR: **1e-6 / 3e-6 / 1e-5**
+- V4 fold-safe pseudo labels 유지
+
+### Fold2 결과
+- **Macro ROC-AUC: 0.901786**
+- **Weak-6 Macro AUC: 0.853968**
+- Best checkpoint: **epoch 3 / step 827**
+- Optimizer updates at best: **3,025**
+
+### Target별 AUC
+- ACL: 0.900000
+- MCL: 1.000000
+- Medial Meniscus: 0.785714
+- Lateral Meniscus: 0.821429
+- Medial OA: 1.000000
+- Lateral OA: 0.944444
+- PF OA: 1.000000
+- Effusion: 0.964286
+- Synovitis: 0.766667
+- Baker's: 0.888889
+- Contusion: 1.000000
+- Fracture: 0.750000
+
+### Exp11B Base+Head768 대비
+- Macro: 0.942758 → **0.901786** (**-0.040972**)
+- Weak-6: 0.905357 → **0.853968** (**-0.051389**)
+- Public LB: 0.872 → **0.858** (**-0.014**)
+
+### Public LB 결과
+- **Exp13B Public LB: 0.858**
+- 현재 최고 Exp10A 5-Fold 0.873 대비: **-0.015**
+
+### 인사이트
+- Base → Large capacity 확장은 Fold2 내부와 Public LB 모두 악화됐다.
+- 현재 Wide9 / 224 구조에서는 backbone을 더 크게 만드는 것보다 데이터 supervision과 evidence selection 개선이 우선이다.
+- Exp13B는 **REJECT**한다.
+- Backbone scaling screen은 여기서 종료하고, 주력 single-fold 기준은 **DINOv2-Base + Head768 / 224 / Wide9**로 유지한다.
+
+---
+
+## Data Supervision Update — Master Label v2 Final
+
+### 목적
+기존 V4의 target-routed GPT / report-v2 consensus를 재검토하고, 공개 report-label source들을 Gold 58개 기준으로 비교해 더 단순하고 안정적인 fixed fusion pseudo-label을 구축했다.
+
+### 최종 정책
+- Official Gold: **58 studies**, pseudo CSV에서 제외, 학습 시 weight **1.0**
+- Report-only: **4,349 studies**
+- Final soft label:
+  - **0.90 × report_labels_v4hybrid**
+  - **+ 0.10 × yunus_llm_labels**
+- Fold 0~4 pseudo files는 **동일한 fixed recipe** 사용
+- fold별 target winner / routing 재최적화는 사용하지 않음
+
+### Source dependency 정리
+- `llm_labels_full` ↔ `llm_labels_v2`: 동일 계열로 중복 vote 금지
+- `llm_labels_v4_blend` ↔ `report_labels_v4hybrid`: 동일/파생 계열로 중복 vote 금지
+- `report_labels_v5`: Official Gold 58×12 overwrite 확인 → 독립 reader에서 제외
+- GPT-5.6-Sol / report_v2는 audit reference로 유지하되 최종 fixed fusion에는 포함하지 않음
+
+### Gold 기준 fusion 검증
+- Hybrid Macro AUC: **0.899131**
+- Yunus Macro AUC: **0.879751**
+- **Master Label v2 90:10 Macro AUC: 0.901731**
+
+### Confidence
+대부분 target:
+```text
+conf = clip(
+    hybrid_conf * (1 - abs(hybrid - yunus)),
+    0.25,
+    1.0
+)
+```
+
+예외:
+- Synovitis
+- Fracture
+
+두 target은 disagreement가 sample-level error signal로 충분히 안정적이지 않아:
+```text
+conf = clip(hybrid_conf, 0.25, 1.0)
+```
+
+### Final Builder 결과
+- Report-only rows: **4,349**
+- Gold overlap: **0**
+- Fold files: **5개**, fixed-recipe / byte-identical
+- Contract checks: **PASS**
+- 생성 파일:
+  - `rsna_knee_master_labels_v2_full.csv`
+  - `rsna_knee_master_labels_v2_fold0.csv` ~ `fold4.csv`
+  - audit / target summary / confidence audit / method manifest
+
+### 다음 controlled experiment
+- **Exp11B DINOv2-Base + Head768 / Wide224 / Wide9 / Fold2** 유지
+- 변경 단 하나:
+  - V4 pseudo labels → **Master Label v2**
+- 첫 비교에서는 기존 `pseudo_weight = 0.70` 유지
+
+
 ## Completed Experiment Scoreboard
 
 | ID | Experiment | Internal Metric | Public LB |
@@ -2155,6 +2317,8 @@ Exp7A의 Series selector / 해상도 / crop / slice band / 모델 / 학습 recip
 | 37 | Exp11B DINOv2-Base + Head768 Fold2 | **Fold2 AUC 0.942758 / Weak-6 0.905357** | **Public LB 0.872** |
 | 38 | Exp12A Selector v2 + Wide9 Small Fold2 | Fold2 AUC 0.901984 / Weak-6 0.849603 | Public LB 0.866 |
 | 39 | Exp12B Slice15 Wide224 Small Fold2 | Fold2 AUC 0.926687 / Weak-6 0.898016 | Public LB 0.822 |
+| 40 | Exp13A Resolution336 Small Fold2 | Fold2 AUC 0.889683 / Weak-6 0.836508 | Public LB 0.861 |
+| 41 | Exp13B DINOv2-Large + Head1024 Fold2 | Fold2 AUC 0.901786 / Weak-6 0.853968 | Public LB 0.858 |
 
 ---
 
@@ -2192,6 +2356,8 @@ Exp7A의 Series selector / 해상도 / crop / slice band / 모델 / 학습 recip
   - Exp7A Fold2 single: 0.863
   - Exp9A target swap: 0.862
   - Exp11B Base + Head768 Fold2 single: 0.872
+  - Exp13A Resolution336 Small Fold2: 0.861
+  - Exp13B Large + Head1024 Fold2: 0.858
   - **Exp10A Exp7A 5-Fold mean: 0.873**
 - Exp3B는 현재 처음으로 **단일 Fold 모델이 이전 5-Fold Public 최고를 넘어선 구조**다.
 - Fold2 validation은 11 Gold에 불과하므로 구조 탐색용으로 사용하고, Public LB는 선택된 후보의 실제 일반화 확인용으로 사용한다.
@@ -2209,3 +2375,6 @@ Exp7A의 Series selector / 해상도 / crop / slice band / 모델 / 학습 recip
 - Exp11B는 Fold2 Macro 0.942758 / Weak-6 0.905357로 내부 single-Fold 최고를 크게 갱신했고, Public LB도 **0.872**로 Exp7A Small single 0.863보다 +0.009 높았다. 다만 Exp10A Small 5-Fold 0.873에는 표시 점수 기준 0.001 못 미쳐 현재 Public 최고는 유지된다.
 - Exp12A Selector v2는 Fold2 Macro 0.901984 / Public LB **0.866**으로 Exp7A single 대비 각각 소폭 상승했지만 Weak-6는 낮아져 **HOLD**로 유지한다. Hidden test 18 slots에서는 baseline 대비 실제 Series 변경이 0건이었다.
 - Exp12B Slice15는 Fold2 Macro 0.926687로 크게 상승했지만 Public LB가 **0.822**로 급락했다. 특히 Lateral Meniscus / Effusion degradation이 컸으며, 단순 9→15 equal-spaced slice 증가는 **REJECT**한다. 이후 canonical input은 Wide9를 유지한다.
+- Exp13A Resolution336은 Fold2 Macro 0.889683 / Public LB **0.861**로 224 기준보다 악화돼 **REJECT**한다. 현재 canonical resolution은 224를 유지한다.
+- Exp13B DINOv2-Large + Head1024는 Fold2 Macro 0.901786 / Weak-6 0.853968 / Public LB **0.858**로 Exp11B Base보다 내부·외부 모두 하락해 **REJECT**한다. 현재 Wide9 구조에서는 추가 backbone scaling을 중단한다.
+- Master Label v2 Final은 report-only 4,349 studies에 대해 **0.90×Hybrid + 0.10×Yunus** fixed fusion을 사용하며 Gold Macro AUC **0.901731**을 재현했다. 다음 controlled experiment는 Exp11B Base+Head768를 그대로 두고 supervision만 V4 → Master Label v2로 교체한다.
