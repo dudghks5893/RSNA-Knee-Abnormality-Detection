@@ -2277,6 +2277,94 @@ conf = clip(hybrid_conf, 0.25, 1.0)
 - 첫 비교에서는 기존 `pseudo_weight = 0.70` 유지
 
 
+
+---
+
+## Experiment 42 — Exp14A Master Label v2, DINOv2-Base + Head768 Fold2
+
+### 목적
+Exp11B의 모델 / 해상도 / Wide9 입력 / optimizer / loss / Fold2 validation 구조를 유지하고,
+**supervision만 V4 pseudo labels → Master Label v2**로 교체해 라벨 개선 효과를 확인했다.
+
+### 구성
+- Backbone: **DINOv2-Base**
+- Backbone hidden: **768**
+- Encoder blocks: **12**
+- Head hidden: **768**
+- Input: **Wide224 / Wide9 / 6 slots / 130 mm crop**
+- Validation: **Fold2 Gold 11 studies**
+- Full layer-wise fine-tuning
+- Physical batch: **4**
+- Head LR: **2e-4**
+- Backbone Early / Mid / Late LR: **1e-6 / 3e-6 / 1e-5**
+- Pseudo label: **Master Label v2**
+- pseudo_weight: **0.70**
+
+### Fold2 결과
+- **Macro ROC-AUC: 0.889087**
+- **Weak-6 Macro AUC: 0.826984**
+- Best checkpoint: **epoch 5 / step 554**
+- Optimizer updates at best: **4,950**
+
+### Exp11B 대비
+- Macro: 0.942758 → **0.889087** (**-0.053671**)
+- Weak-6: 0.905357 → **0.826984** (**-0.078373**)
+
+### Public LB 결과
+- **Exp14A Public LB: 0.862**
+- Exp11B Base single 0.872 대비: **-0.010**
+- 현재 최고 Exp10A 5-Fold 0.873 대비: **-0.011**
+
+### 인사이트
+- Master Label v2는 Gold 58개 기준 label fusion 자체의 평균 AUC는 개선했지만, 현재 training supervision으로 그대로 사용했을 때는 Fold2와 Public LB 모두 악화됐다.
+- 따라서 **Master Label v2 전체 승격은 REJECT**한다.
+- 다만 이번 변경에는 soft label 값과 confidence weighting이 함께 바뀌었으므로, 다음에는 **label 자체와 confidence 효과를 분리하는 ablation**이 필요하다.
+- canonical model/input은 계속 **DINOv2-Base + Head768 / 224 / Wide9**로 유지한다.
+
+---
+
+## Experiment 43 — Exp14B Class-Specific Slice MIL9 Probe
+
+### 목적
+현재 Wide9 54개 image instance에서 **12개 class별로 어떤 slice가 중요한지 직접 학습**하는 true per-image MIL probe를 검증했다.
+
+### 구성
+- Input: **224 / Wide9 / 6 slots**
+- Study당 image instances: **54**
+- Backbone feature extractor: **pretrained DINOv2-Base frozen**
+- Slice representation: grayscale slice를 RGB 3채널로 복제 후 독립 feature 추출
+- Feature: **CLS + patch mean = 1536 dim**
+- Hierarchical attention:
+  - target-specific slice attention
+  - target-specific slot attention
+- MIL head trainable params: 약 **0.82M**
+- Supervision: **Master Label v2 / pseudo_weight 0.70**
+- Validation: **Fold2 Gold 11 studies**
+
+### Fold2 결과
+- **Macro ROC-AUC: 0.818254**
+- **Weak-6 Macro AUC: 0.792857**
+- Best epoch: **36**
+- 주요 target:
+  - ACL 0.800000
+  - MCL 1.000000
+  - Medial Meniscus 0.750000
+  - Lateral Meniscus 0.821429
+  - Synovitis 0.900000
+  - Contusion 0.642857
+  - Fracture 0.500000
+
+### Attention 결과
+- 9개 slice 내 평균 attention이 대부분 **약 0.111 전후**로 거의 균등했다.
+- 즉 현재 frozen-feature MIL head는 **class별 중요한 개별 slice를 충분히 분리하지 못했다.**
+- 여러 target의 aggregate top importance가 Coronal Fluid slot으로 몰리는 경향도 확인됐다.
+
+### 인사이트
+- Exp14B는 leaderboard model 후보가 아니라 **selector feasibility probe**였으며, 현재 형태는 **REJECT as selector**.
+- 바로 Wide15 / 전체 500GB raw slice로 확대하지 않는다.
+- 다음에는 이미 성능이 검증된 strong task model을 사용해 **slice perturbation / masking importance audit**를 먼저 수행한다.
+- 의미 있는 class-specific slice dependency가 확인되면 그 신호를 기반으로 task-tuned MIL 또는 dense candidate slice selector를 설계한다.
+
 ## Completed Experiment Scoreboard
 
 | ID | Experiment | Internal Metric | Public LB |
@@ -2319,6 +2407,8 @@ conf = clip(hybrid_conf, 0.25, 1.0)
 | 39 | Exp12B Slice15 Wide224 Small Fold2 | Fold2 AUC 0.926687 / Weak-6 0.898016 | Public LB 0.822 |
 | 40 | Exp13A Resolution336 Small Fold2 | Fold2 AUC 0.889683 / Weak-6 0.836508 | Public LB 0.861 |
 | 41 | Exp13B DINOv2-Large + Head1024 Fold2 | Fold2 AUC 0.901786 / Weak-6 0.853968 | Public LB 0.858 |
+| 42 | Exp14A Master Label v2 Base+Head768 Fold2 | Fold2 AUC 0.889087 / Weak-6 0.826984 | Public LB 0.862 |
+| 43 | Exp14B Class-Specific Slice MIL9 Probe | Fold2 AUC 0.818254 / Weak-6 0.792857 | - |
 
 ---
 
@@ -2358,6 +2448,7 @@ conf = clip(hybrid_conf, 0.25, 1.0)
   - Exp11B Base + Head768 Fold2 single: 0.872
   - Exp13A Resolution336 Small Fold2: 0.861
   - Exp13B Large + Head1024 Fold2: 0.858
+  - Exp14A Master Label v2 Base+Head768 Fold2: 0.862
   - **Exp10A Exp7A 5-Fold mean: 0.873**
 - Exp3B는 현재 처음으로 **단일 Fold 모델이 이전 5-Fold Public 최고를 넘어선 구조**다.
 - Fold2 validation은 11 Gold에 불과하므로 구조 탐색용으로 사용하고, Public LB는 선택된 후보의 실제 일반화 확인용으로 사용한다.
@@ -2378,3 +2469,5 @@ conf = clip(hybrid_conf, 0.25, 1.0)
 - Exp13A Resolution336은 Fold2 Macro 0.889683 / Public LB **0.861**로 224 기준보다 악화돼 **REJECT**한다. 현재 canonical resolution은 224를 유지한다.
 - Exp13B DINOv2-Large + Head1024는 Fold2 Macro 0.901786 / Weak-6 0.853968 / Public LB **0.858**로 Exp11B Base보다 내부·외부 모두 하락해 **REJECT**한다. 현재 Wide9 구조에서는 추가 backbone scaling을 중단한다.
 - Master Label v2 Final은 report-only 4,349 studies에 대해 **0.90×Hybrid + 0.10×Yunus** fixed fusion을 사용하며 Gold Macro AUC **0.901731**을 재현했다. 다음 controlled experiment는 Exp11B Base+Head768를 그대로 두고 supervision만 V4 → Master Label v2로 교체한다.
+- Exp14A에서 Master Label v2를 실제 training supervision으로 적용했을 때 Fold2 Macro **0.889087 / Weak-6 0.826984 / Public LB 0.862**로 Exp11B 0.872보다 하락했다. Master Label v2 전체 승격은 **REJECT**하며, 다음에는 soft label과 confidence weighting 효과를 분리해 검증한다.
+- Exp14B frozen-feature MIL9 probe는 Fold2 Macro **0.818254**였고 slice attention이 대부분 약 1/9 수준으로 거의 균등해 class-specific individual-slice selector 학습이 충분하지 않았다. 다음 selector 단계는 strong task model 기반 perturbation/masking audit로 전환한다.
