@@ -14,6 +14,21 @@
 
 ---
 
+
+# 0. 실험 번호 규칙
+
+앞으로 주요 실행 단위마다 Exp 번호를 붙여 추적한다.
+
+- **Exp51**: B3A 70% + B2 direct 30% 확률 앙상블
+- **Exp52A**: Fold0 task-tuned DINOv2-Base + Head768 학습
+- **Exp52B**: Fold1 task-tuned DINOv2-Base + Head768 학습
+
+A/B는 같은 단계의 병렬 실험을 뜻한다.
+이후 단계도 같은 방식으로 번호를 순차 부여한다.
+
+---
+
+
 # 1. 현재 기준점
 
 현재 확인된 Public LB:
@@ -24,7 +39,7 @@
 
 현재 제출 대기:
 
-- **B3A 70% + B2 direct 30% probability ensemble**
+- **Exp51 — B3A 70% + B2 direct 30% probability ensemble**
 - 결과 대기 중
 
 현재 핵심 관찰:
@@ -193,7 +208,7 @@ full-MRI direct branch를 유지할지 판단하는 참고 자료다.
 ### A 레인 — Fold0
 
 ```text
-A1. Fold0용 Exp11B-style DINOv2-Base 학습
+A1. **Exp52A — Fold0용 Exp11B-style DINOv2-Base 학습**
 A2. Fold0 backbone으로 전체 MRI 819,078 window feature 생성
 A3. Fold0용 fresh full-MRI hierarchical MIL 학습
 A4. Fold0 full-MRI direct validation 기록
@@ -205,7 +220,7 @@ A7. Fold0 Top-24로 Fold0 B3A 최종 모델 학습
 ### B 레인 — Fold1
 
 ```text
-B1. Fold1용 Exp11B-style DINOv2-Base 학습
+B1. **Exp52B — Fold1용 Exp11B-style DINOv2-Base 학습**
 B2. Fold1 backbone으로 전체 MRI 819,078 window feature 생성
 B3. Fold1용 fresh full-MRI hierarchical MIL 학습
 B4. Fold1 full-MRI direct validation 기록
