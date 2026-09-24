@@ -2423,7 +2423,7 @@ Exp11B의 모델 / 해상도 / Wide9 입력 / optimizer / loss / Fold2 validatio
 
 ## Current Best Completed Results
 
-- **Public LB 최고: 전체 MRI에서 환자별 중요 영상 24개를 선택한 뒤 기존 무릎 MRI 학습 가중치를 이어받아 재학습 (Exp16B-3A) — 0.907**
+- **Public LB 최고: Top-24 warm-start 70% + 전체 MRI 직접 예측 30% 확률 앙상블 (Exp51) — 0.913**
   - 이전 최고 Exp7A Fold2 single 0.863 대비 **+0.010**
   - V2.1 / V2.2 5-Fold 0.816 대비 **+0.057**
 - **Full 58-Gold OOF 최고: Exp10A — 0.856496**
@@ -2737,6 +2737,28 @@ Top-24 선택, NMS, B3A/B3B 최종 모델은 사용하지 않았다.
   Top-24 raw-image end-to-end refinement도 작지만 실제 이득이 있다.
 - 두 모델이 거의 같은 수준이면서 정보 사용 방식이 다르기 때문에,
   다음은 **B3A + 전체 MRI 직접 예측의 확률 앙상블**을 먼저 확인한다.
+
+---
+
+
+## Experiment 51 — Top-24 + Full-MRI Direct 70:30 확률 앙상블
+
+### 구성
+- Top-24 warm-start 최종 모델(B3A): **Public LB 0.907**
+- 전체 MRI 직접 예측 모델(B2 direct): **Public LB 0.904**
+- 최종 확률: **0.70 × B3A + 0.30 × B2 direct**
+
+### 결과
+- **Public LB: 0.913 — 현재 최고**
+- B3A 단독 대비: **+0.006**
+- B2 direct 단독 대비: **+0.009**
+- Exp11B 고정 Wide9 0.872 대비: **+0.041**
+
+### 인사이트
+- Top-24 집중 branch와 full-MRI 전체 정보 branch가 hidden test에서 실제로 상보적이다.
+- 이후 3-Fold / 5-Fold 확장에서도 두 branch를 모두 유지하고 hybrid ensemble을 핵심 후보로 검증한다.
+- 이번 결과는 “MIL 유무”의 단순 비교가 아니다. B3A도 hierarchical MIL을 사용하며,
+  **full-MRI MIL이 보존한 추가 정보가 Top-24 branch를 보완했다**는 해석이 더 정확하다.
 
 ---
 
