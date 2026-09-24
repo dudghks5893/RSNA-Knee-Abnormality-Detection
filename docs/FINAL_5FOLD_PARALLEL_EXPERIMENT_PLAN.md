@@ -313,6 +313,48 @@ Exp51이 0.913으로 개선됐으므로
 
 ---
 
+
+## 단계 1 결과 — Exp52A / Exp52B backbone 완료
+
+### Exp52A Fold0
+
+- Macro AUC: **0.830886243**
+- Weak-6: **0.788029101**
+- Validation Gold: 11
+- Best: epoch 9 / epoch-end
+- Wall time: 183.18 min
+- 상태: **PASS / 다음 단계 진행**
+
+### Exp52B Fold1
+
+- Macro AUC: **0.885819004**
+- Weak-6: **0.902926587**
+- Validation Gold: 12
+- Best: epoch 7 step 6 intra-epoch
+- Early stop: epoch 10
+- Wall time: 138.56 min
+- 상태: **PASS / 다음 단계 진행**
+
+판정:
+
+- Fold0/1 모두 독립 backbone checkpoint를 정상 확보했다.
+- Wide9 validation 차이가 크지만 validation 표본이 11~12명뿐이므로
+  이 값만으로 5-Fold 확장을 중단하지 않는다.
+- 실제 selector 품질 판단은 다음 단계의 full-MRI MIL까지 본 뒤 한다.
+
+다음 병렬 실행:
+
+```text
+Exp53A
+Fold0 checkpoint
+→ 전체 MRI 819,078 window feature 생성
+
+Exp53B
+Fold1 checkpoint
+→ 전체 MRI 819,078 window feature 생성
+```
+
+
 # 7. 단계 1 의사결정
 
 Fold0 / 1 / 2가 거의 같은 사진만 고르더라도
