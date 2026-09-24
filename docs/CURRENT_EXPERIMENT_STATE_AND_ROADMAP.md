@@ -619,6 +619,98 @@ Public LB:
 
 ---
 
+
+## Exp52A / Exp52B — Fold0 / Fold1 task-tuned DINOv2-Base backbone 구축
+
+목적:
+
+- 기존 Fold2 Exp11B recipe를 그대로 유지하고 validation Fold만 바꿔
+  Fold0 / Fold1의 독립적인 task-tuned backbone 계보를 만든다.
+- 이후 각 Fold backbone으로 전체 MRI 819,078 window feature를 생성하고
+  Fold별 full-MRI MIL / Top-24 / B3A로 이어간다.
+
+공통 설정:
+
+- DINOv2-Base + Head768
+- Wide224 / Wide9 / 6 MRI slots
+- physical batch 4
+- grad accumulation 1
+- effective batch 4
+- V4 pseudo labels
+- pseudo weight = 0.70 × confidence
+- deterministic 5-Fold split, seed 2026
+
+### Exp52A — Fold0
+
+- Validation Gold: **11**
+- Best: **epoch 9 / epoch-end / step 1099**
+- Macro AUC: **0.830886243**
+- Weak-6 AUC: **0.788029101**
+- Wall time: **183.18 min**
+- Checkpoint:
+  `rsna_knee_exp52a_fold0_tasktuned_dinov2_base_head768_fold0_best.bin`
+
+Target AUC:
+
+- ACL 0.966667
+- MCL 0.555556
+- Medial Meniscus 0.928571
+- Lateral Meniscus 0.785714
+- Medial OA 0.875000
+- Lateral OA 0.777778
+- PF OA 0.750000
+- Effusion 0.821429
+- Synovitis 0.833333
+- Baker's 0.944444
+- Contusion 0.857143
+- Fracture 0.875000
+
+### Exp52B — Fold1
+
+- Validation Gold: **12**
+- Best checkpoint: **epoch 7 / step 6 / intra-epoch**
+- Best epoch fraction: **6.005**
+- Macro AUC: **0.885819004**
+- Weak-6 AUC: **0.902926587**
+- Early stop: epoch 10
+- Wall time: **138.56 min**
+- Checkpoint:
+  `rsna_knee_exp52b_fold1_tasktuned_dinov2_base_head768_fold1_best.bin`
+
+Target AUC:
+
+- ACL 0.843750
+- MCL 1.000000
+- Medial Meniscus 1.000000
+- Lateral Meniscus 0.657143
+- Medial OA 1.000000
+- Lateral OA 0.555556
+- PF OA 1.000000
+- Effusion 1.000000
+- Synovitis 0.916667
+- Baker's 0.962963
+- Contusion 0.850000
+- Fracture 0.843750
+
+해석:
+
+- 두 실험 모두 checkpoint / prediction / log 저장과 output contract를 통과했다.
+- Fold0의 Wide9 Macro / Weak-6는 Fold2보다 낮고,
+  Fold1은 Macro는 낮지만 Weak-6는 Fold2와 비슷하다.
+- 각 Fold validation은 11~12명뿐이므로 이 단계의 Wide9 AUC만으로
+  Fold0/1 계보를 중단하지 않는다.
+- 현재 목적은 동일 recipe에서 **Fold별 독립 backbone을 확보**하는 것이다.
+- 다음 단계에서 실제 핵심인
+  **전체 MRI feature → fresh full-MRI MIL → direct prediction / importance / Top-24**
+  성능을 확인한 뒤 Fold별 selector 품질을 판단한다.
+
+다음:
+
+- **Exp53A:** Fold0 backbone으로 전체 MRI 819,078 window feature 생성
+- **Exp53B:** Fold1 backbone으로 전체 MRI 819,078 window feature 생성
+
+---
+
 # 10.5. 2026-09-25 최종 5-Fold / A-B 병렬 실행 설계 확정
 
 상세 설계는 다음 문서를 우선 기준으로 사용한다.
