@@ -2762,6 +2762,31 @@ Top-24 선택, NMS, B3A/B3B 최종 모델은 사용하지 않았다.
 
 ---
 
+
+## Experiment 52A / 52B — Fold0 / Fold1 task-tuned backbone
+
+### Exp52A Fold0
+- Macro AUC: **0.830886**
+- Weak-6 AUC: **0.788029**
+- Best epoch: **9**
+- Validation Gold: 11
+- checkpoint 정상 저장
+
+### Exp52B Fold1
+- Macro AUC: **0.885819**
+- Weak-6 AUC: **0.902927**
+- Best checkpoint: **epoch 7 / step 6**
+- Validation Gold: 12
+- checkpoint 정상 저장
+
+### 판정
+- 두 Fold 모두 독립 backbone 구축 성공.
+- 작은 11~12명 validation 변동성을 감안해 Wide9 AUC만으로 탈락시키지 않는다.
+- 다음은 Fold0 / Fold1 backbone 각각으로 전체 MRI 819,078 window feature를 생성하고,
+  fresh full-MRI MIL을 학습해 실제 direct prediction / selector 성능을 확인한다.
+
+---
+
 ## 최근 핵심 실험 요약
 
 | 실험 | 무엇을 했는가 | Fold2 Macro AUC | Weak-6 AUC | Public LB |
@@ -2772,7 +2797,7 @@ Top-24 선택, NMS, B3A/B3B 최종 모델은 사용하지 않았다.
 | Exp16B-3B | 동일한 환자별 중요 영상 24개 + 일반 pretrained DINOv2부터 새로 학습 | 0.924702 | 0.879960 | **0.903** |
 
 ### 현재 결론
-- **Public LB 최고: 0.907**
+- **Public LB 최고: 0.913 (Exp51, B3A 70% + full-MRI direct 30%)**
 - 현재 최고 방식: **전체 MRI에서 환자별 중요 영상 24개를 선택한 뒤, 기존 무릎 MRI 학습 가중치를 이어받아 최종 이미지 모델을 재학습**
 - 기존 고정 위치 입력 방식의 최고 0.873보다 **+0.034**
 - 동일 Top-24를 사용한 clean-start 모델도 0.903으로 높다.
