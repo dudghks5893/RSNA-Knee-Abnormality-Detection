@@ -15,11 +15,14 @@
 
 현재 Public LB 최고 기록은:
 
-- **0.907**
+- **0.913**
 - 실험 내용:
-  **전체 MRI에서 환자별 중요 영상 24개를 선택한 뒤,
-  기존 무릎 MRI 학습 가중치를 이어받아 DINOv2-Base + 계층적 MIL을 end-to-end 재학습**
-- 내부 추적 ID: **Exp16B-3A**
+  **Top-24 warm-start 최종 모델 70% + 전체 MRI 직접 예측 모델 30% 확률 앙상블**
+- 내부 추적 ID: **Exp51**
+- 구성:
+  - B3A Top-24 warm-start: **0.907**
+  - B2 full-MRI direct: **0.904**
+  - 70:30 probability blend: **0.913**
 
 비교 실험:
 
@@ -582,6 +585,40 @@ Public LB 결과:
 
 ---
 
+
+## Exp51 — Top-24 최종 모델 70% + 전체 MRI 직접 예측 30% 확률 앙상블
+
+설명형 이름:
+
+**환자별 중요 Top-24를 보는 최종 이미지 모델과 전체 MRI 모든 슬라이스를 보는 직접 예측 모델을 70:30으로 확률 앙상블**
+
+구성:
+
+- B3A Top-24 warm-start branch: **0.907**
+- B2 full-MRI direct branch: **0.904**
+- 최종 확률:
+  `0.70 × B3A + 0.30 × B2 direct`
+
+Public LB:
+
+- **0.913 — 현재 최고**
+
+개선폭:
+
+- B3A 단독 0.907 대비 **+0.006**
+- B2 direct 단독 0.904 대비 **+0.009**
+- Exp11B 고정 Wide9 0.872 대비 **+0.041**
+
+핵심 해석:
+
+- Top-24에 집중하는 branch와 전체 MRI 정보를 유지하는 branch가 hidden test에서 실제로 상보적이다.
+- “MIL이 중요하다”는 방향은 맞지만, 더 정확히는 **full-MRI hierarchical MIL이 보존한 정보가 Top-24 raw-image 모델에 추가적인 유효 신호를 제공한다**는 결과다.
+- B3A 자체도 hierarchical MIL을 사용하므로, 이번 +0.006을 단순히 “MIL 유무” 차이로 해석하지 않는다.
+- 이후 3-Fold / 5-Fold에서도
+  **Top-24 B3A ensemble + full-MRI direct ensemble의 hybrid**를 핵심 제출 후보로 유지한다.
+
+---
+
 # 10.5. 2026-09-25 최종 5-Fold / A-B 병렬 실행 설계 확정
 
 상세 설계는 다음 문서를 우선 기준으로 사용한다.
@@ -593,6 +630,8 @@ Public LB 결과:
 - 단일 Fold2 B3A backbone으로 전체 MRI feature를 다시 만드는 실험은 **즉시 최우선에서 제외**한다.
 - 다음 큰 검증은 Fold0 / Fold1을 A/B 병렬로 새로 구축해
   Fold2와 함께 **selector가 실제로 다른 사진을 고르는지** 확인하는 것이다.
+- Exp51 70:30 hybrid가 **0.913**으로 새 최고를 기록했으므로,
+  Fold 확장 후에도 **B3A 계열과 full-MRI direct 계열을 둘 다 유지하고 hybrid를 우선 검증**한다.
 - 신호가 유지되면 Fold3 / Fold4도 A/B 병렬로 확장한다.
 - 1차 최종 구조는
   **Fold별 독립 selector → Fold별 Top-24 → Fold별 B3A → 5개 예측 평균**이다.
