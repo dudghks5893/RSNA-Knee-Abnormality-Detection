@@ -710,6 +710,16 @@ checkpoint에서 backbone state만 정확히 추출해 사용한다.
 
 - B2 Macro: 0.954167
 - B2 Weak-6: 0.915278
+- B2 standalone Public LB: **0.904**
+
+추가 검증 원칙:
+
+- 새 B3A-backbone feature로 학습한 full-MRI MIL은 selector 역할뿐 아니라
+  **그 자체로 12개 질환을 직접 예측할 수 있는 모델**이다.
+- 따라서 새 MIL이 Fold2에서 기존 B2와 동등하거나 개선되면,
+  새 Top-24 전체 재생성에 들어가기 전에 **standalone Public LB를 먼저 확인**한다.
+- 이유는 기존 B2 direct prediction이 이미 0.904로 강했기 때문에,
+  B3A feature 공간이 full-MRI 직접 예측 자체를 개선하는지 분리해서 볼 가치가 크다.
 
 ---
 
