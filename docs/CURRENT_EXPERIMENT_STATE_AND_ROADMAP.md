@@ -1,6 +1,6 @@
 # RSNA Knee Abnormality Detection — 현재 실험 상태 / 데이터 계보 / 다음 로드맵
 
-최종 업데이트: **2026-09-24**
+최종 업데이트: **2026-09-25**
 
 이 문서는 채팅이 바뀌어도 실험을 그대로 이어갈 수 있도록,
 현재까지의 데이터 생성 방식, 모델 계보, 정확한 설정값, 결과, 해석,
@@ -28,6 +28,14 @@
 - Public LB: **0.903**
 - 내부 추적 ID: **Exp16B-3B**
 
+추가 standalone 검증:
+
+- 전체 MRI의 모든 슬라이스 특징을 계층적으로 통합하는 Exp16B-2 모델 자체를
+  Top-24 최종 이미지 모델 없이 hidden test에 직접 적용
+- Public LB: **0.904**
+- Fold2 Macro AUC: **0.954167**
+- Fold2 Weak-6 AUC: **0.915278**
+
 이 결과로 현재 가장 중요한 인사이트는 다음과 같다.
 
 1. 기존의 고정된 Wide9 위치 입력보다,
@@ -37,7 +45,12 @@
 3. 기존 무릎 MRI 학습 가중치를 이어받은 warm-start 모델이
    clean-start보다 Public LB에서 **+0.004** 높아,
    초기화도 추가적인 이득을 준다.
-4. Fold2 Gold validation은 11명뿐이므로,
+4. 전체 MRI 직접 예측 모델도 **Public LB 0.904**를 기록해,
+   Top-24로 압축하지 않아도 full-MRI 계층적 모델 자체가 hidden test에서 매우 강하다는 점이 확인됐다.
+5. 현재 최고 B3A 0.907과 전체 MRI 직접 예측 0.904의 차이는 **0.003**뿐이다.
+   따라서 B3A의 추가 이득은 존재하지만, 성능 향상의 대부분은
+   “전체 MRI에서 환자별/질환별로 중요한 정보를 학습해 통합하는 구조”에서 이미 확보된 것으로 보인다.
+6. Fold2 Gold validation은 11명뿐이므로,
    작은 CV 차이를 과신하지 않는다.
    실제 Public LB와 함께 해석해야 한다.
 
@@ -263,6 +276,24 @@ Checkpoint:
 
 `exp16b2_full_data_hierarchical_target_mil_fold2_v2_best.bin`
 
+Standalone hidden-test 직접 예측 Public LB:
+
+- **0.904**
+
+비교:
+
+- 기존 Exp11B 고정 Wide9 모델: 0.872
+- 전체 MRI 직접 예측: **0.904**
+- Top-24 clean-start 최종 모델: 0.903
+- Top-24 warm-start 최종 모델: **0.907**
+
+해석:
+
+- 전체 MRI feature를 계층적으로 통합하는 모델 자체가 이미 매우 강하다.
+- Top-24 raw-image 재학습은 이 강한 full-MRI 표현 위에서 추가로 약 **+0.003** Public LB 이득을 만들었다.
+- 따라서 이후에는 full-MRI 모델과 Top-24 최종 모델을 서로 대체 관계로 보기보다
+  서로 다른 표현을 사용하는 두 강한 예측기로 보고 앙상블 가능성을 먼저 확인한다.
+
 ---
 
 # 7. 환자별 Top-24 선택
@@ -467,9 +498,9 @@ Public LB:
 
 ---
 
-# 10. 현재 진행 중인 실험
+# 10. 전체 MRI 모든 슬라이스 특징 통합 직접 예측 — Public LB 검증 완료
 
-## 상태: 진행 중
+## 상태: 완료
 
 설명형 이름:
 
@@ -501,11 +532,16 @@ v1 오류:
   `NameError` 발생
 - 모델 / inference 논리 문제는 아니었음
 
-v2 수정:
+v2 수정 및 실행 결과:
 
 - stale variable 제거
 - syntax validation 통과
-- 현재 **Kaggle 전체 실행 결과 대기 중**
+- Exp11B task-tuned feature extractor 정상 로드
+- Exp16B-2 hierarchical prediction model 정상 로드
+- visible test 3 studies 전체 추론 완료
+- window 수: **284 / 135 / 138**
+- decode errors: **0 / 0 / 0**
+- 최종 submission contract PASS
 
 필요 Inputs:
 
@@ -525,7 +561,24 @@ Runtime:
 - Notebook submission 방식
 - 직접 submission.csv 수동 업로드 방식으로 설명하지 말 것
 
-이 실험의 Public LB가 아직 나오지 않았다.
+Public LB 결과:
+
+- **0.904**
+
+비교:
+
+- Exp11B 고정 Wide9: 0.872
+- Exp16B-3B 동일 Top-24 clean-start: 0.903
+- **Exp16B-2 전체 MRI 직접 예측: 0.904**
+- **Exp16B-3A Top-24 warm-start: 0.907**
+
+핵심 해석:
+
+- Top-24 최종 이미지 모델이 아니어도 전체 MRI 모델 자체가 0.904까지 도달했다.
+- 즉 성능 상승의 핵심은 “24장으로 줄였기 때문”만이 아니라,
+  **전체 MRI에서 질환별 중요도를 학습하고 정보를 계층적으로 통합한 것**에 있다.
+- B3A가 0.003 더 높으므로 Top-24 raw-image end-to-end refinement의 추가 효과는 남아 있다.
+- 두 모델의 구조와 정보 사용 방식이 다르므로 다음 단계의 저비용 앙상블 실험 가치가 더 커졌다.
 
 ---
 
@@ -534,9 +587,9 @@ Runtime:
 이 순서를 임의로 바꾸지 않는다.
 새 결과가 나오면 근거를 기록한 뒤 변경한다.
 
-## 1. 전체 MRI B2 직접 예측 Public LB
+## 1. 전체 MRI B2 직접 예측 Public LB — 완료
 
-현재 진행 중.
+결과: **0.904**
 
 목적:
 
@@ -546,11 +599,12 @@ Runtime:
 
 ---
 
-## 2. 현재 최고 Top-24 모델 + 전체 MRI 직접 예측 모델 앙상블
+## 2. 현재 최고 Top-24 모델 + 전체 MRI 직접 예측 모델 앙상블 — 현재 다음 실험
 
 조건:
 
-- 1번 Public LB 확인 후 진행
+- 1번 Public LB **0.904 확인 완료**
+- B3A Public LB **0.907**
 
 후보:
 
@@ -806,11 +860,11 @@ hidden test에서도
 # 12. 현재 로드맵 한 줄 버전
 
 ```text
-[현재]
-1. 전체 MRI B2 직접 예측 Public LB
+[완료]
+1. 전체 MRI B2 직접 예측 Public LB = 0.904
 
-[아주 저비용]
-2. B3A + B2 직접예측 앙상블
+[현재 다음]
+2. B3A 0.907 + B2 직접예측 0.904 앙상블
 
 [다음 핵심 실험]
 3. B3A backbone으로 전체 MRI feature 재생성
@@ -893,19 +947,23 @@ hidden test에서도
 
 # 15. 현재 즉시 다음 액션
 
-현재 해야 할 일은 하나다.
+현재 해야 할 일은:
 
-**`rsna_knee_full_mri_all_slice_feature_hierarchical_mil_fold2_public_lb_submission_v2.ipynb`를 Kaggle에서 전체 실행하고 결과를 확인한다.**
+**B3A Top-24 warm-start 모델과 전체 MRI 직접 예측 모델의 확률 앙상블을 검증한다.**
 
-성공 조건:
+확정된 Public LB:
 
-- Exp11B task-tuned feature extractor load PASS
-- full-MRI Hierarchical prediction model load PASS
-- visible test studies 전체 inference 완료
-- decode error 확인
-- submission shape / columns / probability range 검증
-- final PASS
-- 이후 Notebook submission
-- Public LB 기록
+- B3A Top-24 warm-start: **0.907**
+- 전체 MRI 직접 예측: **0.904**
 
-그 다음은 이 문서의 로드맵 **2번 → 3번** 순서로 진행한다.
+우선 비교할 blend 후보:
+
+- B3A 0.8 + Full-MRI 0.2
+- B3A 0.7 + Full-MRI 0.3
+- B3A 0.6 + Full-MRI 0.4
+- B3A 0.5 + Full-MRI 0.5
+
+가능하면 단순 LB 제출 전에 두 모델의 visible-test prediction correlation / target별 차이도 확인한다.
+
+앙상블 확인 후에는 로드맵 **3번:
+B3A backbone으로 전체 MRI feature 재생성**으로 넘어간다.
