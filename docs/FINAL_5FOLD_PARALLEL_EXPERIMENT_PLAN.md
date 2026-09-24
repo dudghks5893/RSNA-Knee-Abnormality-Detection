@@ -188,18 +188,20 @@ Fold f용 Wide9 task backbone
 
 # 6. A/B 병렬 실행 전체 계획
 
-## 단계 0 — 현재 제출 결과 대기
+## 단계 0 — Exp51 hybrid 검증 완료
 
 현재:
 
-- B3A: 0.907
-- B2 direct: 0.904
-- B3A 70% + B2 direct 30%: **Public LB 결과 대기**
+- B3A: **0.907**
+- B2 direct: **0.904**
+- B3A 70% + B2 direct 30%: **0.913 — 현재 최고**
 
-이 결과는 이후 최종 ensemble에서
-full-MRI direct branch를 유지할지 판단하는 참고 자료다.
+결론:
 
-새 학습을 막지는 않는다.
+- full-MRI direct branch는 보조 실험 수준이 아니라 **최종 파이프라인에 유지할 핵심 branch**다.
+- Top-24 branch와 full-MRI branch가 실제 hidden test에서 상보적이라는 근거가 생겼다.
+- 따라서 Fold0 / Fold1 구축은 계획대로 즉시 진행한다.
+- 3-Fold / 5-Fold에서도 B3A와 direct를 각각 만든 뒤 hybrid를 우선 검증한다.
 
 ---
 
@@ -296,9 +298,18 @@ Fold2 selector → Fold2 Top-24 → Fold2 B3A ┘
 
 처음에는 세 Fold를 **동일 가중치 1/3**로 사용한다.
 
-필요하면 두 3-Fold 결과가 모두 강할 때만
-3-Fold B3A + 3-Fold full-MRI direct의 단순 hybrid ensemble을 추가 확인한다.
-제출 횟수를 불필요하게 소모하지 않는다.
+Exp51이 0.913으로 개선됐으므로
+**3-Fold B3A + 3-Fold full-MRI direct hybrid는 우선 제출 후보로 승격**한다.
+
+기본 시작점은 Exp51과 동일하게:
+
+```text
+3-Fold B3A ensemble × 0.70
++
+3-Fold full-MRI direct ensemble × 0.30
+```
+
+으로 두고, 단일 비율을 먼저 확인한다.
 
 ---
 
@@ -728,7 +739,7 @@ GPU1 → 가능한 final-model 계산
 
 ```text
 [현재]
-B3A 0.907 + B2 direct 0.904 → 70:30 ensemble LB 대기
+Exp51: B3A 0.907 + B2 direct 0.904 → 70:30 ensemble = **0.913 현재 최고**
 
 [1차 병렬]
 A: Fold0 backbone → full MRI feature → MIL → Top-24 → Fold0 B3A
@@ -737,6 +748,7 @@ B: Fold1 backbone → full MRI feature → MIL → Top-24 → Fold1 B3A
 [중간 제출]
 3-Fold full-MRI direct equal ensemble (Fold0/1/2)
 3-Fold B3A equal ensemble (Fold0/1/2)
+3-Fold hybrid: B3A 70% + full-MRI direct 30%
 
 [체크]
 Fold0 / Fold1 / Fold2 selector 비교
