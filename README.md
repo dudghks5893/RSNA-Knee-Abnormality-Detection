@@ -1,5 +1,10 @@
 # RSNA Knee Abnormality Detection — Experiment Log
 
+
+> 최신 최종 실험 설계 / A-B 병렬 실행 계획:  
+> `docs/FINAL_5FOLD_PARALLEL_EXPERIMENT_PLAN.md`
+
+
 **Competition:** [RSNA Knee Abnormality Detection](https://www.kaggle.com/competitions/rsna-knee-abnormality-detection)
 
 > **현재 실험 상태 / 데이터 계보 / 다음 로드맵:** [docs/CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md](docs/CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md)  
