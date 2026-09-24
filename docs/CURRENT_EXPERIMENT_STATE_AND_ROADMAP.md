@@ -582,9 +582,60 @@ Public LB 결과:
 
 ---
 
+# 10.5. 2026-09-25 최종 5-Fold / A-B 병렬 실행 설계 확정
+
+상세 설계는 다음 문서를 우선 기준으로 사용한다.
+
+`docs/FINAL_5FOLD_PARALLEL_EXPERIMENT_PLAN.md`
+
+현재 중요한 변경점:
+
+- 단일 Fold2 B3A backbone으로 전체 MRI feature를 다시 만드는 실험은 **즉시 최우선에서 제외**한다.
+- 다음 큰 검증은 Fold0 / Fold1을 A/B 병렬로 새로 구축해
+  Fold2와 함께 **selector가 실제로 다른 사진을 고르는지** 확인하는 것이다.
+- 신호가 유지되면 Fold3 / Fold4도 A/B 병렬로 확장한다.
+- 1차 최종 구조는
+  **Fold별 독립 selector → Fold별 Top-24 → Fold별 B3A → 5개 예측 평균**이다.
+- Consensus Top-24는 5개 selector의 의견을 합쳐 최종 24개 window를 고르는 별도 후속 연구 실험이다.
+- Consensus는 train/validation leakage 문제가 있으므로
+  5-Fold 독립 파이프라인보다 먼저 주력 모델로 사용하지 않는다.
+- 최종 제출은 9시간 제한을 고려해
+  study당 DICOM decode / crop / normalization / 3-slice window 생성을 한 번만 수행하고
+  5개 Fold가 같은 raw window를 공유하도록 설계한다.
+- 모든 Fold 실험에서 sec/study와 GPU memory를 함께 기록한다.
+
+현재 A/B 병렬 요약:
+
+```text
+A: Fold0 backbone → full MRI feature → MIL → Top-24
+B: Fold1 backbone → full MRI feature → MIL → Top-24
+          ↓
+Fold0 / Fold1 / Fold2 selector 비교
+          ↓
+A: Fold3 pipeline
+B: Fold4 pipeline
+          ↓
+A: Fold0 B3A → Fold3 B3A
+B: Fold1 B3A → Fold4 B3A
+Fold2 B3A는 기존 모델 사용
+          ↓
+5-Fold B3A equal ensemble
+          ↓
+5-Fold full-MRI direct ensemble
+          ↓
+두 계열 ensemble
+          ↓
+Consensus Top-24 연구
+          ↓
+Top-16 / 24 / 32
+```
+
+---
+
 # 11. 현재 확정 로드맵
 
-이 순서를 임의로 바꾸지 않는다.
+아래 기존 순서는 당시 기준 기록으로 유지한다.
+**2026-09-25 이후 실행 우선순위는 `docs/FINAL_5FOLD_PARALLEL_EXPERIMENT_PLAN.md`를 우선한다.**
 새 결과가 나오면 근거를 기록한 뒤 변경한다.
 
 ## 1. 전체 MRI B2 직접 예측 Public LB — 완료
