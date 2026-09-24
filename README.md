@@ -2414,12 +2414,12 @@ Exp11B의 모델 / 해상도 / Wide9 입력 / optimizer / loss / Fold2 validatio
 
 ## Current Best Completed Results
 
-- **Public LB 최고: Exp10A Exp7A 5-Fold Mean Ensemble — 0.873**
+- **Public LB 최고: 전체 MRI에서 환자별 중요 영상 24개를 선택한 뒤 기존 무릎 MRI 학습 가중치를 이어받아 재학습 (Exp16B-3A) — 0.907**
   - 이전 최고 Exp7A Fold2 single 0.863 대비 **+0.010**
   - V2.1 / V2.2 5-Fold 0.816 대비 **+0.057**
 - **Full 58-Gold OOF 최고: Exp10A — 0.856496**
-- **Single Fold2 screening 최고: Exp11B DINOv2-Base + Head768 — 0.942758**
-- **Single Fold2 Weak-6 최고: Exp11B DINOv2-Base + Head768 — 0.905357**
+- **Single Fold2 Macro AUC 최고: 전체 MRI의 모든 슬라이스 특징을 질환별로 통합해 직접 예측 (Exp16B-2) — 0.954167**
+- **Single Fold2 Weak-6 최고: 환자별 중요 영상 24개 + 기존 무릎 MRI 학습 가중치를 이어받아 재학습 (Exp16B-3A) — 0.932738**
 - 최근 Fold2 screening:
   - Exp1A Last4: 0.818585
   - Exp1B Full fine-tuning: 0.884127
@@ -2471,3 +2471,230 @@ Exp11B의 모델 / 해상도 / Wide9 입력 / optimizer / loss / Fold2 validatio
 - Master Label v2 Final은 report-only 4,349 studies에 대해 **0.90×Hybrid + 0.10×Yunus** fixed fusion을 사용하며 Gold Macro AUC **0.901731**을 재현했다. 다음 controlled experiment는 Exp11B Base+Head768를 그대로 두고 supervision만 V4 → Master Label v2로 교체한다.
 - Exp14A에서 Master Label v2를 실제 training supervision으로 적용했을 때 Fold2 Macro **0.889087 / Weak-6 0.826984 / Public LB 0.862**로 Exp11B 0.872보다 하락했다. Master Label v2 전체 승격은 **REJECT**하며, 다음에는 soft label과 confidence weighting 효과를 분리해 검증한다.
 - Exp14B frozen-feature MIL9 probe는 Fold2 Macro **0.818254**였고 slice attention이 대부분 약 1/9 수준으로 거의 균등해 class-specific individual-slice selector 학습이 충분하지 않았다. 다음 selector 단계는 strong task model 기반 perturbation/masking audit로 전환한다.
+
+
+---
+
+## Experiment 44 — 강한 기존 모델을 이용한 슬라이스 중요도 교란 분석 (Exp15B)
+
+### 목적
+고정된 9개 슬라이스 위치를 그대로 늘리는 대신, 이미 성능이 검증된 DINOv2-Base 무릎 MRI 모델이 실제로 어떤 위치의 영상에 의존하는지 확인했다.
+
+### 구성
+- 기준 모델: 기존 DINOv2-Base + Head768 Fold2 모델
+- 입력: 기존 6개 MRI 구역 × 구역당 9개 슬라이스
+- 각 슬라이스 위치를 가리거나 교란했을 때 12개 질환 예측이 얼마나 변하는지 측정
+- 질환별 중요도와 환자별 중요도 차이를 함께 분석
+
+### 결과
+- 기준 Fold2 Macro AUC 재현: **0.942758**
+- 질환별 중요도 패턴은 완전히 동일하지 않았고, 환자별로도 중요한 슬라이스 위치가 달라졌다.
+- 고정된 위치를 모든 환자에게 동일하게 적용하는 것보다, 환자별로 중요한 영상을 선택하는 방식이 필요하다는 근거를 얻었다.
+
+### 인사이트
+- 이후 실험에서는 기존 9개 위치를 고정하지 않고 **전체 MRI 슬라이스를 후보로 확장**한다.
+- 단순히 슬라이스 수를 늘리는 방식이 아니라, 학습된 중요도를 이용해 환자별로 필요한 영상을 선택하는 방향으로 전환한다.
+
+---
+
+## Experiment 45 — 전체 MRI의 모든 슬라이스를 기존 무릎 MRI 모델로 특징 추출 (Exp16B-1)
+
+### 목적
+환자별 중요 영상 선택 모델을 학습하기 위해, 기존 9개 슬라이스만 보던 입력을 전체 MRI series의 모든 슬라이스로 확장했다.
+
+### 구성
+- 전체 train study: **4,407**
+- 전체 MRI series: **24,371**
+- 전체 3-slice window 후보: **819,078**
+- 각 window는 이전/현재/다음 슬라이스를 RGB 3채널처럼 구성
+- 기존 Exp11B에서 무릎 MRI에 맞게 학습된 DINOv2-Base backbone으로 특징 추출
+- 특징 표현: CLS token + patch mean = **1536차원**
+- 원본 DICOM의 slope/intercept, MONOCHROME1, 130 mm crop, 좌우 방향 정규화 적용
+
+### 결과
+- 4,407 study / 24,371 series / 819,078 window 처리 완료
+- Decode error: **0**
+- 전체 특징 캐시 생성 성공
+
+### 인사이트
+- 이후 모델이 제한된 9개 위치가 아니라 **전체 MRI에서 질환별로 중요한 위치를 학습**할 수 있는 기반을 만들었다.
+
+---
+
+## Experiment 46 — 전체 MRI 특징을 계층적으로 통합해 12개 질환을 직접 예측 (Exp16B-2)
+
+### 목적
+전체 MRI의 모든 슬라이스 특징을 사용해, 같은 series 안에서 중요한 영상과 여러 series 중 중요한 series를 질환별로 학습하는 모델을 검증했다.
+
+### 구성
+- 입력: Experiment 45에서 생성한 전체 MRI 특징
+- 같은 series 안에서 질환별 window attention 학습
+- 여러 series 사이에서 질환별 series attention 학습
+- 최종적으로 12개 질환을 직접 예측
+- 학습: Gold 47 + pseudo 4,349
+- 검증: Fold2 Gold 11
+
+### Fold2 결과
+- **Macro ROC-AUC: 0.954167**
+- **Weak-6 Macro AUC: 0.915278**
+
+### 인사이트
+- 기존 고정 9-slice DINOv2-Base 모델의 Fold2 Macro 0.942758보다 상승했다.
+- 전체 MRI에서 학습된 중요도 정보를 이용해 환자별 입력을 선택할 가치가 확인됐다.
+- 이 모델의 attention을 다음 단계의 환자별 중요 영상 선택에 사용한다.
+
+---
+
+## Experiment 47 — 전체 MRI에서 환자별 중요 영상 24개 선택 및 이미지 캐시 생성 (Exp16B-2.5)
+
+### 목적
+Experiment 46에서 학습한 질환별 중요도를 이용해 각 환자의 전체 MRI 중 최종 이미지 모델이 볼 **24개 3-slice window**를 선택했다.
+
+### 선택 방식
+- 모든 series / 모든 slice를 후보로 사용
+- 12개 질환의 joint attention 중 가장 큰 값을 해당 window의 중요도 점수로 사용
+- 같은 series에서 지나치게 인접한 영상을 반복 선택하지 않도록 center 간격 3 이상 적용
+- 환자별 Top-24 선택
+
+### 결과
+- 전체 train study **4,407명 모두 Top-24 선택 완료**
+- 평균 선택 series 수: **5.48**
+- 평균 attention coverage: **0.8211**
+- Decode error: **0**
+- 최종 이미지 캐시: **[4407, 24, 3, 224, 224] uint8**
+
+### 인사이트
+- 모든 환자에게 같은 위치를 보여주는 대신, **환자마다 전체 MRI에서 중요한 24개 영상을 다르게 선택**하는 입력 체계를 구축했다.
+
+---
+
+## Experiment 48 — 전체 MRI에서 환자별 중요 영상 24개를 선택한 뒤 기존 무릎 MRI 학습 가중치를 이어받아 재학습 (Exp16B-3A)
+
+### 목적
+환자별로 선택된 24개 실제 MRI 영상을 사용해 DINOv2 backbone부터 최종 질환 예측부까지 다시 학습했다.
+기존에 무릎 MRI를 학습한 가중치를 이어받는 것이 실제 일반화에 도움이 되는지 확인했다.
+
+### 구성
+- 입력: Experiment 47에서 환자별로 선택한 Top-24 3-slice windows
+- Backbone: DINOv2-Base
+- Backbone 초기값: **기존 Exp11B에서 무릎 MRI로 학습된 가중치**
+- 여러 영상과 series를 통합하는 계층적 attention 예측부 초기값: **Experiment 46에서 학습된 가중치**
+- Backbone과 최종 예측부를 함께 end-to-end fine-tuning
+- Physical batch: 4
+- Gradient accumulation: 1
+- 학습: Gold 47 + pseudo 4,349
+- 검증: Fold2 Gold 11
+
+### Fold2 결과
+- **Macro ROC-AUC: 0.953472**
+- **Weak-6 Macro AUC: 0.932738**
+- Best checkpoint: epoch 4 / step 828 / optimizer update 4,125
+
+### Target별 AUC
+- ACL: 1.000000
+- MCL: 1.000000
+- Medial Meniscus: 0.964286
+- Lateral Meniscus: 0.928571
+- Medial OA: 0.916667
+- Lateral OA: 1.000000
+- PF OA: 0.928571
+- Effusion: 0.928571
+- Synovitis: 0.900000
+- Baker's: 1.000000
+- Contusion: 1.000000
+- Fracture: 0.875000
+
+### Hidden-test 제출 방식
+hidden test에서도 train의 선택 위치를 재사용하지 않는다.
+
+```text
+hidden test 전체 MRI
+→ 기존 무릎 MRI DINOv2 모델로 모든 slice 특징 추출
+→ 전체 MRI 특징 통합 모델이 환자별 중요도 계산
+→ 환자별 Top-24 영상 선택
+→ 본 실험의 최종 이미지 모델이 12개 질환 예측
+```
+
+### Public LB 결과
+- **Public LB: 0.907**
+- 기존 최고 Exp10A 5-Fold 0.873 대비: **+0.034**
+- Exp11B DINOv2-Base Fold2 single 0.872 대비: **+0.035**
+
+### 인사이트
+- **현재 프로젝트 Public LB 최고 기록을 0.873 → 0.907로 갱신했다.**
+- 고정된 위치의 영상을 보는 방식보다, 전체 MRI에서 환자별 중요 영상을 선택한 뒤 예측하는 방식이 hidden test에서도 크게 개선됐다.
+- 특히 Weak-6가 0.932738까지 상승해 기존에 어려웠던 질환군에서도 개선 신호가 확인됐다.
+- 앞으로의 주력 방향은 환자별 중요 영상 선택 기반 파이프라인으로 전환한다.
+
+---
+
+## Experiment 49 — 동일한 환자별 중요 영상 24개를 사용하되 일반 DINOv2부터 새로 학습 (Exp16B-3B)
+
+### 목적
+Experiment 48의 성능 향상이 환자별 Top-24 입력 자체에서 오는지, 기존 무릎 MRI 학습 가중치를 이어받은 효과가 큰지 분리해서 확인했다.
+
+### 동일 조건
+- 환자별 Top-24 입력은 Experiment 48과 동일
+- DINOv2-Base 구조 동일
+- 여러 영상과 series를 통합하는 계층적 attention 구조 동일
+- Fold2 split / pseudo-label / optimizer / learning rate / batch 동일
+
+### 변경 조건
+- Backbone 초기값: **일반 pretrained DINOv2-Base**
+- 기존 Exp11B 무릎 MRI 가중치 사용 안 함
+- 계층적 attention 예측부: **새 랜덤 초기화**
+- Experiment 46의 학습된 예측부 가중치 사용 안 함
+
+### Fold2 결과
+- **Macro ROC-AUC: 0.924702**
+- **Weak-6 Macro AUC: 0.879960**
+- Best checkpoint: epoch 6 / epoch-end / optimizer update 6,594
+
+### Target별 AUC
+- ACL: 0.900000
+- MCL: 1.000000
+- Medial Meniscus: 0.964286
+- Lateral Meniscus: 0.642857
+- Medial OA: 0.916667
+- Lateral OA: 1.000000
+- PF OA: 0.964286
+- Effusion: 1.000000
+- Synovitis: 0.833333
+- Baker's: 1.000000
+- Contusion: 1.000000
+- Fracture: 0.875000
+
+### Public LB 결과
+- **Public LB: 0.903**
+- Experiment 48의 기존 무릎 MRI 가중치 이어받기 0.907 대비: **-0.004**
+- 기존 Exp10A 5-Fold 0.873 대비: **+0.030**
+
+### 인사이트
+- 기존 무릎 MRI 학습 가중치를 사용하지 않아도 환자별 Top-24 입력만으로 Public LB가 0.903까지 올라갔다.
+- 따라서 **환자별 중요 영상 선택 자체가 큰 성능 향상의 핵심 요인**이라는 근거가 강해졌다.
+- 다만 기존 무릎 MRI 학습 가중치를 이어받은 모델이 0.907로 0.004 더 높아, 현재 최종 기준은 Experiment 48을 유지한다.
+- Fold2 내부에서는 두 모델 차이가 크게 보였지만 Public LB 차이는 0.004에 그쳐, 11명 Fold2 validation의 변동성이 크다는 점을 다시 확인했다.
+
+---
+
+## 최근 핵심 실험 요약
+
+| 실험 | 무엇을 했는가 | Fold2 Macro AUC | Weak-6 AUC | Public LB |
+|---|---|---:|---:|---:|
+| Exp11B | 고정된 6개 MRI 구역에서 각 9개 슬라이스를 사용한 DINOv2-Base 모델 | 0.942758 | 0.905357 | 0.872 |
+| Exp16B-2 | 전체 MRI 모든 슬라이스 특징을 질환별로 통합해 직접 예측 | **0.954167** | 0.915278 | - |
+| Exp16B-3A | 환자별 중요 영상 24개 + 기존 무릎 MRI 학습 가중치를 이어받아 전체 모델 재학습 | 0.953472 | **0.932738** | **0.907** |
+| Exp16B-3B | 동일한 환자별 중요 영상 24개 + 일반 pretrained DINOv2부터 새로 학습 | 0.924702 | 0.879960 | **0.903** |
+
+### 현재 결론
+- **Public LB 최고: 0.907**
+- 현재 최고 방식: **전체 MRI에서 환자별 중요 영상 24개를 선택한 뒤, 기존 무릎 MRI 학습 가중치를 이어받아 최종 이미지 모델을 재학습**
+- 기존 고정 위치 입력 방식의 최고 0.873보다 **+0.034**
+- 동일 Top-24를 사용한 clean-start 모델도 0.903으로 높아, 성능 향상의 핵심은 환자별 중요 영상 선택에 있는 것으로 보인다.
+- 기존 무릎 MRI 학습 가중치를 이어받는 방식은 추가로 약 **+0.004 Public LB** 이득을 보였다.
+
+### 다음 검증 후보
+1. 전체 MRI의 모든 슬라이스 특징을 통합하는 Experiment 46 모델을 hidden test에 직접 적용해 Public LB 확인
+2. 현재 최고 Top-24 이미지 모델과 전체 MRI 특징 모델의 예측 앙상블
+3. 선택 영상 수 16 / 24 / 32 비교
+4. 현재 최고 환자별 중요 영상 선택 방식을 Fold 0~4로 확장해 5-Fold ensemble 검증
