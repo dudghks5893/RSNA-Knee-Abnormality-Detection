@@ -355,6 +355,49 @@ Fold1 checkpoint
 ```
 
 
+
+## 현재 진행 — Exp53A / Exp53B
+
+Exp52A / Exp52B backbone 확보 후 다음 병렬 단계로 진입.
+
+### Exp53A — Fold0 전체 MRI feature 생성
+
+- source checkpoint:
+  `rsna_knee_exp52a_fold0_tasktuned_dinov2_base_head768_fold0_best.bin`
+- 전체 4,407 studies / 24,371 series / 819,078 windows
+- output feature: CLS + patch mean = 1536-d float16
+- full-series 1–99 percentile normalization
+- recommended output Dataset:
+  `rsna-knee-exp53a-fold0-full-data-features-v1`
+
+### Exp53B — Fold1 전체 MRI feature 생성
+
+- source checkpoint:
+  `rsna_knee_exp52b_fold1_tasktuned_dinov2_base_head768_fold1_best.bin`
+- 전체 4,407 studies / 24,371 series / 819,078 windows
+- output feature: CLS + patch mean = 1536-d float16
+- full-series 1–99 percentile normalization
+- recommended output Dataset:
+  `rsna-knee-exp53b-fold1-full-data-features-v1`
+
+두 Notebook 모두:
+
+- T4 ×2
+- Internet Off
+- feature extraction only
+- total sec / sec-per-study / GPU peak memory 기록
+- decode error 0을 다음 단계 진입 조건으로 확인
+
+다음:
+
+```text
+Exp53A/B 완료
+→ Exp54A/B fresh full-MRI hierarchical MIL
+→ direct prediction + target importance
+→ Fold0/1 Top-24 생성
+```
+
+
 # 7. 단계 1 의사결정
 
 Fold0 / 1 / 2가 거의 같은 사진만 고르더라도
