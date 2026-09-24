@@ -2,6 +2,10 @@
 
 **Competition:** [RSNA Knee Abnormality Detection](https://www.kaggle.com/competitions/rsna-knee-abnormality-detection)
 
+> **현재 실험 상태 / 데이터 계보 / 다음 로드맵:** [docs/CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md](docs/CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md)  
+> 채팅이 바뀌어도 동일한 설정으로 이어가기 위한 기준 문서입니다.
+
+
 ---
 
 ## Experiment 01 — 초기 V1.1 Submission
