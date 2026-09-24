@@ -199,6 +199,7 @@ A3. Fold0용 fresh full-MRI hierarchical MIL 학습
 A4. Fold0 full-MRI direct validation 기록
 A5. Fold0 selector importance 생성
 A6. 전체 4,407 study에 Fold0 Top-24 생성
+A7. Fold0 Top-24로 Fold0 B3A 최종 모델 학습
 ```
 
 ### B 레인 — Fold1
@@ -210,10 +211,11 @@ B3. Fold1용 fresh full-MRI hierarchical MIL 학습
 B4. Fold1 full-MRI direct validation 기록
 B5. Fold1 selector importance 생성
 B6. 전체 4,407 study에 Fold1 Top-24 생성
+B7. Fold1 Top-24로 Fold1 B3A 최종 모델 학습
 ```
 
 Fold2는 이미 존재하므로,
-단계 1이 끝나면 **Fold0 / Fold1 / Fold2 세 selector**를 비교할 수 있다.
+단계 1이 끝나면 **Fold0 / Fold1 / Fold2 세 selector와 세 최종 B3A 모델**을 비교할 수 있다.
 
 ### 단계 1 체크포인트
 
@@ -238,6 +240,50 @@ train study에서 여러 selector를 비교하면
 일부 selector는 그 study를 학습에서 본 상태다.
 따라서 Top-24 overlap은 **선택 다양성 진단용**이지
 엄격한 OOF 성능 지표로 해석하지 않는다.
+
+### 단계 1 중간 제출 — 3-Fold 앙상블
+
+Fold0 / Fold1이 완성되는 즉시 Fold2와 묶어
+5-Fold 전체가 끝나기 전에 **3-Fold 중간 Public LB**를 확인한다.
+
+#### 3-Fold full-MRI direct ensemble
+
+Fold0 / 1의 full-MRI MIL이 학습되는 순간 가능하다.
+
+```text
+Fold0 full-MRI direct
+Fold1 full-MRI direct
+Fold2 full-MRI direct
+        ↓
+       1/3 평균
+```
+
+목적:
+
+- full-MRI branch가 Fold 확장으로 실제 안정화되는지 빠르게 확인
+- Fold3 / 4까지 확장할 가치 판단
+
+#### 3-Fold B3A ensemble
+
+Fold0 / 1의 Top-24 최종 B3A까지 학습되면 제출한다.
+
+```text
+Fold0 selector → Fold0 Top-24 → Fold0 B3A ┐
+Fold1 selector → Fold1 Top-24 → Fold1 B3A ├→ 1/3 평균
+Fold2 selector → Fold2 Top-24 → Fold2 B3A ┘
+```
+
+목적:
+
+- 현재 Fold2 단일 B3A **0.907**을
+  Fold0 / 1과의 평균이 넘어서는지 조기 확인
+- 5-Fold 완성 전에 fold diversity의 실제 Public LB 이득 확인
+
+처음에는 세 Fold를 **동일 가중치 1/3**로 사용한다.
+
+필요하면 두 3-Fold 결과가 모두 강할 때만
+3-Fold B3A + 3-Fold full-MRI direct의 단순 hybrid ensemble을 추가 확인한다.
+제출 횟수를 불필요하게 소모하지 않는다.
 
 ---
 
@@ -333,15 +379,17 @@ Fold f full-MRI MIL
 
 ### 병렬 실행
 
+Fold0 / Fold1 B3A는 3-Fold 중간 제출을 위해 단계 1에서 이미 학습한다.
+
+이 단계에서는:
+
 #### A 레인
-- Fold0 B3A
-- 완료 후 Fold3 B3A
+- Fold3 B3A
 
 #### B 레인
-- Fold1 B3A
-- 완료 후 Fold4 B3A
+- Fold4 B3A
 
-Fold2 B3A는 이미 완료되어 있다.
+Fold2 B3A는 기존 모델을 사용한다.
 
 ---
 
@@ -480,23 +528,87 @@ validation study 정보가 selection 단계에 섞일 수 있다.
 
 그래서 Consensus Top-24는 **5-Fold 독립 파이프라인보다 뒤에 있는 별도 연구 실험**으로 둔다.
 
-초기에는:
+하지만 Consensus Top-24를 단순 분석으로 끝내지는 않는다.
+선택 방식이 유의미하면 **그 24개를 실제 입력으로 사용하는 전용 최종 이미지 모델도 학습한다.**
 
-- selection 안정성 분석
-- hidden/visible test에서의 consensus 구조 확인
+개념적으로는 현재 B3A와 동일하다.
 
-용도로 사용한다.
+```text
+현재 B3A
+Fold2 selector가 고른 Top-24
+→ raw-image DINOv2 + hierarchical MIL 재학습
 
-Consensus 전용 최종 모델을 실제 주력 모델로 만들려면
-별도의 leakage-safe 학습 설계를 먼저 확정해야 한다.
+후속 Consensus 모델
+5개 selector 의견을 합친 Consensus Top-24
+→ raw-image DINOv2 + hierarchical MIL 재학습
+```
 
-가능한 후속 방법:
+즉 질문은:
 
-- outer Fold마다 같은 validation Fold를 제외하고 학습한 여러 selector seed를 만들어 consensus
-- 또는 selector용 추가 inner-fold / repeated-fold 구조 사용
+> “한 Fold가 고른 24장보다 여러 Fold가 공통적으로 높게 평가한 24장만 보여주면
+> 최종 이미지 모델이 더 강해지는가?”
+
+를 직접 검증한다.
+
+다만 학습용 Consensus Top-24 생성에는 leakage 문제가 있으므로
+다음 두 단계로 진행한다.
+
+### 1차 실용 실험 — OOF-selected training + Consensus hidden-test
+
+각 train study는 **자기 study를 보지 않은 held-out Fold selector**가 고른 Top-24를 사용해
+OOF Top-24 training cache를 만든다.
+
+```text
+Fold0 study → Fold0 selector가 선택
+Fold1 study → Fold1 selector가 선택
+...
+Fold4 study → Fold4 selector가 선택
+```
+
+이렇게 만든 4,407 study OOF Top-24로
+새 최종 이미지 모델을 학습한다.
+
+hidden test에서는 정답/학습 노출이 없으므로
+5개 selector의 normalized-rank consensus로
+Consensus Top-24를 만든 뒤 이 최종 모델에 넣는다.
+
+장점:
+
+- train selection은 각 study에 대해 leakage-free
+- 기존 5개 selector를 그대로 활용 가능
+- 추가 selector 학습 없이 빠르게 검증 가능
+
+주의:
+
+- train은 single OOF selector Top-24,
+  hidden test는 5-selector Consensus Top-24이므로
+  selection distribution이 완전히 같지는 않다.
+- 따라서 첫 실용 검증으로 사용한다.
+
+### 2차 엄격 실험 — Consensus-trained final model
+
+1차 실험에서 신호가 좋으면
+각 outer Fold validation을 보지 않은 **여러 selector replica / seed**를 만들어
+그 Fold에 대해 leakage-free consensus를 생성한다.
+
+예:
+
+```text
+Outer Fold2 validation
+→ Fold2 validation을 전혀 보지 않은 selector seed A
+→ Fold2 validation을 전혀 보지 않은 selector seed B
+→ Fold2 validation을 전혀 보지 않은 selector seed C
+→ 세 의견 consensus
+→ Fold2 validation Consensus Top-24
+```
+
+필요하면 inner-fold / repeated-fold 구조로 확장한다.
+
+이렇게 하면 학습/검증에서도
+“여러 독립 selector의 합의로 고른 Top-24”라는 조건을 더 정확하게 재현할 수 있다.
 
 비용이 크므로
-5-Fold 독립 파이프라인 성능을 확인한 뒤 결정한다.
+**5-Fold 독립 B3A와 1차 Consensus 모델의 결과를 확인한 뒤** 진행한다.
 
 ---
 
@@ -604,21 +716,20 @@ GPU1 → 가능한 final-model 계산
 B3A 0.907 + B2 direct 0.904 → 70:30 ensemble LB 대기
 
 [1차 병렬]
-A: Fold0 backbone → full MRI feature → MIL → Top-24
-B: Fold1 backbone → full MRI feature → MIL → Top-24
+A: Fold0 backbone → full MRI feature → MIL → Top-24 → Fold0 B3A
+B: Fold1 backbone → full MRI feature → MIL → Top-24 → Fold1 B3A
+
+[중간 제출]
+3-Fold full-MRI direct equal ensemble (Fold0/1/2)
+3-Fold B3A equal ensemble (Fold0/1/2)
 
 [체크]
 Fold0 / Fold1 / Fold2 selector 비교
 + CV / direct prediction / 시간 측정
 
 [2차 병렬]
-A: Fold3 backbone → full MRI feature → MIL → Top-24
-B: Fold4 backbone → full MRI feature → MIL → Top-24
-
-[최종 모델 병렬]
-A: Fold0 B3A → Fold3 B3A
-B: Fold1 B3A → Fold4 B3A
-Fold2 B3A는 기존 모델 사용
+A: Fold3 backbone → full MRI feature → MIL → Top-24 → Fold3 B3A
+B: Fold4 backbone → full MRI feature → MIL → Top-24 → Fold4 B3A
 
 [1차 최종 제출]
 5-Fold B3A equal ensemble
@@ -629,10 +740,12 @@ Fold2 B3A는 기존 모델 사용
 [최종 ensemble 후보]
 5-Fold B3A + 5-Fold full-MRI direct
 
-[연구 실험]
+[Consensus 실험]
 5-Fold importance 분석
 → Consensus Top-24
-→ leakage-safe 학습법 확정 후 전용 최종 모델 검증
+→ OOF-selected Top-24로 1차 전용 최종 모델 학습
+→ hidden test는 5-selector Consensus Top-24 사용
+→ 신호가 좋으면 multi-seed / inner-fold 기반 엄격한 Consensus-trained 모델
 
 [마지막]
 Top-16 / Top-24 / Top-32
