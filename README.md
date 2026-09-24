@@ -2755,7 +2755,9 @@ Top-24 선택, NMS, B3A/B3B 최종 모델은 사용하지 않았다.
 ### 다음 검증 순서
 1. **현재 최고 Top-24 warm-start 모델(0.907) + 전체 MRI 직접 예측 모델(0.904) 확률 앙상블**
 2. 현재 최고 B3A backbone으로 전체 MRI feature를 다시 생성
-3. 새 feature 공간에서 전체 MRI 중요 영상 선택 모델을 다시 학습하고 기존 selector와 비교
-4. 새 selector가 유효하면 전체 4,407 study의 Top-24를 다시 생성하고 최종 이미지 모델 재학습
-5. 그 다음 Top-16 / Top-24 / Top-32 비교
-6. 구조 확정 후 최종 5-Fold 학습 + ensemble
+3. 새 feature 공간에서 full-MRI 계층적 MIL을 다시 학습하고 기존 모델과 비교
+4. 새 full-MRI MIL이 유효하면 **standalone Public LB를 먼저 확인**해 B3A feature 자체의 효과를 분리
+5. 그 다음 기존 selector와 새 selector의 Top-24 overlap / 선택 Series / attention coverage 비교
+6. 새 selector가 유효하면 전체 4,407 study의 Top-24를 다시 생성하고 최종 이미지 모델 재학습
+7. 그 다음 Top-16 / Top-24 / Top-32 비교
+8. 구조 확정 후 최종 5-Fold 학습 + ensemble
