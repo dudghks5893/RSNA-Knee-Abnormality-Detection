@@ -314,6 +314,29 @@ Exp51이 0.913으로 개선됐으므로
 ---
 
 
+
+## Exp53A / Exp53B 완료 — Fold0 / Fold1 전체 MRI feature cache
+
+- Exp53A Fold0: 819,078 windows / decode error 0 / 200.44 min / PASS
+- Exp53B Fold1: 819,078 windows / decode error 0 / 241.14 min / PASS
+- 두 cache 모두 4,407 studies / 24,371 series / 1536-d float16 계약 유지
+- Fold별 feature cache는 이후 MIL 단계에서 서로 섞지 않음
+
+다음 병렬 단계:
+
+```text
+Exp54A
+Fold0 Exp53A features
+→ fresh full-MRI hierarchical MIL
+→ Fold0 direct prediction + importance
+
+Exp54B
+Fold1 Exp53B features
+→ fresh full-MRI hierarchical MIL
+→ Fold1 direct prediction + importance
+```
+
+
 ## 단계 1 결과 — Exp52A / Exp52B backbone 완료
 
 ### Exp52A Fold0
