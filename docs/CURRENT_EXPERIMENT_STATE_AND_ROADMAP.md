@@ -711,6 +711,44 @@ Target AUC:
 
 ---
 
+
+## Exp53A / Exp53B — Fold0 / Fold1 전체 MRI feature cache 생성 완료
+
+### Exp53A — Fold0
+- Source backbone: Exp52A Fold0
+- Studies: **4,407**
+- Series: **24,371**
+- 3-slice windows: **819,078**
+- Feature: **CLS 768 + PatchMean 768 = 1536**
+- dtype: **float16**
+- Decode errors: **0**
+- Runtime: **200.44 min**
+- Seconds/study: **2.729**
+- Output size: **2.546 GiB**
+- 상태: **PASS**
+
+### Exp53B — Fold1
+- Source backbone: Exp52B Fold1
+- Studies: **4,407**
+- Series: **24,371**
+- 3-slice windows: **819,078**
+- Feature: **CLS 768 + PatchMean 768 = 1536**
+- dtype: **float16**
+- Decode errors: **0**
+- Runtime: **241.14 min**
+- Seconds/study: **3.283**
+- Output size: **2.546 GiB**
+- 상태: **PASS**
+
+두 Fold 모두 동일한 full-series 전처리 계약을 유지했고,
+Fold별 feature space를 서로 섞지 않는다.
+
+다음:
+- **Exp54A:** Fold0 fresh full-MRI hierarchical MIL
+- **Exp54B:** Fold1 fresh full-MRI hierarchical MIL
+
+---
+
 # 10.5. 2026-09-25 최종 5-Fold / A-B 병렬 실행 설계 확정
 
 상세 설계는 다음 문서를 우선 기준으로 사용한다.
