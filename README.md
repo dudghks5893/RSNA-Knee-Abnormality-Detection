@@ -2787,6 +2787,17 @@ Top-24 선택, NMS, B3A/B3B 최종 모델은 사용하지 않았다.
 
 ---
 
+
+## Experiment 53A / 53B — Fold0 / Fold1 전체 MRI feature cache
+
+- **Exp53A Fold0:** 4,407 studies / 24,371 series / 819,078 windows / decode error 0 / **200.44 min**
+- **Exp53B Fold1:** 4,407 studies / 24,371 series / 819,078 windows / decode error 0 / **241.14 min**
+- Feature는 Fold별 task-tuned DINOv2-Base에서 추출한 **1536-d float16**
+- 두 Fold 모두 full-series 1–99 percentile normalization 및 동일한 laterality/window 계약 유지
+- 다음 단계는 Fold별 fresh full-MRI hierarchical MIL 학습(Exp54A/B)
+
+---
+
 ## 최근 핵심 실험 요약
 
 | 실험 | 무엇을 했는가 | Fold2 Macro AUC | Weak-6 AUC | Public LB |
