@@ -1,6 +1,6 @@
 # RSNA Knee Abnormality Detection — 5-Fold 최종 실험 / A-B 병렬 실행 설계
 
-최종 업데이트: **2026-09-25**
+최종 업데이트: **2026-09-27**
 
 이 문서는 현재 최고 성능 파이프라인을 5-Fold로 확장하고,
 환자별 중요 MRI 선택을 더 안정화하기 위한 **최종 실험 설계 기준 문서**다.
@@ -419,6 +419,24 @@ Exp53A/B 완료
 → direct prediction + target importance
 → Fold0/1 Top-24 생성
 ```
+
+
+
+## 단계 1 추가 결과 — Exp54A / Exp54B full-MRI MIL
+
+| 실험 | Fold | Same-fold Wide9 Macro / Weak-6 | full-MRI MIL Macro / Weak-6 | 판정 |
+|---|---:|---:|---:|---|
+| Exp54A | 0 | 0.830886 / 0.788029 | **0.797553 / 0.737434** | Top-24 selector 단계까지 진행 |
+| Exp54B | 1 | 0.885819 / 0.902927 | **0.872473 / 0.861806** | Top-24 selector 단계까지 진행 |
+| Exp16B-2 | 2 | 0.942758 / 0.905357 | **0.954167 / 0.915278** | 기존 강한 reference |
+
+중요:
+
+- Fold0/1 direct validation은 같은 Fold Wide9보다 하락했다.
+- 이를 이유로 Fold0/1 lineage 전체를 중단하지 않는다.
+- 작은 Gold validation과 selector/direct 역할 차이를 고려해,
+  **각 Fold MIL이 고른 Top-24를 실제 raw-image B3A가 얼마나 활용하는지**까지 확인한다.
+- 다음은 Exp55A/B로 각 Fold 전체 4,407 study의 Top-24 cache를 생성한다.
 
 
 # 7. 단계 1 의사결정
