@@ -810,6 +810,55 @@ Fold별 feature space를 서로 섞지 않는다.
 
 ---
 
+
+## Exp55A / Exp55B — Fold별 Top-24 선택 + Persistent Image Cache 완료
+
+### Exp55A — Fold0
+
+- selector: Exp54A Fold0 full-MRI MIL
+- 후보 window: 819,078
+- study: 4,407
+- Top-K: 24
+- NMS: same-series center gap >= 3
+- selected series mean / median: **5.4786 / 5**
+- NMS fallback total: **12**
+- expanded attention coverage mean / median: **0.8060 / 0.8230**
+- cache shape: **[4407, 24, 3, 224, 224] uint8**
+- decode errors: **0**
+- cache build: **107.51 min**
+- output size: **14.839 GiB**
+- status: **PASS**
+
+### Exp55B — Fold1
+
+- selector: Exp54B Fold1 full-MRI MIL
+- 후보 window: 819,078
+- study: 4,407
+- Top-K: 24
+- NMS: same-series center gap >= 3
+- selected series mean / median: **5.5022 / 5**
+- NMS fallback total: **19**
+- expanded attention coverage mean / median: **0.8436 / 0.8572**
+- cache shape: **[4407, 24, 3, 224, 224] uint8**
+- decode errors: **0**
+- cache build: **105.29 min**
+- output size: **14.839 GiB**
+- status: **PASS**
+
+해석:
+
+- Fold0/1 모두 각자의 backbone → full-MRI feature → MIL → Top-24로 독립 lineage를 유지했다.
+- selected-series 분포는 기존 Fold2와 유사하지만 attention coverage는 Fold별 차이가 있다.
+- selector validation AUC가 Fold2보다 낮았어도 Top-24 final model 성능과 동일한 의미는 아니므로
+  다음 단계에서 raw-image end-to-end B3A 성능을 확인한다.
+
+다음:
+
+- **Exp56A:** Fold0 Top-24 + Fold0 backbone/MIL warm-start 최종 모델
+- **Exp56B:** Fold1 Top-24 + Fold1 backbone/MIL warm-start 최종 모델
+
+---
+
 # 10.5. 2026-09-25 최종 5-Fold / A-B 병렬 실행 설계 확정
 
 상세 설계는 다음 문서를 우선 기준으로 사용한다.
