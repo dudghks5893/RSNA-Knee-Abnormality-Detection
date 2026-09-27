@@ -439,6 +439,32 @@ Exp53A/B 완료
 - 다음은 Exp55A/B로 각 Fold 전체 4,407 study의 Top-24 cache를 생성한다.
 
 
+
+## 단계 1 Top-24 결과 — Exp55A / Exp55B
+
+Fold0 / Fold1 모두 Fold별 selector로 전체 4,407 study의 Top-24를 정상 생성했다.
+
+- Exp55A Fold0: selected series mean 5.4786, fallback 12, coverage mean 0.8060, decode 0
+- Exp55B Fold1: selected series mean 5.5022, fallback 19, coverage mean 0.8436, decode 0
+- 두 cache 모두 [4407,24,3,224,224] uint8, 약 14.839 GiB
+
+다음 병렬 실행:
+
+```text
+Exp56A
+Fold0 Top24
++ Exp52A Fold0 task backbone
++ Exp54A Fold0 MIL head
+→ Fold0 B3A final raw-image model
+
+Exp56B
+Fold1 Top24
++ Exp52B Fold1 task backbone
++ Exp54B Fold1 MIL head
+→ Fold1 B3A final raw-image model
+```
+
+
 # 7. 단계 1 의사결정
 
 Fold0 / 1 / 2가 거의 같은 사진만 고르더라도
