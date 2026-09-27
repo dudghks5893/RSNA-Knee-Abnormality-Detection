@@ -2859,3 +2859,25 @@ Top-24 선택, NMS, B3A/B3B 최종 모델은 사용하지 않았다.
 6. 새 selector가 유효하면 전체 4,407 study의 Top-24를 다시 생성하고 최종 이미지 모델 재학습
 7. 그 다음 Top-16 / Top-24 / Top-32 비교
 8. 구조 확정 후 최종 5-Fold 학습 + ensemble
+
+
+---
+
+## Experiment 56A / 56B — Fold0 / Fold1 Top-24 final B3A
+
+- Exp56A Fold0: Macro **0.824735**, Weak-6 **0.738095**
+- Exp56B Fold1: Macro **0.897401**, Weak-6 **0.914054**
+- Fold0/1/2의 독립적인 selector → Top-24 → final B3A 계보 구축 완료
+
+## Experiment 57 — 3-Fold 70:30 Hybrid
+
+- 3-Fold B3A 평균 70%
+- 3-Fold full-MRI direct 평균 30%
+- Fold2에서 0.913을 만든 비율을 3-Fold로 바로 확장
+- branch prediction은 별도 저장해 이후 blend ratio를 저비용으로 변경 가능
+
+## Experiment 58A — Fold2 Top-K sensitivity screen
+
+- K = 16 / 20 / 24 / 28 / 32
+- 기존 K24-trained B3A로 빠르게 screening
+- 신호가 있는 K만 실제 cache / final model 재학습
