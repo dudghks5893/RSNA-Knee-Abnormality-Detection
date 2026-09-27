@@ -1307,3 +1307,62 @@ hidden test에서도
 
 앙상블 확인 후에는 로드맵 **3번:
 B3A backbone으로 전체 MRI feature 재생성**으로 넘어간다.
+
+
+---
+
+
+## Exp56A / Exp56B — Fold0 / Fold1 전용 Top-24 최종 B3A 완료
+
+### Exp56A — Fold0
+- Top-24: Exp55A Fold0 selector
+- Backbone init: Exp52A Fold0
+- MIL init: Exp54A Fold0
+- Best: epoch 2 / step 826 / validation event 8
+- Macro AUC: **0.824735**
+- Weak-6 AUC: **0.738095**
+- 상태: PASS
+
+### Exp56B — Fold1
+- Top-24: Exp55B Fold1 selector
+- Backbone init: Exp52B Fold1
+- MIL init: Exp54B Fold1
+- Best: epoch 7 / step 6 / validation event 30
+- Macro AUC: **0.897401**
+- Weak-6 AUC: **0.914054**
+- 상태: PASS
+
+해석:
+- Fold1은 Top-24 end-to-end refinement에서 Exp52B / Exp54B보다 개선됐다.
+- Fold0은 여전히 낮은 validation을 보이지만 Gold validation이 11명뿐이므로 3-Fold hidden-test ensemble에서 실제 일반화를 확인한다.
+- Fold0/1/2 모두 각자 독립 backbone → full-MRI MIL → Top-24 → final B3A 계보를 확보했다.
+
+## Exp57 — 3-Fold B3A + 3-Fold Full-MRI Direct 70:30 Hybrid
+
+별도 3-Fold direct / 3-Fold B3A 제출을 먼저 하지 않고,
+Fold2에서 Public LB 0.913을 만든 70:30 구조를 바로 3-Fold로 확장한다.
+
+```text
+P_B3A_3F   = mean(Fold0 B3A, Fold1 B3A, Fold2 B3A)
+P_DIRECT_3F = mean(Fold0 direct, Fold1 direct, Fold2 direct)
+
+P_FINAL = 0.70 × P_B3A_3F + 0.30 × P_DIRECT_3F
+```
+
+구현 원칙:
+- study DICOM decode / sort / crop / normalize 1회
+- 각 Fold task-backbone feature 1회
+- 같은 Fold feature를 direct branch와 selector branch가 공유
+- Fold별 Top-24는 각 Fold selector가 독립적으로 선택
+- branch prediction을 별도 저장해 이후 ratio 변경을 재추론 없이 할 수 있게 유지
+
+## Exp58A — Fold2 Top-K 빠른 스크리닝
+
+대규모 Top-K 재학습 전에 Fold2 Gold 11명에서
+기존 K24-trained B3A를 이용해 **K16 / 20 / 24 / 28 / 32** inference sensitivity를 비교한다.
+
+목적:
+- K24보다 낮은 K가 비슷한 성능이면 계산량 절감 후보
+- K28/32가 개선 신호면 새 K cache + final model 재학습 후보
+- 이 단계는 inference-only screen이므로 최종 결론이 아니라 재학습 후보 결정용
+
