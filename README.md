@@ -2798,6 +2798,31 @@ Top-24 선택, NMS, B3A/B3B 최종 모델은 사용하지 않았다.
 
 ---
 
+
+## Experiment 54A / 54B — Fold0 / Fold1 full-MRI hierarchical MIL
+
+### Exp54A Fold0
+- Best epoch: **4**
+- Macro AUC: **0.797553**
+- Weak-6 AUC: **0.737434**
+- Same-fold Wide9 Exp52A: 0.830886 / 0.788029
+- checkpoint / attention / summary 정상 저장
+
+### Exp54B Fold1
+- Best epoch: **13**
+- Macro AUC: **0.872473**
+- Weak-6 AUC: **0.861806**
+- Same-fold Wide9 Exp52B: 0.885819 / 0.902927
+- checkpoint / attention / summary 정상 저장
+
+### 해석
+- Fold0/1에서는 full-MRI direct validation이 Wide9보다 상승하지 않았다.
+- 11~12명 validation만으로 Fold lineage를 제거하지 않고,
+  각 MIL이 고른 Fold별 Top-24를 최종 raw-image 모델에서 검증한다.
+- 다음: **Exp55A/B — Fold0/1 전용 Top-24 selector + image cache**.
+
+---
+
 ## 최근 핵심 실험 요약
 
 | 실험 | 무엇을 했는가 | Fold2 Macro AUC | Weak-6 AUC | Public LB |
