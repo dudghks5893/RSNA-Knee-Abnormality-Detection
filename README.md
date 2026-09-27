@@ -2823,6 +2823,16 @@ Top-24 선택, NMS, B3A/B3B 최종 모델은 사용하지 않았다.
 
 ---
 
+
+## Experiment 55A / 55B — Fold별 Top-24 cache
+
+- Fold0 Exp55A: Top-24 cache PASS, selected-series mean 5.4786, coverage mean 0.8060, decode 0
+- Fold1 Exp55B: Top-24 cache PASS, selected-series mean 5.5022, coverage mean 0.8436, decode 0
+- 두 Fold 모두 독립 selector lineage 유지
+- 다음: Exp56A/B Fold별 warm-start B3A final model
+
+---
+
 ## 최근 핵심 실험 요약
 
 | 실험 | 무엇을 했는가 | Fold2 Macro AUC | Weak-6 AUC | Public LB |
