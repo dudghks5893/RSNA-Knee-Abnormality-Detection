@@ -1,6 +1,6 @@
 # RSNA Knee Abnormality Detection — 현재 실험 상태 / 데이터 계보 / 다음 로드맵
 
-최종 업데이트: **2026-09-25**
+최종 업데이트: **2026-09-27**
 
 이 문서는 채팅이 바뀌어도 실험을 그대로 이어갈 수 있도록,
 현재까지의 데이터 생성 방식, 모델 계보, 정확한 설정값, 결과, 해석,
@@ -746,6 +746,67 @@ Fold별 feature space를 서로 섞지 않는다.
 다음:
 - **Exp54A:** Fold0 fresh full-MRI hierarchical MIL
 - **Exp54B:** Fold1 fresh full-MRI hierarchical MIL
+
+---
+
+
+## Exp54A / Exp54B — Fold0 / Fold1 fresh full-MRI hierarchical MIL 완료
+
+공통:
+
+- 입력: 각 Fold의 Exp53 full-MRI 819,078-window feature cache
+- 모델: FullDataHierarchicalMIL
+- MIL은 random initialization부터 새로 학습
+- pseudo weight: 0.70 × confidence
+- 다른 Fold MIL checkpoint warm-start 없음
+- checkpoint / validation prediction / attention export / summary contract PASS
+
+### Exp54A — Fold0
+
+- Validation Gold: **11**
+- Best epoch: **4**
+- Macro AUC: **0.797552910**
+- Weak-6 AUC: **0.737433862**
+- Same-fold Wide9 Exp52A:
+  - Macro **0.830886243**
+  - Weak-6 **0.788029101**
+- 변화:
+  - Macro **-0.033333333**
+  - Weak-6 **-0.050595238**
+- Training: **8.08 min**
+- Checkpoint:
+  `exp54a_fold0_full_data_hierarchical_target_mil_v1_best.bin`
+
+### Exp54B — Fold1
+
+- Validation Gold: **12**
+- Best epoch: **13**
+- Macro AUC: **0.872472994**
+- Weak-6 AUC: **0.861805556**
+- Same-fold Wide9 Exp52B:
+  - Macro **0.885819004**
+  - Weak-6 **0.902926587**
+- 변화:
+  - Macro **-0.013346010**
+  - Weak-6 **-0.041121032**
+- Training: **14.17 min**
+- Checkpoint:
+  `exp54b_fold1_full_data_hierarchical_target_mil_v1_best.bin`
+
+해석:
+
+- Fold0/1에서는 Fold2 Exp16B-2와 달리 full-MRI direct validation이 같은 Fold Wide9보다 상승하지 않았다.
+- 따라서 **full-MRI direct 성능 향상이 모든 Fold에서 자동으로 재현되는 것은 아니다.**
+- 다만 validation은 11~12명으로 매우 작고, direct AUC와 selector 유용성은 완전히 같은 질문이 아니다.
+- 현재 5-Fold 설계의 핵심은 독립 selector가 고르는 Top-24의 다양성과 최종 B3A 성능을 확인하는 것이므로,
+  Exp54A/B를 즉시 폐기하지 않고 다음 Top-24 생성 단계로 진행한다.
+- 3-Fold direct ensemble은 Fold0/1/2 결과를 모두 확보한 뒤 실제 OOF / hidden inference 구조에서 다시 판단하며,
+  Fold별 direct branch 가중치를 지금 validation 11~12명만으로 조정하지 않는다.
+
+다음:
+
+- **Exp55A:** Fold0 MIL → 전체 4,407명 중요도 → Fold0 전용 Top-24 cache
+- **Exp55B:** Fold1 MIL → 전체 4,407명 중요도 → Fold1 전용 Top-24 cache
 
 ---
 
