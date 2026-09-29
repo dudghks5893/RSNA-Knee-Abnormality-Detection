@@ -2843,12 +2843,16 @@ Top-24 선택, NMS, B3A/B3B 최종 모델은 사용하지 않았다.
 | Exp16B-3B | 동일한 환자별 중요 영상 24개 + 일반 pretrained DINOv2부터 새로 학습 | 0.924702 | 0.879960 | **0.903** |
 
 ### 현재 결론
-- **Public LB 최고: 0.913 (Exp51, B3A 70% + full-MRI direct 30%)**
-- 현재 최고 방식: **전체 MRI에서 환자별 중요 영상 24개를 선택한 뒤, 기존 무릎 MRI 학습 가중치를 이어받아 최종 이미지 모델을 재학습**
-- 기존 고정 위치 입력 방식의 최고 0.873보다 **+0.034**
+- **Public LB 최고: 0.918 (Exp57, 3-Fold B3A 70% + 3-Fold full-MRI direct 30%)**
+- Exp51 Fold2 단일 hybrid 0.913 대비 **+0.005** 추가 개선.
+- 현재 최고 제출 방식은 Fold0 / Fold1 / Fold2의 독립 B3A 예측을 평균한 branch 70%와,
+  동일 3개 Fold의 full-MRI direct 예측을 평균한 branch 30%를 결합하는 구조다.
+- 핵심 단일 모델 기준은 여전히 환자별 Top-24 warm-start B3A이며 Public LB **0.907**.
+- 기존 고정 위치 입력 방식의 최고 0.873보다 Top-24 warm-start 단일 모델이 **+0.034** 높다.
 - 동일 Top-24를 사용한 clean-start 모델도 0.903으로 높다.
 - 전체 MRI를 그대로 통합해 직접 예측한 모델도 **0.904**를 기록해, 성능 향상의 핵심은 단순한 Top-24 압축만이 아니라 **전체 MRI에서 질환별 중요 정보를 학습하고 통합하는 것**에 있음을 확인했다.
-- Top-24 warm-start 최종 모델은 전체 MRI 직접 예측보다 **+0.003**, clean-start보다 **+0.004** 높아 현재 최종 기준을 유지한다.
+- Top-24 warm-start 최종 모델은 전체 MRI 직접 예측보다 **+0.003**, clean-start보다 **+0.004** 높고,
+  두 branch를 함께 사용하는 hybrid는 추가적인 상보적 이득을 보였다.
 
 ### 다음 검증 순서
 1. **현재 최고 Top-24 warm-start 모델(0.907) + 전체 MRI 직접 예측 모델(0.904) 확률 앙상블**
@@ -2869,12 +2873,31 @@ Top-24 선택, NMS, B3A/B3B 최종 모델은 사용하지 않았다.
 - Exp56B Fold1: Macro **0.897401**, Weak-6 **0.914054**
 - Fold0/1/2의 독립적인 selector → Top-24 → final B3A 계보 구축 완료
 
-## Experiment 57 — 3-Fold 70:30 Hybrid
+## Experiment 57 — 3-Fold B3A + 3-Fold Full-MRI Direct 70:30 Hybrid
 
-- 3-Fold B3A 평균 70%
-- 3-Fold full-MRI direct 평균 30%
-- Fold2에서 0.913을 만든 비율을 3-Fold로 바로 확장
-- branch prediction은 별도 저장해 이후 blend ratio를 저비용으로 변경 가능
+### 목적
+Fold2 단일 계보에서 Public LB 0.913을 만든 B3A + full-MRI direct 70:30 hybrid를
+Fold0 / Fold1 / Fold2의 독립 계보까지 확장해 Fold diversity의 실제 hidden-test 이득을 확인했다.
+
+### 구성
+- `P_B3A_3F = mean(Fold0 B3A, Fold1 B3A, Fold2 B3A)`
+- `P_DIRECT_3F = mean(Fold0 direct, Fold1 direct, Fold2 direct)`
+- 최종 확률:
+  `0.70 × P_B3A_3F + 0.30 × P_DIRECT_3F`
+- Fold별 B3A는 각 Fold의 독립적인 backbone → full-MRI MIL → Top-24 → final B3A 계보 사용
+- Fold별 direct branch는 각 Fold의 full-MRI hierarchical MIL 예측 사용
+- branch prediction은 별도 저장해 이후 blend ratio를 재추론 없이 변경 가능하도록 유지
+
+### Public LB 결과
+- **Public LB: 0.918**
+- Exp51 Fold2 단일 70:30 hybrid 0.913 대비: **+0.005**
+- 당시 기준 프로젝트 **최고 Public LB 갱신**
+
+### 인사이트
+- Fold0 / Fold1 / Fold2의 독립 예측을 평균한 뒤 B3A와 full-MRI direct를 결합하는 방식이
+  Fold2 단일 hybrid보다 hidden test에서 추가 이득을 만들었다.
+- 따라서 이후 K24 / K32 비교에서도 Top-24 raw-image branch와 full-MRI direct branch를
+  서로 대체하지 않고 최종 hybrid 후보로 유지한다.
 
 ## Experiment 58A — Fold2 Top-K sensitivity screen
 
