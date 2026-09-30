@@ -201,7 +201,7 @@ pilot target baseline 설계를 마친 뒤 controlled experiment로 확인한다
 S00-1  Target distribution audit                [DONE]
 S00-2  Target별 Fixed pseudo Val manifest       [DONE]
 S00-3  Training Positive MRI localization audit [DONE]
-S00-4  Disease-specific candidate rule
+S00-4  Disease-specific candidate rule            [DONE]
 S00-5  Disease-specific Top-K selector / manifest
 S00-6  Persistent Specialist cache
 S01     DINOv2-Small + Slice Transformer baseline
@@ -633,3 +633,98 @@ SHA256 = fa655e94ec00bd9cbf84aac51b91bdec1b5f8e93711dec3917e373b9b5b355f8
 
 S00-4에서는 자동 winner를 정하지 않는다.
 실행 결과를 검토한 뒤 candidate rule 하나를 freeze하고 S00-5로 이동한다.
+
+
+---
+
+# 12. S00-4 실제 실행 결과 — Lateral Meniscus Candidate Rule Audit
+
+실행일: **2026-09-30**
+
+결과: **PASS**
+
+S00-3의 Training Positive 520명 / 101,883 windows에서
+5개 deterministic candidate rule을 동일 조건으로 비교했다.
+
+## 12.1 주요 비교
+
+| Rule | Candidate windows | Reduction | Mean retention | P10 | Min | >=0.90 | >=0.85 | >=0.80 | Zero candidate |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| R0 Full MRI | 101883 | 0.00% | 1.000000 | 1.000000 | 1.000000 | 520 | 520 | 520 | 0 |
+| R1 all-plane rel 0.2–0.9 | 69873 | 31.42% | 0.919902 | 0.879340 | 0.770628 | 417 | 495 | 516 | 0 |
+| **R2 conservative plane-specific** | **68242** | **33.02%** | **0.921925** | **0.881625** | 0.750619 | **427** | **497** | **516** | **0** |
+| R3 focused plane-specific | 54393 | 46.61% | 0.867250 | 0.816231 | 0.608829 | 116 | 381 | 486 | 0 |
+| R4 focused + axial non-fluid prune | 51026 | 49.92% | 0.837359 | 0.717373 | 0.520097 | 96 | 303 | 384 | 0 |
+
+R2는 R1 대비:
+
+- 평균 3.14 windows/study 추가 감소
+- total reduction 31.42% -> 33.02%
+- mean retention 0.919902 -> 0.921925
+- p10 0.879340 -> 0.881625
+- >=0.90 study 417 -> 427
+- >=0.85 study 495 -> 497
+- >=0.80 study 516 -> 516
+
+paired study comparison에서는 R2 retention이 R1보다 높은 study 274,
+낮은 study 246으로 mixed지만 평균 delta는 +0.002023이다.
+R2의 absolute minimum은 0.750619로 R1보다 낮지만,
+80% 이상 retention study 수는 두 rule 모두 516/520이므로
+실질적인 low-retention tail 규모는 증가하지 않았다.
+
+## 12.2 Frozen Candidate Rule v1
+
+```text
+Axial    : 0.2 <= canonical_relative_position <= 0.8
+Coronal  : 0.3 <= canonical_relative_position <= 0.9
+Sagittal : 0.1 <= canonical_relative_position <= 0.9
+```
+
+추가 sequence pruning 없음.
+
+이 규칙은 metadata-only / label-blind이며
+Positive / Negative / Fixed Val / Test에 동일 적용한다.
+
+주의:
+candidate rule discovery는 Positive training MRI에서 수행했지만,
+runtime에는 pseudo label이나 attention value를 입력하지 않는다.
+
+## 12.3 S00-5 참고 NMS + K simulation
+
+R2 candidate rule + same-series center gap >=3:
+
+| K | Mean selected windows | Full-K studies | Mean attention retention | P10 |
+|---:|---:|---:|---:|---:|
+| 8 | 8.000 | 520/520 | 0.220593 | 0.161124 |
+| 16 | 15.990 | 517/520 | 0.291597 | 0.236510 |
+| 24 | 23.640 | 468/520 | 0.320140 | 0.276411 |
+| 32 | 29.796 | 338/520 | 0.332169 | 0.297908 |
+
+NMS 이후 K가 커질수록 일부 study에서 full K를 채우지 못한다.
+특히 K32는 338/520만 32개를 충족한다.
+
+따라서 S00-5에서는
+'항상 정확히 K개를 강제로 채우는가'와
+'중복 없는 variable-count를 허용하는가'를 포함해 Top-K contract를 먼저 정량 검증한다.
+
+## 12.4 Artifact fingerprint
+
+```text
+lateral_meniscus_candidate_rule_summary.csv
+SHA256 = a7e8eacfe4d889a7eccd2038a0396b830d939e0a513389e6178231e47f821d01
+
+lateral_meniscus_candidate_rule_nms_k_summary.csv
+SHA256 = 0e8d653fcd05ce4447718ca6efd330e165b6c3261913ceebd7477b0950011fff
+
+lateral_meniscus_candidate_rule_audit_summary.json
+SHA256 = c7fec8968d0a694391d584a0f9c1f0ddea07f23623f7875450bd95490bf8b127
+
+lateral_meniscus_candidate_rule_per_study.csv
+SHA256 = d6e0bb4b10f476569764dd375ac80a6afa30e5404e8bd5eb044f9534c55cb4a6
+
+rsna_knee_s00_4_lateral_meniscus_candidate_rule_audit_v1.zip
+SHA256 = 674b0d10a23e7f5b2589e9095999748789822550711def4ef408fa15e9b412c3
+```
+
+S00-4 완료.
+다음 단계는 S00-5 Lateral Meniscus target-specific Top-K selector audit이다.
