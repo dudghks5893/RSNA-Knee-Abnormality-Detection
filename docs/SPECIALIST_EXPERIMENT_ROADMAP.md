@@ -410,18 +410,57 @@ SHA256 = fa70ac6a710df8d123a91d306bed14089d75d324290c98a304e1dfb53b745b1b
 
 ## S00-4 — Disease-specific candidate rule 확정
 
+상태: **Lateral Meniscus candidate-rule audit notebook 준비 / Kaggle 실행 결과 대기**
+
 S00-3 결과를 바탕으로
 label을 알지 못해도 적용할 수 있는 deterministic candidate rule을 정의한다.
 
-예:
+이번 단계에서는 하나의 규칙을 미리 정답으로 고정하지 않고
+Positive 520명의 101,883 full-MRI windows에서
+**candidate-window 감소율 vs Lateral Meniscus attention 보존율**을 비교한다.
+
+비교 후보:
 
 ```text
-All MRI
- -> target-relevant Plane / Series
- -> target-relevant window candidate pool
+R0 Full MRI
+- filter 없음
+
+R1 Broad relative range
+- all Plane
+- relative 0.2 ~ 0.9
+
+R2 Conservative plane-specific
+- Axial    0.2 ~ 0.8
+- Coronal  0.3 ~ 0.9
+- Sagittal 0.1 ~ 0.9
+
+R3 Focused plane-specific
+- Axial    0.2 ~ 0.7
+- Coronal  0.4 ~ 0.9
+- Sagittal 0.1 ~ 0.4 OR 0.6 ~ 0.9
+
+R4 Focused + low-value sequence pruning
+- R3
+- Axial non-fluid / non-fat-suppressed 제외
 ```
 
-Validation / Test에서도 동일 규칙을 사용한다.
+평가 항목:
+
+- 전체 candidate window 감소율
+- study당 candidate windows mean / median / p10 / min
+- study별 attention retention mean / median / p10 / min
+- retention >= 95 / 90 / 85 / 80% study 수
+- zero-candidate study 수
+- Plane / sequence 보존 분포
+- 각 rule에서 same-series NMS gap3 + K 8/16/24/32 simulation
+
+중요:
+S00-4에서 attention은 rule 성능을 평가하는 근거로만 사용한다.
+최종 candidate filter 자체는 Plane / sequence / relative-position 같은
+label-blind metadata만 사용해야 한다.
+
+실행 결과를 검토한 뒤 한 rule만 freeze하고 S00-5로 이동한다.
+Validation / Test에서도 동일 rule을 사용한다.
 
 ## S00-5 — Disease-specific Top-K selector / manifest
 
