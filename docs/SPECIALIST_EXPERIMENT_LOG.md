@@ -766,3 +766,30 @@ Hidden Test ranking은 제출 전에 미리 생성할 수 없다.
 
 기존 S00-3/S00-4의 3-slice window 분석은 historical reference로 유지하지만,
 새 native single-slice lineage의 selector training space를 제한하는 규칙으로 사용하지 않는다.
+
+
+---
+
+# 14. 2026-10-01 Dual-Target Pilot + Notebook Protocol
+
+상태: **설계 확정 / SS01 실행 준비**
+
+Pilot을 다음 두 lane으로 병렬화했다.
+
+- A: Lateral Meniscus
+- B: ACL
+
+기본 모델 수는 target당 Selector 1 + Final Specialist 1이다.
+3-Fold는 후순위 개선 옵션이다.
+
+Val과 LB 용어를 분리한다.
+Fixed Val 지표는 Val ROC-AUC라고 기록하고,
+LB는 실제 Kaggle submission 결과에만 사용한다.
+
+Kaggle notebook 전달 규칙을 고정했다:
+Run All 완결, Input 안내, CPU/GPU 안내, 예상 runtime 안내,
+결과 공유 후 Git 문서 현행화, 제목 6~59자 + experiment ID 필수.
+
+다음 실행은 두 lane 공통 prerequisite인
+**SS01 Full MRI Single-Slice Inventory / Manifest**이다.
+SS01 결과가 확정되면 SS02A LM / SS02B ACL Native Selector를 동시에 실행한다.
