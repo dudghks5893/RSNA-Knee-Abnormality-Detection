@@ -267,11 +267,10 @@ Broad / Strict / Gold의 Positive / Negative 수를 확인했다.
 
 ## S00-2 — Target별 Fixed Val 구축
 
-상태: **manifest 생성 스크립트 구현 완료 / Kaggle 실행 결과 대기**
+상태: **Kaggle 실행용 notebook 준비 / 실행 결과 대기**
 
-구현 파일:
-
-`scripts/build_specialist_fixed_val_manifests.py`
+실행 코드는 GitHub에 저장하지 않는다.
+Specialist 실행은 Kaggle에 notebook을 Import해 Run All 하는 방식으로 진행한다.
 
 12개 target의 Val 크기와 P/N 수를 위 2.6 표대로 먼저 고정한다.
 
