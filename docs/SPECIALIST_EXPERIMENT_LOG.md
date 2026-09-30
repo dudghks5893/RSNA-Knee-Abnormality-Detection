@@ -16,7 +16,7 @@
 - **S00-1 Target distribution audit: 완료**
 - **S00-2 Target별 Fixed pseudo Val manifest: 완료**
 - **S00-3 Lateral Meniscus Training Positive MRI localization audit: 완료**
-- 다음 작업: **S00-4 Lateral Meniscus disease-specific candidate rule 정량 비교**
+- 다음 작업: **S00-4 Lateral Meniscus candidate-rule audit Kaggle 실행**
 - 이후: target-specific Top-K -> persistent cache -> S01 baseline
 
 현재 전체 프로젝트 기준 최고 Public LB:
@@ -580,3 +580,56 @@ SHA256 = 72dc2f88027777be2855449720a5979c37243566a7e4b0f9e33869d1ef919b40
 rsna_knee_s00_3_lateral_meniscus_localization_audit_v1.zip
 SHA256 = fa70ac6a710df8d123a91d306bed14089d75d324290c98a304e1dfb53b745b1b
 ```
+
+
+---
+
+# 12. S00-4 Lateral Meniscus Candidate Rule Audit 실행 계약
+
+준비일: **2026-09-30**
+
+상태: **Kaggle notebook 준비 / 실행 결과 대기**
+
+실행 코드는 repository에 저장하지 않는다.
+Kaggle Import용 notebook artifact로만 관리한다.
+
+Input:
+
+- S00-3 Output의 `lateral_meniscus_all_window_attention.parquet`
+- S00-3 Output의 `lateral_meniscus_localization_audit_summary.json`
+
+S00-3 source fingerprint:
+
+```text
+lateral_meniscus_all_window_attention.parquet
+SHA256 = 06cd3904c8961a4b4f526f85e79a70a54fe000a311f6d6c9ebf27739652c70ef
+
+lateral_meniscus_localization_audit_summary.json
+SHA256 = fa655e94ec00bd9cbf84aac51b91bdec1b5f8e93711dec3917e373b9b5b355f8
+```
+
+비교 rules:
+
+1. R0 — Full MRI
+2. R1 — all Plane / relative 0.2–0.9
+3. R2 — conservative plane-specific
+   - Axial 0.2–0.8
+   - Coronal 0.3–0.9
+   - Sagittal 0.1–0.9
+4. R3 — focused plane-specific
+   - Axial 0.2–0.7
+   - Coronal 0.4–0.9
+   - Sagittal 0.1–0.4 또는 0.6–0.9
+5. R4 — R3 + Axial non-fluid/non-fat-suppressed pruning
+
+평가 기준:
+
+- candidate-window reduction
+- per-study attention retention
+- p10 / min retention
+- zero-candidate study
+- Plane / sequence retention
+- NMS gap3 + K8/16/24/32 simulation
+
+S00-4에서는 자동 winner를 정하지 않는다.
+실행 결과를 검토한 뒤 candidate rule 하나를 freeze하고 S00-5로 이동한다.
