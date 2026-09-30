@@ -14,7 +14,7 @@
 
 - **Specialist 완료 학습 실험: 없음**
 - **S00-1 Target distribution audit: 완료**
-- 다음 작업: **S00-2 pilot target Fixed Val 100 구축**
+- 다음 작업: **S00-2 12개 target Fixed Val manifest 구축**
 - 이후: Positive MRI localization audit -> disease-specific candidate rule -> target-specific Top-K -> persistent cache -> S01 baseline
 
 현재 전체 프로젝트 기준 최고 Public LB:
@@ -66,14 +66,36 @@ Gold train metric은 sanity check 이상의 일반화 근거로 사용하지 않
 
 ## Validation
 
-질환별 Fixed pseudo Val 100을 만든다.
+Target별 Fixed pseudo Val 규모를 2026-09-30에 다음과 같이 사전 고정했다.
 
-- Train과 UID 완전 분리
-- Positive / Negative 모두 포함
-- 가능한 high-confidence sample 우선
-- 한 번 고정한 100명은 해당 Specialist의 후속 실험에서 변경하지 않음
-- target ROC-AUC를 primary development metric으로 사용
-- 정확한 P/N 비율은 pilot target의 confidence distribution을 확인한 뒤 고정
+| Target | Val Total | Val Pos | Val Neg |
+|---|---:|---:|---:|
+| ACL | 80 | 40 | 40 |
+| MCL | 80 | 40 | 40 |
+| Medial Meniscus | 80 | 40 | 40 |
+| Lateral Meniscus | 80 | 40 | 40 |
+| Medial OA | 80 | 40 | 40 |
+| Lateral OA | 80 | 40 | 40 |
+| PF OA | 80 | 40 | 40 |
+| Effusion | 80 | 40 | 40 |
+| Synovitis | 50 | 25 | 25 |
+| Baker's | 80 | 40 | 40 |
+| Contusion | 80 | 40 | 40 |
+| Fracture | 60 | 30 | 30 |
+
+선정 계약:
+
+- Gold 58은 전부 Train
+- pseudo V4 Strict pool 사용
+- Positive / Negative 각각 confidence percentile 50% 이상 90% 미만을 기본 candidate band로 사용
+- 최상위 confidence 10%는 가능한 한 Train에 보존
+- candidate 부족 시 아래 confidence 구간으로만 순차 확장
+- random seed = **20260930**
+- Train / Val StudyInstanceUID 완전 분리
+- target별 manifest를 한 번 만든 뒤 해당 Specialist lineage에서 고정
+- target ROC-AUC = primary development metric
+- BCE / prediction distribution = secondary
+- pseudo validation이므로 external ground truth로 해석하지 않음
 
 ---
 
@@ -175,7 +197,7 @@ pilot target baseline 설계를 마친 뒤 controlled experiment로 확인한다
 
 ```text
 S00-1  Target distribution audit                [DONE]
-S00-2  Fixed pseudo Val 100                     [NEXT]
+S00-2  Target별 Fixed pseudo Val manifest       [NEXT]
 S00-3  Training Positive MRI localization audit
 S00-4  Disease-specific candidate rule
 S00-5  Disease-specific Top-K selector / manifest
