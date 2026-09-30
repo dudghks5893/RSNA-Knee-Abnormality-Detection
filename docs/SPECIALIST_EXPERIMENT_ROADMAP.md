@@ -2,11 +2,12 @@
 
 최종 업데이트: **2026-09-30**
 
-> 상태: **실험 전 설계 확정 단계**
+> 상태: **Lateral Meniscus pilot pre-experiment 단계**
 >
 > Specialist의 큰 구조와 데이터/검증 원칙은 확정했다.
-> 아직 남은 핵심 TBD는 pilot target, target-specific candidate rule, Top-K, Slice Transformer 세부 구조, pseudo supervision 세부 정책이다.
-> 실제 학습 실험은 이 항목들을 고정한 뒤 시작한다.
+> Pilot target은 **Lateral Meniscus**로 고정했고, S00-1~S00-3을 완료했다.
+> 현재 남은 핵심 TBD는 target-specific candidate rule, Top-K, Slice Transformer 세부 구조, pseudo supervision 세부 정책이다.
+> 실제 S01 학습 전 S00-4~S00-6에서 입력 계약을 먼저 고정한다.
 
 완료 기록: [SPECIALIST_EXPERIMENT_LOG.md](SPECIALIST_EXPERIMENT_LOG.md)
 
@@ -301,7 +302,7 @@ S00-2 완료. 다음은 S00-3 pilot target Training Positive MRI localization au
 
 ## S00-3 — Training Positive MRI localization audit
 
-상태: **Lateral Meniscus pilot notebook 준비 / Kaggle 실행 결과 대기**
+상태: **완료 — 2026-09-30**
 
 Pilot target: **Lateral Meniscus**
 
@@ -332,6 +333,80 @@ S00-3에서는 Exp16B-2.5 → Exp16B-3A로 이어진 원래 성공 selector 계�
 
 목적은 최종 Top-K를 지금 확정하는 것이 아니라,
 전체 819,078-window 공간에서 Lateral Meniscus candidate space를 좁힐 근거를 얻는 것이다.
+
+실행 결과:
+
+- Fixed Val 80명 완전 제외 확인
+- Training Strict Positive 520명 전부 분석
+- 분석된 full-MRI windows = 101,883
+- 분석된 Series = 3,051
+- target-specific joint attention 합 = study별 1.0 검증
+- runtime 약 0.20분
+- PASS
+
+Plane 평균 joint-attention mass:
+
+| Plane | Mean attention mass |
+|---|---:|
+| Axial | 0.362325 |
+| Coronal | 0.326014 |
+| Sagittal | 0.311661 |
+
+세 Plane 모두 중요하며 Axial이 1위지만 차이가 크지 않다.
+따라서 S00-4에서 단일 Plane만 남기는 규칙은 사용하지 않는다.
+
+Raw Top32 plane share:
+
+- Axial 36.05%
+- Coronal 34.15%
+- Sagittal 29.80%
+
+same-series NMS gap3 Top32 plane share:
+
+- Sagittal 39.68%
+- Coronal 34.54%
+- Axial 25.78%
+
+NMS 후 Sagittal 비중이 크게 올라간 것은 Axial 상위 attention window가 인접 slice에 더 군집되어 있음을 시사한다.
+따라서 실제 Specialist selector에서는 연속 3-slice window 중복 제어가 필요하다.
+
+Raw attention concentration:
+
+| K | Mean cumulative attention mass |
+|---:|---:|
+| 8 | 0.280396 |
+| 16 | 0.447494 |
+| 24 | 0.566393 |
+| 32 | 0.653829 |
+
+Top32만으로도 평균 attention mass가 약 65.4%이므로 K를 먼저 확정하지 않는다.
+S00-4에서 deterministic candidate space를 먼저 줄인 뒤 그 안에서 K를 결정한다.
+
+전체 relative-position attention은 0.3~0.8 구간에 가장 많이 모였지만,
+Plane별 peak 위치가 다르다:
+
+- Axial: 0.3~0.7, 특히 0.4~0.6
+- Coronal: 0.4~0.9, 특히 0.5~0.8
+- Sagittal: 0.6~0.9가 강하고 0.1~0.4에도 secondary mass 존재
+
+따라서 모든 Plane에 동일한 단일 relative-position cutoff를 바로 적용하지 않고
+S00-4에서 plane-specific candidate ranges를 정량 비교한다.
+
+S00-3 artifact fingerprint:
+
+```text
+lateral_meniscus_localization_audit_summary.json
+SHA256 = fa655e94ec00bd9cbf84aac51b91bdec1b5f8e93711dec3917e373b9b5b355f8
+
+lateral_meniscus_attention_concentration.csv
+SHA256 = 221930f8943a9ef22e20d4030297977f8c33704d3f7efed46f98f715c8a7bc03
+
+lateral_meniscus_top32_nms_gap3.parquet
+SHA256 = 72dc2f88027777be2855449720a5979c37243566a7e4b0f9e33869d1ef919b40
+
+rsna_knee_s00_3_lateral_meniscus_localization_audit_v1.zip
+SHA256 = fa70ac6a710df8d123a91d306bed14089d75d324290c98a304e1dfb53b745b1b
+```
 
 ## S00-4 — Disease-specific candidate rule 확정
 
@@ -442,7 +517,7 @@ DINO backbone size scaling은 다시 하지 않는다.
 
 ## S07 — Public LB 검증
 
-Fixed Val 100에서 충분한 개선이 확인된 중요한 checkpoint만 Kaggle Public LB로 확인한다.
+해당 target의 Fixed Val에서 충분한 개선이 확인된 중요한 checkpoint만 Kaggle Public LB로 확인한다.
 
 Gold 58은 Train에 포함되므로 별도 Gold validation 단계는 없다.
 
@@ -465,10 +540,7 @@ Specialist가 더 강한 target만 교체하는 방식도 허용한다.
 
 실제 S01을 실행하기 전에 다음을 확정한다.
 
-- **Pilot target**
-- Target별 Fixed Val manifest의 실제 StudyInstanceUID
-- candidate rule discovery에 사용할 Positive subset
-- target-specific candidate Plane / Series 규칙
+- target-specific candidate Plane / Series / relative-position 규칙
 - Top-K
 - DINO feature token: CLS only / CLS + PatchMean
 - Slice Transformer layer / head / hidden dim
@@ -492,7 +564,7 @@ Specialist가 더 강한 target만 교체하는 방식도 허용한다.
 4. candidate rule freeze
 5. frozen rule을 Train / Val / Test에 동일 적용
 6. Specialist Train
-7. Fixed Val 100 평가
+7. 해당 target의 Fixed Val 평가
 ```
 
 기존 shared selector가 이미 일부 pseudo study를 학습에 본 이력이 있을 수 있으므로,
