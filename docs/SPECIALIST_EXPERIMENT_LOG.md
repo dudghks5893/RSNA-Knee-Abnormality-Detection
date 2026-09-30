@@ -793,3 +793,18 @@ Run All 완결, Input 안내, CPU/GPU 안내, 예상 runtime 안내,
 다음 실행은 두 lane 공통 prerequisite인
 **SS01 Full MRI Single-Slice Inventory / Manifest**이다.
 SS01 결과가 확정되면 SS02A LM / SS02B ACL Native Selector를 동시에 실행한다.
+
+
+### SS01 notebook 전달 상태 — 2026-10-01
+
+- Kaggle title: `SS01 Full MRI Single-Slice Inventory`
+- Artifact: `RSNA_Knee_SS01_Full_MRI_Single_Slice_Inventory.ipynb`
+- Input: RSNA Knee Abnormality Detection competition data only
+- Accelerator: **CPU**
+- Expected Run All: **30~90 min**
+- Status: **notebook prepared / execution result pending**
+- Result sharing: 마지막 셀 로그 + `rsna_knee_ss01_single_slice_inventory_v1.zip`
+
+SS01 결과를 검토한 직후
+`SS02A Lateral Meniscus Native Selector`와
+`SS02B ACL Native Selector`를 A/B 병렬로 시작한다.
