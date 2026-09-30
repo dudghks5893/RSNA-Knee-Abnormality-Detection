@@ -267,6 +267,12 @@ Broad / Strict / Gold의 Positive / Negative 수를 확인했다.
 
 ## S00-2 — Target별 Fixed Val 구축
 
+상태: **manifest 생성 스크립트 구현 완료 / Kaggle 실행 결과 대기**
+
+구현 파일:
+
+`scripts/build_specialist_fixed_val_manifests.py`
+
 12개 target의 Val 크기와 P/N 수를 위 2.6 표대로 먼저 고정한다.
 
 작업:
@@ -275,6 +281,8 @@ Broad / Strict / Gold의 Positive / Negative 수를 확인했다.
 - class별 confidence percentile 50–90% candidate band 생성
 - seed 20260930으로 고정 sampling
 - target별 Val manifest CSV 생성
+- 통합 `specialist_fixed_val_manifest_v1.csv` 생성
+- 검증용 `specialist_fixed_val_summary_v1.csv` 생성
 - Train / Val UID 완전 분리 검증
 - 이후 동일 target의 모든 Specialist 실험에서 같은 manifest 사용
 
