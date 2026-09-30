@@ -779,7 +779,7 @@ SS01에는 target label을 이용한 slice selection을 넣지 않는다.
 ### SS01 notebook 전달 상태 — 2026-10-01
 
 - Kaggle title: `SS01 Full MRI Single-Slice Inventory`
-- Artifact: `RSNA_Knee_SS01_Full_MRI_Single_Slice_Inventory.ipynb`
+- Artifact: `RSNA_Knee_SS01_Full_MRI_Single_Slice_Inventory_v2.ipynb`
 - Input: RSNA Knee Abnormality Detection competition data only
 - Accelerator: **CPU**
 - Expected Run All: **30~90 min**
