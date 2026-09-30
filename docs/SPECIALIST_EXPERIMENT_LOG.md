@@ -14,7 +14,7 @@
 
 - **Specialist 완료 학습 실험: 없음**
 - **S00-1 Target distribution audit: 완료**
-- 다음 작업: **S00-2 12개 target Fixed Val manifest 구축**
+- 다음 작업: **S00-2 스크립트를 Kaggle에서 실행해 12개 target Fixed Val manifest 실제 UID 확정**
 - 이후: Positive MRI localization audit -> disease-specific candidate rule -> target-specific Top-K -> persistent cache -> S01 baseline
 
 현재 전체 프로젝트 기준 최고 Public LB:
@@ -197,7 +197,7 @@ pilot target baseline 설계를 마친 뒤 controlled experiment로 확인한다
 
 ```text
 S00-1  Target distribution audit                [DONE]
-S00-2  Target별 Fixed pseudo Val manifest       [NEXT]
+S00-2  Target별 Fixed pseudo Val manifest       [CODE READY / RUN NEXT]
 S00-3  Training Positive MRI localization audit
 S00-4  Disease-specific candidate rule
 S00-5  Disease-specific Top-K selector / manifest
@@ -266,3 +266,41 @@ Val ROC-AUC / BCE / Public LB / runtime
 ```
 
 실험 ID만으로 설명하지 않고 항상 설명형 제목을 함께 사용한다.
+
+
+---
+
+# 8. S00-2 Fixed Val Manifest Builder 구현
+
+구현일: **2026-09-30**
+
+스크립트:
+
+`scripts/build_specialist_fixed_val_manifests.py`
+
+고정 계약:
+
+- V4 routed strict pseudo 사용
+- Positive = soft target >= 0.5
+- Negative = soft target < 0.5
+- class별 confidence percentile 50% 이상 90% 미만을 기본 candidate band로 사용
+- 최상위 confidence 10%는 가능한 Train에 보존
+- candidate 부족 시 아래 confidence 구간으로만 확장
+- random seed = 20260930
+- Gold 58과 UID overlap 발생 시 즉시 중단
+- target별 계획된 P/N 개수를 assertion으로 검증
+
+출력 위치:
+
+`/kaggle/working/specialist_fixed_val_v1/`
+
+주요 출력:
+
+- `acl_fixed_val_v1.csv` 등 target별 12개 manifest
+- `specialist_fixed_val_manifest_v1.csv` — 12개 target 통합 manifest
+- `specialist_fixed_val_summary_v1.csv` — 실제 P/N 수와 confidence 통계
+
+현재 상태:
+
+**코드 구현 완료. 실제 Kaggle 실행 결과와 StudyInstanceUID는 아직 미확정.**
+실행 결과 PASS 후 summary와 실제 manifest 계약을 이 문서에 추가하고 S00-3으로 이동한다.
