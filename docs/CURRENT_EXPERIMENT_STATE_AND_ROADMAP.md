@@ -1,6 +1,6 @@
 # RSNA Knee Abnormality Detection — 현재 실험 상태 / 데이터 계보 / 다음 로드맵
 
-최종 업데이트: **2026-09-27**
+최종 업데이트: **2026-09-30**
 
 이 문서는 채팅이 바뀌어도 실험을 그대로 이어갈 수 있도록,
 현재까지의 데이터 생성 방식, 모델 계보, 정확한 설정값, 결과, 해석,
@@ -15,50 +15,52 @@
 
 현재 Public LB 최고 기록은:
 
-- **0.913**
-- 실험 내용:
-  **Top-24 warm-start 최종 모델 70% + 전체 MRI 직접 예측 모델 30% 확률 앙상블**
-- 내부 추적 ID: **Exp51**
+- **0.918**
+- 내부 추적 ID: **Exp57**
 - 구성:
-  - B3A Top-24 warm-start: **0.907**
-  - B2 full-MRI direct: **0.904**
-  - 70:30 probability blend: **0.913**
+  - Fold0 / Fold1 / Fold2 B3A prediction equal mean
+  - Fold0 / Fold1 / Fold2 full-MRI direct prediction equal mean
+  - 최종 `0.70 x B3A_3F + 0.30 x DIRECT_3F`
 
-비교 실험:
+기존 주요 기준:
 
-- 동일한 Top-24를 사용하되
-  일반 pretrained DINOv2-Base + 새 랜덤 MIL에서 시작한 clean-start 모델
-- Public LB: **0.903**
-- 내부 추적 ID: **Exp16B-3B**
+- Exp16B-3A Fold2 Top-24 raw: **0.907**
+- Exp16B-2 full-MRI direct: **0.904**
+- Exp51 Fold2 70:30 hybrid: **0.913**
+- Exp57 3-Fold 70:30 hybrid: **0.918**
 
-추가 standalone 검증:
+2026-09-30 최신 K24 / K32 재검증:
 
-- 전체 MRI의 모든 슬라이스 특징을 계층적으로 통합하는 Exp16B-2 모델 자체를
-  Top-24 최종 이미지 모델 없이 hidden test에 직접 적용
-- Public LB: **0.904**
-- Fold2 Macro AUC: **0.954167**
-- Fold2 Weak-6 AUC: **0.915278**
+| Model | K | Fold2 Macro | Fold2 Weak-6 | Public LB |
+|---|---:|---:|---:|---:|
+| Exp62A-F2-B2Warm | 24 | 0.933333 | 0.911508 | **0.905** |
+| Exp62B-F2-B2Warm | 32 | 0.932837 | 0.884127 | **0.905** |
 
-이 결과로 현재 가장 중요한 인사이트는 다음과 같다.
+현재 해석:
 
-1. 기존의 고정된 Wide9 위치 입력보다,
-   **환자별로 전체 MRI에서 중요한 영상을 선택하는 방식이 실제 hidden test에서도 크게 유리했다.**
-2. 동일한 Top-24를 사용한 clean-start 모델도 0.903이므로,
-   성능 상승의 핵심은 **환자별 중요 영상 선택 자체**에 있다는 근거가 강하다.
-3. 기존 무릎 MRI 학습 가중치를 이어받은 warm-start 모델이
-   clean-start보다 Public LB에서 **+0.004** 높아,
-   초기화도 추가적인 이득을 준다.
-4. 전체 MRI 직접 예측 모델도 **Public LB 0.904**를 기록해,
-   Top-24로 압축하지 않아도 full-MRI 계층적 모델 자체가 hidden test에서 매우 강하다는 점이 확인됐다.
-5. 현재 최고 B3A 0.907과 전체 MRI 직접 예측 0.904의 차이는 **0.003**뿐이다.
-   따라서 B3A의 추가 이득은 존재하지만, 성능 향상의 대부분은
-   “전체 MRI에서 환자별/질환별로 중요한 정보를 학습해 통합하는 구조”에서 이미 확보된 것으로 보인다.
-6. Fold2 Gold validation은 11명뿐이므로,
-   작은 CV 차이를 과신하지 않는다.
-   실제 Public LB와 함께 해석해야 한다.
+1. Exp58A에서 K32 inference-only screening은 강한 신호를 보였지만, K32-trained final model의 Public LB 개선으로 재현되지 않았다.
+2. K24 / K32 모두 0.905로 동일해 이번 warm-start branch는 기존 B3A raw 0.907에도 미치지 못했다.
+3. 이전 all-data / no-validation branch는 K24/K32 70:30 hybrid 모두 0.897로 실패했다. train loss 기반 checkpoint 선택은 일반화 기준으로 부적절했다.
+4. clean Fold2 warm-start selector 자체는 Macro 0.954266 / Weak-6 0.933929로 안정적으로 복구됐지만, 그 selector에서 재학습한 final K24/K32는 hidden LB 상승으로 이어지지 않았다.
+5. Fold2 Gold11 validation은 여전히 매우 작아 절대값 및 작은 차이를 과신하지 않는다.
+6. 현재 최고 0.918과 새 A/B 0.905의 차이를 고려해, A/B 70:30 추가 제출은 우선순위에서 제외한다.
+
+### 새 연구 축 — disease-specific binary specialist
+
+shared 12-label 모델을 계속 미세 조정하는 것과 별도로, **각 질환을 Yes / No로 판단하는 질환별 specialist**를 독립 실험 계보로 분리한다.
+
+- Specialist 완료 기록: [SPECIALIST_EXPERIMENT_LOG.md](SPECIALIST_EXPERIMENT_LOG.md)
+- Specialist 계획 초안: [SPECIALIST_EXPERIMENT_ROADMAP.md](SPECIALIST_EXPERIMENT_ROADMAP.md)
+
+현재는 문서 틀과 참고 근거만 생성한다.
+architecture / pilot target / pseudo filtering / validation 정책은 사용자와 추가 논의 후 확정하며, 확정 전에는 실제 Specialist experiment 번호를 부여하지 않는다.
+
+### 로드맵 문서 해석 주의
+
+이 문서 아래쪽에 남아 있는 과거의 `현재 다음 실험`, `즉시 다음 액션` 표현은 당시 시점의 역사 기록이다.
+**2026-09-30 이후의 실제 우선순위는 이 섹션과 Specialist 전용 로드맵을 우선한다.**
 
 ---
-
 # 2. 절대 바꾸지 말아야 할 기본 데이터 / 전처리 계약
 
 ## 전체 train 규모
