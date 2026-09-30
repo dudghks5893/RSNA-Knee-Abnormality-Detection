@@ -270,13 +270,11 @@ Val ROC-AUC / BCE / Public LB / runtime
 
 ---
 
-# 8. S00-2 Fixed Val Manifest Builder 구현
+# 8. S00-2 Fixed Val Notebook 실행 계약
 
-구현일: **2026-09-30**
+정리일: **2026-09-30**
 
-스크립트:
-
-`scripts/build_specialist_fixed_val_manifests.py`
+실행 코드는 GitHub에 저장하지 않고, Kaggle notebook Import + Run All 방식으로 진행한다.
 
 고정 계약:
 
@@ -302,5 +300,5 @@ Val ROC-AUC / BCE / Public LB / runtime
 
 현재 상태:
 
-**코드 구현 완료. 실제 Kaggle 실행 결과와 StudyInstanceUID는 아직 미확정.**
+**Kaggle 실행용 notebook 준비. 실제 실행 결과와 StudyInstanceUID는 아직 미확정.**
 실행 결과 PASS 후 summary와 실제 manifest 계약을 이 문서에 추가하고 S00-3으로 이동한다.
