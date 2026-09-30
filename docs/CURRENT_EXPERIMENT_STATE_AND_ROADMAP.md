@@ -1368,3 +1368,94 @@ P_FINAL = 0.70 × P_B3A_3F + 0.30 × P_DIRECT_3F
 - K28/32가 개선 신호면 새 K cache + final model 재학습 후보
 - 이 단계는 inference-only screen이므로 최종 결론이 아니라 재학습 후보 결정용
 
+
+
+---
+
+# 2026-10-01 Specialist 최신 실행 상태 — 다음 채팅 우선 기준
+
+기존 3-slice window Specialist 실험 S00-3/S00-4는 historical reference로 유지한다.
+현재부터의 주력 계보는 **native single-slice specialist**이다.
+
+## 병렬 Pilot
+
+- **Lane A: Lateral Meniscus**
+- **Lane B: ACL**
+
+두 target은 첫 class-specific 단계부터 A/B 병렬로 진행한다.
+공통 raw-data inventory / manifest처럼 두 target이 완전히 공유하는 작업은 중복 실행하지 않고 한 번만 수행한다.
+
+## 기본 모델 단위
+
+```text
+1 target
+= 1 native single-slice Selector
++ 1 Final Specialist
+```
+
+기본 전체 구성은 12 selectors + 12 final specialists = 24 checkpoints.
+3-Fold는 baseline이 아니며, single-model 성능 개선이 막힌 target부터 선택적으로 적용한다.
+
+Hidden Test에서는 target별로 반드시:
+
+```text
+Hidden Test Full MRI
+-> target-specific Selector
+-> target-specific Top-K single slices
+-> target-specific Final Specialist
+-> probability
+```
+
+를 실행한다.
+
+## 용어
+
+- **Val ROC-AUC / Val 성능**: Fixed Val에서 측정한 내부 개발 지표
+- **LB / Public LB / Private LB**: 실제 Kaggle submission 후 Leaderboard에서 받은 점수
+
+Val 결과를 LB라고 부르지 않는다.
+
+## Notebook 운영 계약
+
+앞으로 모든 Kaggle 실행 notebook은 아래를 지킨다.
+
+1. Import 후 **Run All 한 번으로 전체 실행 가능**해야 한다.
+2. 답변에 필요한 **Kaggle Input 설정과 필요한 파일/데이터셋**을 명시한다.
+3. **GPU / CPU 중 무엇을 선택할지** 명시한다. GPU가 필요하지 않은 단계는 CPU를 사용한다.
+4. **Run All 예상 소요시간**을 대략 제시한다.
+5. 사용자가 완료 output을 공유하면 결과를 분석한 뒤 GitHub에
+   - 실험 결과
+   - artifact fingerprint
+   - 현재 진행 상태
+   - 다음 액션
+   을 기록한다.
+6. Kaggle Save Version용 notebook 제목은 **6~59자**이며 **실험 번호를 반드시 포함**한다.
+
+실행 코드는 GitHub에 저장하지 않고 Kaggle-importable `.ipynb` artifact로 전달한다.
+
+## 현재 다음 순서
+
+```text
+SS01  Full MRI Single-Slice Inventory / Manifest      [NEXT, shared]
+      ↓
+SS02A Lateral Meniscus Native Selector                [A]
+SS02B ACL Native Selector                             [B]
+      ↓
+각 lane Selector reliability / Top-K audit
+      ↓
+SS03A LM Final Specialist
+SS03B ACL Final Specialist
+      ↓
+Fixed Val 평가
+      ↓
+구조가 통과하면 나머지 10 targets를 A/B 병렬 확장
+      ↓
+12-target hidden-Test inference
+      ↓
+실제 Kaggle submission -> LB 확인
+```
+
+SS01은 두 target 공통 prerequisite이므로 한 번만 실행한다.
+SS01에서는 500GB raw MRI를 바로 대규모 이미지 cache로 복제하지 않고,
+전체 single-slice 수 / Series / Study / 경로 / DICOM header 구조와
+cache 예상 크기를 먼저 확정하여 이후 A/B selector의 I/O 전략을 결정한다.
