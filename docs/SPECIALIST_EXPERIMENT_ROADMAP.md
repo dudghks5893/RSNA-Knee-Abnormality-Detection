@@ -267,7 +267,7 @@ Broad / Strict / Gold의 Positive / Negative 수를 확인했다.
 
 ## S00-2 — Target별 Fixed Val 구축
 
-상태: **Kaggle 실행용 notebook 준비 / 실행 결과 대기**
+상태: **완료 — 2026-09-30**
 
 실행 코드는 GitHub에 저장하지 않는다.
 Specialist 실행은 Kaggle에 notebook을 Import해 Run All 하는 방식으로 진행한다.
@@ -285,7 +285,19 @@ Specialist 실행은 Kaggle에 notebook을 Import해 Run All 하는 방식으로
 - Train / Val UID 완전 분리 검증
 - 이후 동일 target의 모든 Specialist 실험에서 같은 manifest 사용
 
-이 단계가 끝나기 전에는 pilot target의 localization audit으로 넘어가지 않는다.
+실행 결과:
+- 12개 target 모두 계획된 Val P/N 수로 생성 성공
+- 모든 target에서 기본 confidence percentile band 50–90%만으로 충분했음
+- confidence band 하향 확장 불필요
+- Gold overlap 0
+- target 내부 UID 중복 0
+- confidence 최상위 10% Val 사용 0
+- 통합 manifest: 910 target-study rows / 815 unique StudyInstanceUID
+- combined manifest SHA256: `4e80375e688b8419b075a97b63508bb4523512fa91bbde1b3b9003a0bde8fe4a`
+- summary SHA256: `a553d194a33127bdcdea1a316c982d2d9a59b40873b8af2951bef608b80906f4`
+- output ZIP SHA256: `201f723147fffed14aa6171030c6d9a825af80ebb99125e63b710db74f8aacb5`
+
+S00-2 완료. 다음은 S00-3 pilot target Training Positive MRI localization audit이다.
 
 ## S00-3 — Training Positive MRI localization audit
 
