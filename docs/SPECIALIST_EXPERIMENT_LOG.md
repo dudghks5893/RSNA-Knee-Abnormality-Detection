@@ -15,8 +15,9 @@
 - **Specialist 완료 학습 실험: 없음**
 - **S00-1 Target distribution audit: 완료**
 - **S00-2 Target별 Fixed pseudo Val manifest: 완료**
-- 다음 작업: **S00-3 Lateral Meniscus Training Positive MRI localization audit — Kaggle 실행**
-- 이후: disease-specific candidate rule -> target-specific Top-K -> persistent cache -> S01 baseline
+- **S00-3 Lateral Meniscus Training Positive MRI localization audit: 완료**
+- 다음 작업: **S00-4 Lateral Meniscus disease-specific candidate rule 정량 비교**
+- 이후: target-specific Top-K -> persistent cache -> S01 baseline
 
 현재 전체 프로젝트 기준 최고 Public LB:
 
@@ -199,7 +200,7 @@ pilot target baseline 설계를 마친 뒤 controlled experiment로 확인한다
 ```text
 S00-1  Target distribution audit                [DONE]
 S00-2  Target별 Fixed pseudo Val manifest       [DONE]
-S00-3  Training Positive MRI localization audit
+S00-3  Training Positive MRI localization audit [DONE]
 S00-4  Disease-specific candidate rule
 S00-5  Disease-specific Top-K selector / manifest
 S00-6  Persistent Specialist cache
@@ -365,7 +366,7 @@ Broad confidence weighting / high-confidence Negative 보강을 별도 controlle
 
 준비일: **2026-09-30**
 
-상태: **Kaggle notebook 준비 / 실행 결과 대기**
+상태: **완료 — PASS**
 
 Pilot target:
 
@@ -406,3 +407,176 @@ Plane / sequence / canonical relative position,
 raw Top32 / NMS Top32를 진단한 뒤 S00-4에서 candidate rule을 결정한다.
 
 실행 코드는 repository에 저장하지 않고 Kaggle Import용 notebook artifact로만 관리한다.
+
+
+---
+
+# 11. S00-3 실제 실행 결과 — Lateral Meniscus Localization Audit
+
+실행일: **2026-09-30**
+
+결과: **PASS**
+
+데이터 계약:
+
+```text
+Strict Positive 560
+- Fixed Val Positive 40
+= Training Positive audit 520
+```
+
+Fixed Val 80명 전체는 audit에서 제외됐다.
+Gold는 localization discovery에 사용하지 않았다.
+
+사용 lineage:
+
+```text
+Exp16B-1 original full-MRI features
+        ↓
+Exp16B-2 original Fold2 best hierarchical MIL
+        ↓
+Lateral Meniscus-specific
+window attention × series attention
+```
+
+Exp59 / Exp60 refreshed branch는 사용하지 않았다.
+
+## 11.1 실행 규모
+
+- Positive studies = 520
+- Full-MRI window rows = 101,883
+- Series rows = 3,051
+- Raw Top32 rows = 16,640
+- NMS gap3 Top32 rows = 16,640
+- Attention extraction runtime = 약 0.20분
+- 각 study의 Lateral Meniscus joint-attention sum = 1.0 검증
+
+## 11.2 Plane 분포
+
+| Plane | Mean attention mass | Median |
+|---|---:|---:|
+| Axial | 0.362325 | 0.347360 |
+| Coronal | 0.326014 | 0.343044 |
+| Sagittal | 0.311661 | 0.305294 |
+
+Axial이 평균 1위지만 세 Plane 차이는 작다.
+Lateral Meniscus candidate rule에서 한 Plane만 사용하는 근거는 없다.
+
+## 11.3 Sequence 분포
+
+Training Positive 520명 전체 population 기준으로
+category 존재율까지 반영해 평균 attention contribution을 계산하면:
+
+| Sequence group | Approx. global mean attention contribution |
+|---|---:|
+| Axial fluid-sensitive + fat-suppressed | 0.3275 |
+| Coronal fluid-sensitive + fat-suppressed | 0.2166 |
+| Sagittal fluid-sensitive + fat-suppressed | 0.1812 |
+| Sagittal non-fluid / non-fat-suppressed | 0.1305 |
+| Coronal non-fluid / non-fat-suppressed | 0.1094 |
+| Axial non-fluid / non-fat-suppressed | 0.0348 |
+
+Fluid-sensitive + fat-suppressed series가 합계 약 72.5%로 가장 강하지만,
+Sagittal/Coronal non-fluid series도 합계 약 24%를 차지하므로 제거하면 안 된다.
+Axial non-fluid series만 평균 기여도가 상대적으로 작아 S00-4 pruning 후보로 둔다.
+
+## 11.4 Relative slice position
+
+전체 기준 상위 bin:
+
+| Relative bin | Mean attention mass |
+|---|---:|
+| 0.6–0.7 | 0.174473 |
+| 0.4–0.5 | 0.165871 |
+| 0.5–0.6 | 0.163698 |
+| 0.7–0.8 | 0.157018 |
+| 0.3–0.4 | 0.104600 |
+
+단, Plane별 peak가 다르다.
+
+- Axial: 중심부 0.3–0.7, 특히 0.4–0.6
+- Coronal: 0.4–0.9, 특히 0.5–0.8
+- Sagittal: 0.6–0.9가 강하고 0.1–0.4에도 secondary cluster가 존재
+
+전체 Plane 공통 0.2–0.9 범위는 summary 평균 기준 약 91.99%의 attention mass를 포함한다.
+보다 aggressive한 plane-specific rule은 S00-4에서 실제 candidate count와 attention retention을 함께 측정해 결정한다.
+
+## 11.5 Top-K concentration
+
+| K | Mean cumulative raw attention mass |
+|---:|---:|
+| 1 | 0.051343 |
+| 4 | 0.165813 |
+| 8 | 0.280396 |
+| 16 | 0.447494 |
+| 24 | 0.566393 |
+| 32 | 0.653829 |
+
+Top32도 평균 약 65.4%이므로 이 결과만으로 K32를 확정하지 않는다.
+
+Series attention:
+
+- Top1 series = 31.17%
+- Top2 series = 52.02%
+- Top3 series = 69.09%
+- study당 평균 Series 수 = 5.87
+
+Raw Top32 selected Series 수 평균 = 5.52,
+NMS gap3 Top32 = 5.83.
+
+즉 NMS Top32는 거의 전체 Series를 다시 포함하는 수준이다.
+따라서 먼저 candidate space를 줄이고, 그 뒤 target-specific NMS + Top-K를 적용하는 순서가 필요하다.
+
+## 11.6 Raw vs NMS Top32
+
+Raw Top32 Plane share:
+
+- Axial 36.05%
+- Coronal 34.15%
+- Sagittal 29.80%
+
+NMS gap3 Top32 Plane share:
+
+- Sagittal 39.68%
+- Coronal 34.54%
+- Axial 25.78%
+
+NMS 적용 후 Sagittal 비중이 증가하고 Axial이 감소한다.
+이는 Axial high-attention window가 서로 인접한 경우가 상대적으로 많음을 시사한다.
+3-slice window 중복 방지를 위해 same-series center gap >= 3은 계속 중요한 후보 규칙이다.
+
+## 11.7 S00-4로 넘기는 결론
+
+현재 확정 가능한 것:
+
+- 세 Plane 모두 유지
+- Positive/Negative/Test에 동일한 label-blind rule 사용
+- target-specific selector 사용
+- same-series overlap control 필요
+- K는 아직 미확정
+- candidate space pruning을 K보다 먼저 수행
+
+S00-4에서는 다음 범주의 deterministic rule을 정량 비교한다:
+
+1. 전체 Plane + broad relative-position filter
+2. plane-specific relative-position ranges
+3. plane-specific ranges + low-value sequence pruning
+4. 각 규칙의 candidate-window reduction / positive attention retention / per-study minimum retention 비교
+
+S00-4에서 최종 candidate rule을 freeze한 뒤 S00-5 Top-K로 이동한다.
+
+Artifact fingerprint:
+
+```text
+lateral_meniscus_localization_audit_summary.json
+SHA256 = fa655e94ec00bd9cbf84aac51b91bdec1b5f8e93711dec3917e373b9b5b355f8
+
+lateral_meniscus_attention_concentration.csv
+SHA256 = 221930f8943a9ef22e20d4030297977f8c33704d3f7efed46f98f715c8a7bc03
+
+lateral_meniscus_top32_nms_gap3.parquet
+SHA256 = 72dc2f88027777be2855449720a5979c37243566a7e4b0f9e33869d1ef919b40
+
+rsna_knee_s00_3_lateral_meniscus_localization_audit_v1.zip
+SHA256 = fa70ac6a710df8d123a91d306bed14089d75d324290c98a304e1dfb53b745b1b
+```
