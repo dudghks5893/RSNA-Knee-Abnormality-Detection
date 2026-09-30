@@ -758,8 +758,11 @@ one target = one selector + one final specialist
 자기 질환의 slice selection과 classification을 독립적으로 책임지는
 실제 target-specific expert가 되도록 하는 것이다.
 
-또한 Test ranking은 selector별로 한 번 생성해 artifact로 저장한다.
-따라서 ranking 생성 이후 반복 LB prediction에서 selector를 매번 다시 실행하지 않아도 된다.
+Hidden Test ranking은 제출 전에 미리 생성할 수 없다.
+실제 LB inference에서는 각 target마다 Selector가 hidden Test MRI에서 Top-K를 먼저 생성하고,
+그 결과를 같은 실행 안에서 Final Specialist가 사용한다.
+따라서 기본 제출에는 12 selectors와 12 final specialists가 모두 참여한다.
+미리 ranking cache를 재사용할 수 있는 범위는 Train / Fixed Val 등 이미 접근 가능한 데이터에 한정한다.
 
 기존 S00-3/S00-4의 3-slice window 분석은 historical reference로 유지하지만,
 새 native single-slice lineage의 selector training space를 제한하는 규칙으로 사용하지 않는다.
