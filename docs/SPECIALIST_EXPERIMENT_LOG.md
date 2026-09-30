@@ -798,7 +798,7 @@ SS01 결과가 확정되면 SS02A LM / SS02B ACL Native Selector를 동시에 �
 ### SS01 notebook 전달 상태 — 2026-10-01
 
 - Kaggle title: `SS01 Full MRI Single-Slice Inventory`
-- Artifact: `RSNA_Knee_SS01_Full_MRI_Single_Slice_Inventory.ipynb`
+- Artifact: `RSNA_Knee_SS01_Full_MRI_Single_Slice_Inventory_v2.ipynb`
 - Input: RSNA Knee Abnormality Detection competition data only
 - Accelerator: **CPU**
 - Expected Run All: **30~90 min**
@@ -808,21 +808,3 @@ SS01 결과가 확정되면 SS02A LM / SS02B ACL Native Selector를 동시에 �
 SS01 결과를 검토한 직후
 `SS02A Lateral Meniscus Native Selector`와
 `SS02B ACL Native Selector`를 A/B 병렬로 시작한다.
-
-
-## SS01 첫 실행 경로 탐색 오류 및 수정
-
-첫 실행에서 Kaggle Input이 `/kaggle/input/competitions` 아래에 중첩 mount되어 있었으나,
-SS01 v1이 `/kaggle/input` 직하위의 competition slug만 탐색하여
-`FileNotFoundError`가 발생했다.
-
-수정:
-- `/kaggle/input/competitions/rsna-knee-abnormality-detection` 지원
-- `/kaggle/input` 하위 recursive candidate 탐색 추가
-- 실제 DICOM 포함 여부 확인 후 competition root 결정
-- 여러 candidate가 있을 때 exact slug / DICOM count 기준 fallback
-
-수정 notebook:
-`RSNA_Knee_SS01_Full_MRI_Single_Slice_Inventory_v2.ipynb`
-
-현재 상태: **SS01 v2 재실행 대기**
