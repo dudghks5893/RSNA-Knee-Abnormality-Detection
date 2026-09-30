@@ -10,6 +10,12 @@
 > **현재 실험 상태 / 데이터 계보 / 다음 로드맵:** [docs/CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md](docs/CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md)  
 > 채팅이 바뀌어도 동일한 설정으로 이어가기 위한 기준 문서입니다.
 
+> **Specialist 전용 문서:**
+> - [완료 실험 기록](docs/SPECIALIST_EXPERIMENT_LOG.md)
+> - [전용 로드맵 / 설계 초안](docs/SPECIALIST_EXPERIMENT_ROADMAP.md)
+>
+> **현재 최고 Public LB:** **0.918** — Exp57 3-Fold B3A + Full-MRI Direct 70:30 Hybrid
+
 
 ---
 
@@ -2904,3 +2910,166 @@ Fold0 / Fold1 / Fold2의 독립 계보까지 확장해 Fold diversity의 실제 
 - K = 16 / 20 / 24 / 28 / 32
 - 기존 K24-trained B3A로 빠르게 screening
 - 신호가 있는 K만 실제 cache / final model 재학습
+
+---
+
+<!-- LATEST_2026_09_30_START -->
+
+# 2026-09-30 최신 실험 업데이트
+
+> 아래 섹션은 기존 Experiment Log 이후의 최신 계보를 한 번에 정리한다.
+> 이전 섹션은 당시 시점의 기록으로 유지하며, 현재 판단은 이 섹션과 `docs/CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md`를 우선한다.
+
+## Exp57 — 3-Fold Top-24 B3A + Full-MRI Direct 70:30 Hybrid
+
+### 구성
+- Fold0 / Fold1 / Fold2 각자 독립 backbone -> full-MRI MIL -> Top-24 -> final B3A 계보 사용
+- branch 내부는 3-Fold equal mean
+- 최종: `0.70 x 3-Fold B3A + 0.30 x 3-Fold full-MRI direct`
+
+### 결과
+- **Public LB: 0.918**
+- 현재 프로젝트 최고 Public LB
+
+### 인사이트
+- single Fold2 hybrid 0.913에서 3-Fold로 확장한 뒤 추가 개선이 확인됐다.
+- selector / raw-image branch와 full-MRI direct branch의 서로 다른 정보가 ensemble에서 유효했다.
+
+---
+
+## Exp58A — Fold2 Top-K inference-only screening
+
+기존 K24-trained B3A에 K만 바꿔 빠르게 후보를 확인했다.
+
+| K | Fold2 Macro | Weak-6 |
+|---:|---:|---:|
+| 16 | 0.953671 | 0.926190 |
+| 20 | 0.953472 | 0.932738 |
+| 24 | 0.953472 | 0.932738 |
+| 28 | 0.953472 | 0.932738 |
+| 32 | **0.969147** | **0.950198** |
+
+해석 제한:
+- K32 신호는 강했지만 **K24로 학습된 모델의 inference-only screening**이었다.
+- 따라서 K32-trained final model이 실제로 더 좋다는 결론은 아니었다.
+
+---
+
+## Exp59 — B3A refined backbone으로 full-MRI feature refresh
+
+- Backbone: Exp16B-3A Fold2 refined DINOv2-Base
+- Study: **4,407**
+- Series: **24,371**
+- candidate 3-slice windows: **819,078**
+- Feature: CLS 768 + PatchMean 768 = **1536**
+- persistent cache: float16
+- relative position: float16
+
+목적:
+- 기존 Exp11B feature space가 아니라 현재 강한 B3A refined backbone feature space에서 selector/direct 계보를 다시 검증
+
+---
+
+## Exp60 -> Exp63 — All-data / no-validation branch
+
+### Exp60 all-data full-MRI MIL
+- Gold58 + Pseudo4349 전부 train
+- validation 없음
+- random-init MIL
+- fixed 10 epochs
+- final train loss: **0.26879938**
+
+### Exp62A/B old all-data final
+- 동일 common Top32 ranking 사용
+- K24 / K32 controlled A/B
+- validation 없이 train-loss plateau로 checkpoint 선택
+- K24 best train loss 약 **0.218274**
+- K32 best train loss 약 **0.218326**
+
+### Exp63A/B hybrid 결과
+- K24 + Exp60 direct 70:30: **Public LB 0.897**
+- K32 + Exp60 direct 70:30: **Public LB 0.897**
+
+### 인사이트
+- all-data 자체보다 **validation 없이 train loss로 checkpoint를 고른 학습/선택 정책**이 주요 실패 원인 후보가 됐다.
+- train loss 하락이 hidden-test 일반화 향상을 의미하지 않았다.
+
+---
+
+## Exp60-F2-B2Warm + Exp61S — Clean Fold2 warm-start selector
+
+all-data branch를 버리고 Exp16B-2 Fold2 best MIL을 Exp59 feature distribution에 맞게 fine-tuning했다.
+
+- Train: Gold47 + Pseudo4349
+- Val: Fold2 Gold11
+- MIL init: Exp16B-2 best
+- Best epoch: **1**
+- Fold2 Macro: **0.954266**
+- Fold2 Weak-6: **0.933929**
+- checkpoint: `exp60f2_b2warm_refreshed_full_mri_hierarchical_mil_fold2_best.bin`
+
+동일 best MIL로 전체 4,407 study의 common Top32 ranking을 1회 생성했다.
+
+---
+
+## Exp61A / Exp61B — common Top32 persistent raw cache
+
+### Exp61A
+- ranks 1-24
+- shape: `[4407, 24, 3, 224, 224]` uint8
+- decode errors: **0**
+
+### Exp61B
+- ranks 25-32 Tail8
+- shape: `[4407, 8, 3, 224, 224]` uint8
+- decode errors: **0**
+
+K32는 `Exp61A ranks 1-24 + Exp61B ranks 25-32`로 재구성한다.
+
+---
+
+## Exp62A-F2 — K24 Fold2 validation warm-start
+
+- Backbone init: Exp16B-3A refined DINOv2-Base
+- MIL init: Exp60-F2 validation-best MIL
+- Train: Gold47 + Pseudo4349
+- Val: Gold11
+- Best epoch / step: **2 / 1099**
+- Best optimizer updates: **2198**
+- Fold2 Macro: **0.933333**
+- Fold2 Weak-6: **0.911508**
+- **Public LB: 0.905**
+
+인사이트:
+- 새 selector/MIL warm-start 계보의 K24는 기존 B3A raw 0.907을 넘지 못했다.
+- Fold2 validation도 기존 B3A best 0.953472보다 낮았다.
+
+---
+
+## Exp62B-F2 — K32 Fold2 validation warm-start
+
+- Backbone init: Exp16B-3A refined DINOv2-Base
+- MIL init: Exp60-F2 validation-best MIL
+- Train: Gold47 + Pseudo4349
+- Val: Gold11
+- Best epoch / step: **1 / 275**
+- Best optimizer updates: **275**
+- Fold2 Macro: **0.932837**
+- Fold2 Weak-6: **0.884127**
+- **Public LB: 0.905**
+
+인사이트:
+- K32가 K24 대비 Public LB 개선을 만들지 못했다.
+- Exp58A의 K32 inference-only validation 상승은 K32-trained final model 성능으로 재현되지 않았다.
+- A/B 모두 0.905로 동일했고 현재 최고 0.918과 차이가 커, 이 branch의 추가 70:30 제출은 우선순위에서 제외한다.
+
+---
+
+## 현재 방향 전환
+
+기존 shared 12-label 계보는 기록을 유지하되, 다음 연구 축으로 **질환별 binary specialist model**을 별도 관리한다.
+
+- 완료 기록: [docs/SPECIALIST_EXPERIMENT_LOG.md](docs/SPECIALIST_EXPERIMENT_LOG.md)
+- 계획 초안: [docs/SPECIALIST_EXPERIMENT_ROADMAP.md](docs/SPECIALIST_EXPERIMENT_ROADMAP.md)
+
+<!-- LATEST_2026_09_30_END -->
