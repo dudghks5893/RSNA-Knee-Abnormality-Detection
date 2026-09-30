@@ -301,19 +301,37 @@ S00-2 완료. 다음은 S00-3 pilot target Training Positive MRI localization au
 
 ## S00-3 — Training Positive MRI localization audit
 
-Val 100을 제외한 **training Positive studies**를 사용한다.
+상태: **Lateral Meniscus pilot notebook 준비 / Kaggle 실행 결과 대기**
 
-기존 target-specific full-MRI attention을 참고해:
+Pilot target: **Lateral Meniscus**
 
+Audit pool:
+- V4 Strict Positive = 560
+- Fixed Val Positive 40 제외
+- **Training Strict Positive = 520**
+- Gold는 이 localization audit에 포함하지 않음
+
+Attention lineage:
+- **Exp16B-1 original full-MRI features**
+- **Exp16B-2 original Fold2 best hierarchical MIL**
+- Lateral Meniscus target-specific window attention × target-specific series attention
+- Exp59 / Exp60 refreshed branch는 사용하지 않음
+
+이유:
+Exp59/Exp60 이후 K24/K32 재학습은 기존 성공 계보보다 Public LB가 낮았으므로,
+더 좋은 localization signal이라는 근거가 없다.
+S00-3에서는 Exp16B-2.5 → Exp16B-3A로 이어진 원래 성공 selector 계보를 기준으로 한다.
+
+분석 항목:
 - 중요 Plane
 - 중요 Series / sequence
-- slice position
-- attention concentration
+- canonical relative slice position
+- target-specific joint attention concentration
+- diagnostic Top1/4/8/16/24/32 attention mass
+- raw Top32 및 same-series NMS gap3 Top32 metadata 분포
 
-을 분석한다.
-
-목적은 전체 819,078-window 공간을 매번 모두 탐색하지 않고
-질환별 candidate space를 좁히는 것이다.
+목적은 최종 Top-K를 지금 확정하는 것이 아니라,
+전체 819,078-window 공간에서 Lateral Meniscus candidate space를 좁힐 근거를 얻는 것이다.
 
 ## S00-4 — Disease-specific candidate rule 확정
 
