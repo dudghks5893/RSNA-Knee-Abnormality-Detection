@@ -626,3 +626,74 @@ Specialist 계보의 **고정 development proxy**로 사용한다.
 - 실험 ID만 적지 않고 설명형 제목을 함께 사용한다.
 - S01 이후에는 가능한 한 핵심 변수 하나씩만 바꾼다.
 - 기존 dataset / cache / checkpoint를 덮어쓰지 않는다.
+
+
+---
+
+# 2026-10-01 Architecture Decision — One Target, One Selector, One Specialist
+
+Specialist 기본 구조를 다음과 같이 고정한다.
+
+```text
+1 target
+  = 1 native single-slice selector
+  + 1 final specialist
+```
+
+12개 target 전체 기준 기본 checkpoint 수:
+
+```text
+12 selectors
++ 12 final specialists
+= 24 checkpoints
+```
+
+3-Fold ensemble은 기본 설계가 아니다.
+
+우선순위:
+
+1. 각 target마다 selector 1개 + final specialist 1개로 독립 전문가를 완성한다.
+2. target별 성능 개선이 한계에 도달했을 때 final specialist 3-Fold를 선택적으로 검토한다.
+3. 추가 시간이 충분할 때만 selector Fold ensemble까지 확장한다.
+4. 모든 target에 Fold ensemble을 일괄 강제하지 않는다.
+
+목표는 하나의 모델이 하나의 target을 전담하여
+해당 질환의 input selection부터 binary prediction까지 독립적으로 최적화되는 구조다.
+
+## Test inference 운영
+
+Selector는 최종 classifier와 매번 동시에 실행할 필요가 없다.
+
+```text
+Target Selector
+  -> Test slice ranking / Top-K manifest 생성
+  -> ranking artifact 저장
+
+Target Specialist
+  -> 저장된 Top-K를 사용해 prediction
+```
+
+따라서 Test set이 고정된 Kaggle 환경에서는
+selector ranking을 한 번 생성해 저장한 뒤 반복 Specialist inference에서 재사용할 수 있다.
+
+최초 전체 Test ranking 생성 시에는 12 selectors가 필요하지만,
+ranking artifact가 고정된 이후 반복 LB inference에서는 기본적으로 12 final specialists만 실행하면 된다.
+
+## Single-slice architecture 방향
+
+기존 3-slice S00-3/S00-4 결과는 historical reference로 보존하되,
+새 Specialist 기본 lineage는 native single-slice 방향으로 다시 시작한다.
+
+```text
+Full MRI single slices
+  -> target-specific native selector
+  -> target-specific slice ranking / Top-K
+  -> DINOv2-Small
+  -> adjacent-feature local context
+  -> Slice Transformer
+  -> binary head
+```
+
+기존 3-slice attention 기반 candidate rule은
+새 single-slice selector의 입력을 제한하는 hard rule로 사용하지 않는다.
+새 selector는 전체 MRI single-slice space에서 해당 target의 중요도를 다시 학습한다.
