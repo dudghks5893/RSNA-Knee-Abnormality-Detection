@@ -703,3 +703,74 @@ Full MRI single slices
 기존 3-slice attention 기반 candidate rule은
 새 single-slice selector의 입력을 제한하는 hard rule로 사용하지 않는다.
 새 selector는 전체 MRI single-slice space에서 해당 target의 중요도를 다시 학습한다.
+
+
+---
+
+# 2026-10-01 Dual-Target Parallel Execution Contract
+
+현재 Specialist pilot을 단일 Lateral Meniscus에서 **2-target A/B 병렬 pilot**으로 확장한다.
+
+- **A lane = Lateral Meniscus**
+- **B lane = ACL**
+
+선정 이유:
+- 둘 다 Fixed Val 80 (40P/40N)이 이미 고정되어 있다.
+- Strict training pool이 충분하다.
+- 서로 다른 해부학적 target을 동시에 검증하여 single-slice pipeline이 특정 질환에만 맞는지 조기에 확인할 수 있다.
+
+공통 작업은 한 번만 수행한다:
+
+```text
+SS01 Full MRI Single-Slice Inventory / Manifest
+```
+
+그 다음부터:
+
+```text
+A: SS02A LM Native Selector -> reliability / Top-K -> LM Final Specialist
+B: SS02B ACL Native Selector -> reliability / Top-K -> ACL Final Specialist
+```
+
+로 병렬 진행한다.
+
+## Kaggle Notebook 실행 규칙
+
+모든 notebook은:
+
+1. Kaggle Import 후 Run All 1회로 완료
+2. 필요한 Input 명시
+3. CPU/GPU 설정 명시
+4. 예상 Run All 시간 명시
+5. 완료 output 공유 후 GitHub log / roadmap 현행화
+6. Save Version title은 6~59자, 실험 번호 필수
+
+실행 notebook 소스는 repository에 저장하지 않는다.
+
+## 성능 용어
+
+- Fixed Val 결과 = **Val 성능 / Val ROC-AUC**
+- 실제 Kaggle 제출 결과만 = **LB / Public LB / Private LB**
+
+## Single-model first 정책
+
+각 target의 기본은:
+
+```text
+1 native selector + 1 final specialist
+```
+
+3-Fold Final Specialist와 Selector ensemble은 baseline이 아니다.
+먼저 single-model specialist의 성능 한계를 확인한 뒤 선택적으로 추가한다.
+
+## 다음 실험
+
+**SS01 Full MRI Single-Slice Inventory / Manifest**
+
+목적:
+- raw MRI 전체에서 native single-slice lineage의 실제 input universe를 처음부터 확정
+- Study / Series / Slice 수와 DICOM header / path contract 검증
+- 224x224 single-slice image cache와 feature cache의 예상 저장량/throughput 산출
+- LM / ACL selector가 공유할 공통 manifest 생성
+
+SS01에는 target label을 이용한 slice selection을 넣지 않는다.
