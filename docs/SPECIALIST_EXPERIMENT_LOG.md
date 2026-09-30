@@ -728,3 +728,38 @@ SHA256 = 674b0d10a23e7f5b2589e9095999748789822550711def4ef408fa15e9b412c3
 
 S00-4 완료.
 다음 단계는 S00-5 Lateral Meniscus target-specific Top-K selector audit이다.
+
+
+---
+
+# 13. 2026-10-01 Specialist Architecture Pivot
+
+최종 기본 운영 단위를 다음과 같이 변경했다.
+
+```text
+one target = one selector + one final specialist
+```
+
+12 targets 전체 기본 구성:
+
+- Native single-slice selectors: 12
+- Final binary specialists: 12
+- Total baseline checkpoints: 24
+
+3-Fold는 현재 baseline에 포함하지 않는다.
+
+확장 순서:
+
+1. single-model specialist를 target별로 완성
+2. 성능 개선 한계가 확인된 target만 final specialist 3-Fold 검토
+3. 시간이 더 남을 때 selector ensemble 검토
+
+이 결정의 목적은 12개 target 각각이
+자기 질환의 slice selection과 classification을 독립적으로 책임지는
+실제 target-specific expert가 되도록 하는 것이다.
+
+또한 Test ranking은 selector별로 한 번 생성해 artifact로 저장한다.
+따라서 ranking 생성 이후 반복 LB prediction에서 selector를 매번 다시 실행하지 않아도 된다.
+
+기존 S00-3/S00-4의 3-slice window 분석은 historical reference로 유지하지만,
+새 native single-slice lineage의 selector training space를 제한하는 규칙으로 사용하지 않는다.
