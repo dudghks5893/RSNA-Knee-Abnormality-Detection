@@ -14,8 +14,9 @@
 
 - **Specialist 완료 학습 실험: 없음**
 - **S00-1 Target distribution audit: 완료**
-- 다음 작업: **S00-2 스크립트를 Kaggle에서 실행해 12개 target Fixed Val manifest 실제 UID 확정**
-- 이후: Positive MRI localization audit -> disease-specific candidate rule -> target-specific Top-K -> persistent cache -> S01 baseline
+- **S00-2 Target별 Fixed pseudo Val manifest: 완료**
+- 다음 작업: **S00-3 pilot target Training Positive MRI localization audit**
+- 이후: disease-specific candidate rule -> target-specific Top-K -> persistent cache -> S01 baseline
 
 현재 전체 프로젝트 기준 최고 Public LB:
 
@@ -197,7 +198,7 @@ pilot target baseline 설계를 마친 뒤 controlled experiment로 확인한다
 
 ```text
 S00-1  Target distribution audit                [DONE]
-S00-2  Target별 Fixed pseudo Val manifest       [CODE READY / RUN NEXT]
+S00-2  Target별 Fixed pseudo Val manifest       [DONE]
 S00-3  Training Positive MRI localization audit
 S00-4  Disease-specific candidate rule
 S00-5  Disease-specific Top-K selector / manifest
@@ -298,7 +299,61 @@ Val ROC-AUC / BCE / Public LB / runtime
 - `specialist_fixed_val_manifest_v1.csv` — 12개 target 통합 manifest
 - `specialist_fixed_val_summary_v1.csv` — 실제 P/N 수와 confidence 통계
 
-현재 상태:
+실행 결과: **PASS**
 
-**Kaggle 실행용 notebook 준비. 실제 실행 결과와 StudyInstanceUID는 아직 미확정.**
-실행 결과 PASS 후 summary와 실제 manifest 계약을 이 문서에 추가하고 S00-3으로 이동한다.
+- 12개 target 모두 계획된 Total / Positive / Negative 수와 정확히 일치
+- Gold overlap = 0
+- target 내부 UID duplicate = 0
+- confidence top-10% Val 사용 = 0
+- 모든 target이 기본 confidence percentile band 50–90%만으로 생성되어 band 하향 확장 없음
+- 통합 manifest = 910 target-study rows
+- 고유 StudyInstanceUID = 815
+- target 간 동일 study가 일부 Val에 중복되는 것은 허용된 설계이며 최대 pairwise overlap은 5 studies
+
+고정 artifact fingerprint:
+
+```text
+specialist_fixed_val_manifest_v1.csv
+SHA256 = 4e80375e688b8419b075a97b63508bb4523512fa91bbde1b3b9003a0bde8fe4a
+
+specialist_fixed_val_summary_v1.csv
+SHA256 = a553d194a33127bdcdea1a316c982d2d9a59b40873b8af2951bef608b80906f4
+
+specialist_fixed_val_v1.zip
+SHA256 = 201f723147fffed14aa6171030c6d9a825af80ebb99125e63b710db74f8aacb5
+```
+
+이후 Specialist notebook에서 fixed validation input을 사용할 때 combined manifest SHA256을 검증해
+split이 바뀌지 않았음을 확인한다.
+
+S00-2 완료. 다음 단계는 S00-3 Training Positive MRI Localization Audit이다.
+
+
+---
+
+# 9. S00-2 실제 실행 결과
+
+실행일: **2026-09-30**
+
+| Target | Val | Pos | Neg | Strict Pos Remaining | Strict Neg Remaining | Pos Conf Mean | Neg Conf Mean |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| ACL | 80 | 40 | 40 | 787 | 3108 | 0.992398 | 0.887935 |
+| MCL | 80 | 40 | 40 | 482 | 3557 | 0.810633 | 0.863654 |
+| Medial Meniscus | 80 | 40 | 40 | 1521 | 1992 | 0.892479 | 0.845749 |
+| Lateral Meniscus | 80 | 40 | 40 | 520 | 3310 | 0.862020 | 0.862020 |
+| Medial OA | 80 | 40 | 40 | 1323 | 2589 | 0.757657 | 0.750865 |
+| Lateral OA | 80 | 40 | 40 | 897 | 3087 | 0.588048 | 0.599530 |
+| PF OA | 80 | 40 | 40 | 1754 | 1537 | 0.739622 | 0.692426 |
+| Effusion | 80 | 40 | 40 | 2468 | 1260 | 0.494636 | 0.541696 |
+| Synovitis | 50 | 25 | 25 | 490 | 89 | 0.375841 | 0.392419 |
+| Baker's | 80 | 40 | 40 | 1013 | 1217 | 0.814753 | 0.839951 |
+| Contusion | 80 | 40 | 40 | 559 | 3542 | 0.752350 | 0.748401 |
+| Fracture | 60 | 30 | 30 | 216 | 1564 | 0.592632 | 0.662813 |
+
+모든 target의 Val_Pos_Band_Low / Val_Neg_Band_Low = **0.50**.
+따라서 예정된 기본 percentile band만 사용했고 confidence 하한을 추가로 낮출 필요가 없었다.
+
+주의:
+Synovitis는 Val 25 Negative를 제외하면 Strict Negative가 89개 남는다.
+향후 Specialist Train supervision에서 Strict-only를 기본값으로 쓰지 않고
+Broad confidence weighting / high-confidence Negative 보강을 별도 controlled experiment로 검토한다.
