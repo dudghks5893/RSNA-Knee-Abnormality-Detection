@@ -1,5 +1,8 @@
 # RSNA Knee Abnormality Detection — Experiment Log
 
+> **2026-10-01 Specialist 최신 우선 계획:** Native single-slice 계보로 전환. A/B 병렬 pilot은 **A=Lateral Meniscus, B=ACL**. 기본 단위는 **1 target = 1 Selector + 1 Final Specialist**이며 3-Fold는 후순위 개선 옵션이다. 상세 운영 규칙은 [Specialist Roadmap](docs/SPECIALIST_EXPERIMENT_ROADMAP.md)을 우선한다.
+>
+
 
 > 최신 최종 실험 설계 / A-B 병렬 실행 계획:  
 > `docs/FINAL_5FOLD_PARALLEL_EXPERIMENT_PLAN.md`
