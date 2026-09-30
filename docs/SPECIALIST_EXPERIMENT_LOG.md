@@ -15,7 +15,7 @@
 - **Specialist 완료 학습 실험: 없음**
 - **S00-1 Target distribution audit: 완료**
 - **S00-2 Target별 Fixed pseudo Val manifest: 완료**
-- 다음 작업: **S00-3 pilot target Training Positive MRI localization audit**
+- 다음 작업: **S00-3 Lateral Meniscus Training Positive MRI localization audit — Kaggle 실행**
 - 이후: disease-specific candidate rule -> target-specific Top-K -> persistent cache -> S01 baseline
 
 현재 전체 프로젝트 기준 최고 Public LB:
@@ -357,3 +357,52 @@ S00-2 완료. 다음 단계는 S00-3 Training Positive MRI Localization Audit이
 Synovitis는 Val 25 Negative를 제외하면 Strict Negative가 89개 남는다.
 향후 Specialist Train supervision에서 Strict-only를 기본값으로 쓰지 않고
 Broad confidence weighting / high-confidence Negative 보강을 별도 controlled experiment로 검토한다.
+
+
+---
+
+# 10. S00-3 Lateral Meniscus Localization Audit 실행 계약
+
+준비일: **2026-09-30**
+
+상태: **Kaggle notebook 준비 / 실행 결과 대기**
+
+Pilot target:
+
+- **Lateral Meniscus**
+
+Audit data:
+
+```text
+V4 Strict Positive 560
+- Fixed Val Positive 40
+= Training Strict Positive 520
+```
+
+Fixed Val 80명 전체는 audit에서 제외한다.
+
+사용 lineage:
+
+```text
+Exp16B-1 original full-MRI features
+        ↓
+Exp16B-2 original Fold2 best hierarchical MIL
+        ↓
+Lateral Meniscus target-specific
+window attention × series attention
+        ↓
+Training Positive 520-study localization audit
+```
+
+명시적 제외:
+
+- Exp59 refreshed full-MRI features 사용 안 함
+- Exp60-F2-B2Warm 사용 안 함
+- 기존 12-target max attention을 Lateral Meniscus 위치로 간주하지 않음
+
+이번 단계에서는 최종 Top-K를 확정하지 않는다.
+전체 joint-attention 분포와 Top1/4/8/16/24/32 concentration,
+Plane / sequence / canonical relative position,
+raw Top32 / NMS Top32를 진단한 뒤 S00-4에서 candidate rule을 결정한다.
+
+실행 코드는 repository에 저장하지 않고 Kaggle Import용 notebook artifact로만 관리한다.
