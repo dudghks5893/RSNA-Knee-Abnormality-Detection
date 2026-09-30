@@ -579,7 +579,6 @@ Specialist가 더 강한 target만 교체하는 방식도 허용한다.
 
 실제 S01을 실행하기 전에 다음을 확정한다.
 
-- target-specific candidate Plane / Series / relative-position 규칙
 - Top-K
 - DINO feature token: CLS only / CLS + PatchMean
 - Slice Transformer layer / head / hidden dim
