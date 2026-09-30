@@ -660,24 +660,30 @@ Specialist 기본 구조를 다음과 같이 고정한다.
 목표는 하나의 모델이 하나의 target을 전담하여
 해당 질환의 input selection부터 binary prediction까지 독립적으로 최적화되는 구조다.
 
-## Test inference 운영
+## Hidden-Test inference 운영
 
-Selector는 최종 classifier와 매번 동시에 실행할 필요가 없다.
+Kaggle hidden Test는 제출 실행 시점에 처음 접근 가능하므로
+Test slice ranking / Top-K manifest를 제출 전에 미리 생성해 둘 수 없다.
+
+실제 LB inference는 각 target마다 다음 순서를 모두 실행해야 한다.
 
 ```text
-Target Selector
-  -> Test slice ranking / Top-K manifest 생성
-  -> ranking artifact 저장
-
-Target Specialist
-  -> 저장된 Top-K를 사용해 prediction
+Hidden Test Full MRI
+  -> Target Selector
+  -> target-specific slice ranking / Top-K
+  -> Final Specialist
+  -> target probability
 ```
 
-따라서 Test set이 고정된 Kaggle 환경에서는
-selector ranking을 한 번 생성해 저장한 뒤 반복 Specialist inference에서 재사용할 수 있다.
+따라서 기본 12-target 제출은 논리적으로
+**12 selectors + 12 final specialists**가 모두 hidden-Test inference에 참여한다.
 
-최초 전체 Test ranking 생성 시에는 12 selectors가 필요하지만,
-ranking artifact가 고정된 이후 반복 LB inference에서는 기본적으로 12 final specialists만 실행하면 된다.
+같은 notebook 실행 안에서는 selector가 만든 Top-K intermediate artifact를
+즉시 저장해 뒤의 Specialist 단계에서 재사용할 수 있지만,
+그 artifact를 다음 hidden-Test 제출 전에 미리 만들어 두는 것은 불가능하다.
+
+Train / Fixed Val처럼 이미 접근 가능한 데이터에서는 ranking cache를 미리 생성해
+반복 실험 속도를 줄일 수 있다.
 
 ## Single-slice architecture 방향
 
