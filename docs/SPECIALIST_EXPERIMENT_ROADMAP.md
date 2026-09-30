@@ -117,18 +117,41 @@ Official Gold **58명은 모두 Train에 사용**한다.
 
 ## 2.6 Fixed Pseudo Validation
 
-Specialist 개발용으로 질환별 **Fixed Val 100 studies**를 만든다.
+Specialist 개발용 pseudo validation은 target별로 **미리 고정된 크기와 Positive / Negative 수**를 사용한다.
 
-원칙:
+ROC-AUC의 효율적인 비교를 위해 각 target의 Val은 Positive / Negative를 1:1로 구성한다.
+다만 고신뢰 학습 샘플을 최대한 남기기 위해 모든 target을 100명으로 강제하지 않는다.
 
-- pseudo pool에서 Train과 완전히 분리
-- Positive와 Negative를 모두 포함
-- 가능한 한 label confidence가 높은 사례 우선
-- 한 번 정한 100명은 해당 Specialist 계보에서 계속 고정
-- selector rule 발견 / Specialist 학습에서 해당 Val 100을 사용하지 않음
-- main metric: target-specific ROC-AUC
-- secondary metric: BCE / prediction distribution
-- P/N 비율은 모든 질환에 기계적으로 50:50 또는 40:60을 강제하지 않고, 질환별 confidence / class 수를 확인한 뒤 고정
+| Target | Val Total | Val Pos | Val Neg | 이유 |
+|---|---:|---:|---:|---|
+| ACL | 80 | 40 | 40 | Strict P/N 충분 |
+| MCL | 80 | 40 | 40 | Strict P/N 충분 |
+| Medial Meniscus | 80 | 40 | 40 | Strict P/N 충분 |
+| Lateral Meniscus | 80 | 40 | 40 | Strict P/N 충분 |
+| Medial OA | 80 | 40 | 40 | Strict P/N 충분 |
+| Lateral OA | 80 | 40 | 40 | Strict P/N 충분 |
+| PF OA | 80 | 40 | 40 | Strict P/N 충분 |
+| Effusion | 80 | 40 | 40 | Strict P/N 충분 |
+| Synovitis | 50 | 25 | 25 | Strict Negative가 114뿐이므로 Val을 축소 |
+| Baker's | 80 | 40 | 40 | Strict P/N 충분 |
+| Contusion | 80 | 40 | 40 | Strict P/N 충분 |
+| Fracture | 60 | 30 | 30 | Strict Positive가 246뿐이므로 Val을 축소 |
+
+Val sample 선정 원칙:
+
+1. Official Gold 58은 Val 후보에서 제외하고 전부 Train에 둔다.
+2. V4 Strict에서 target별 Positive / Negative pool을 만든다.
+3. 각 class 내부 confidence percentile 기준 **50% 이상 90% 미만**을 기본 Val candidate band로 사용한다.
+   - threshold 직전의 불확실한 pseudo를 피한다.
+   - confidence 최상위 10%는 가능한 한 Train에 남겨 가장 강한 supervision을 보존한다.
+4. candidate가 부족한 경우에만 confidence band를 아래쪽으로 순차 확장한다.
+5. 고정 random seed **20260930**으로 필요한 수만큼 sampling한다.
+6. 한 번 선택한 StudyInstanceUID는 해당 target의 Specialist 계보에서 절대 바꾸지 않는다.
+7. 해당 target의 Val UID는 localization audit / selector discovery / Specialist training에서 모두 제외한다.
+8. main metric은 target ROC-AUC, secondary metric은 BCE / prediction distribution이다.
+9. balanced Val이므로 BCE의 절대값을 실제 population calibration으로 해석하지 않는다.
+
+이 validation은 pseudo-label 기반 development proxy이며 external ground truth validation으로 해석하지 않는다.
 
 ---
 
@@ -242,17 +265,20 @@ Broad / Strict / Gold의 Positive / Negative 수를 확인했다.
 목적:
 각 target이 별도 binary Specialist 학습과 Fixed Val 100을 구성할 수 있는지 확인한다.
 
-## S00-2 — Fixed Val 100 구축
+## S00-2 — Target별 Fixed Val 구축
 
-pilot target에 대해 pseudo pool에서 **100 studies**를 완전히 holdout한다.
+12개 target의 Val 크기와 P/N 수를 위 2.6 표대로 먼저 고정한다.
 
 작업:
 
-- high-confidence Positive 후보 확인
-- high-confidence Negative 후보 확인
-- class 수와 confidence distribution을 보고 P/N 비율 확정
-- Train과 UID 완전 분리
-- 이후 모든 Specialist 실험에서 동일 Val 고정
+- V4 Strict에서 target별 Positive / Negative pool 생성
+- class별 confidence percentile 50–90% candidate band 생성
+- seed 20260930으로 고정 sampling
+- target별 Val manifest CSV 생성
+- Train / Val UID 완전 분리 검증
+- 이후 동일 target의 모든 Specialist 실험에서 같은 manifest 사용
+
+이 단계가 끝나기 전에는 pilot target의 localization audit으로 넘어가지 않는다.
 
 ## S00-3 — Training Positive MRI localization audit
 
@@ -403,7 +429,7 @@ Specialist가 더 강한 target만 교체하는 방식도 허용한다.
 실제 S01을 실행하기 전에 다음을 확정한다.
 
 - **Pilot target**
-- Fixed Val 100의 정확한 Positive / Negative 구성
+- Target별 Fixed Val manifest의 실제 StudyInstanceUID
 - candidate rule discovery에 사용할 Positive subset
 - target-specific candidate Plane / Series 규칙
 - Top-K
@@ -423,8 +449,8 @@ Specialist가 더 강한 target만 교체하는 방식도 허용한다.
 순서는 반드시 다음과 같이 유지한다.
 
 ```text
-1. Fixed Val 100 먼저 확정
-2. Val 100을 모든 discovery / training pool에서 제외
+1. Target별 Fixed Val manifest 먼저 확정
+2. 해당 target Val UID를 모든 discovery / training pool에서 제외
 3. Training Positive만으로 localization audit
 4. candidate rule freeze
 5. frozen rule을 Train / Val / Test에 동일 적용
