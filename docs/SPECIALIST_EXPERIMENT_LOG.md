@@ -4,7 +4,7 @@
 
 > 이 문서는 기존 shared multi-label 계보와 분리해 Specialist 계보와 관련 의사결정을 기록한다.
 >
-> 현재 실행은 **SS03 single-slice DINOv2-Base domain adaptation**이며,
+> 현재 실행은 **SS04 full single-slice feature cache 준비**이며,
 > SS02A/B는 완료 실험이 아니라 중단된 pilot decision으로만 기록한다.
 
 
@@ -59,33 +59,52 @@ SS02A/SS02B는 최종 ranking/audit/output까지 완료하지 않고 중단했�
 이 pilot은 실패 실험 번호로 승격하지 않고,
 다음 architecture 선택을 위한 중단 근거로만 보존한다.
 
-## 현재 실행 — SS03
+## 완료 — SS03
 
 **Knee MRI Single-Slice DINOv2-Base Domain Adaptation**
 
 목적:
-전체 target이 공유할 수 있는 강한 single-slice Knee MRI representation을
-DINOv2-Base 1회 적응으로 구축한다.
+전체 target이 공유할 강한 single-slice Knee MRI representation을
+DINOv2-Base 1회 self-supervised adaptation으로 구축.
 
-확정 설정:
-
-- generic pretrained DINOv2-Base 시작
-- 기존 task-tuned 3-slice-window checkpoint 사용 안 함
-- single slice input
-- Series 중앙 20~80%
-- Series당 epoch마다 1장
+설정:
+- generic pretrained DINOv2-Base
+- 기존 task-tuned 3-slice-window checkpoint 미사용
+- single-slice input
+- Series 20~80%
+- epoch마다 Series당 1장
 - 12 epochs
 - batch 16, T4 x2
-- self-supervised
-- Fixed Val는 train 제외
-- best checkpoint = minimum SSL Val Loss
-- 최종 저장 = teacher DINOv2-Base backbone
+- Fixed Val train 제외
+- best = minimum SSL Val Loss
+- final = teacher backbone
 
-다음 순서:
+결과:
+- **PASS**
+- Best epoch: **11**
+- Best SSL Val Loss: **0.1376109371**
+- Epoch 12 Val Loss: **0.1379058798**
+- Total runtime: **218.72 min**
+- Train studies: **3,592**
+- Val studies: **815**
+- Train series: **19,861**
+- Val series: **4,510**
+- Checkpoint: `ss03_knee_single_slice_dinov2_base_best.pt`
+- SHA256: `d60811d7a002d539fcabddfb8f8334a3b6a0a697f521dccc98bf24a124959166`
+- History SHA256: `f9c0e3151bf6df46a155866bfc4500c2407c19f7f6411bfc5c48f0bf4c4f4f28`
 
+진단:
+- Val SSL Loss가 0.3484 -> 0.1376으로 개선.
+- epoch 12에서 아주 소폭 상승하여 epoch 11 best 선택이 적절.
+- val feature std가 약 1.49로 안정적이어서 collapse 징후 없음.
+- val view cosine 약 0.98 유지.
+
+판정:
+**SS03 완료 / SS04 진행 가능**
+
+다음:
 ```text
-SS03 adapted Base
--> SS04 full single-slice feature cache
+SS04 full single-slice feature cache
 -> SS05 shared 12-target Hierarchical MIL
 -> SS06 target Top-K single-slice caches
 -> SS07 12 binary DINOv2-Small Specialists
@@ -99,8 +118,8 @@ SS03 adapted Base
 
 - **SS01 Full MRI Single-Slice Inventory: 완료**
 - **SS02 target-specific frozen DINOv2-Small selector pilot: 중단 / 확장 폐기**
-- **SS03 Knee MRI Single-Slice DINOv2-Base Domain Adaptation: 현재 진행**
-- 다음: **SS04 full single-slice feature cache**
+- **SS03 Knee MRI Single-Slice DINOv2-Base Domain Adaptation: 완료**
+- **현재: SS04 full single-slice feature cache 준비**
 - 이후: **SS05 shared Hierarchical MIL -> SS06 target Top-K -> SS07 target별 DINOv2-Small Specialist**
 
 현재 전체 프로젝트 기준 최고 Public LB:
