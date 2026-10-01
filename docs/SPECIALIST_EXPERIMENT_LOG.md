@@ -4,7 +4,7 @@
 
 > 이 문서는 기존 shared multi-label 계보와 분리해 Specialist 계보와 관련 의사결정을 기록한다.
 >
-> 현재 실행은 **SS04 full single-slice feature cache 준비**이며,
+> 현재 실행은 **SS05 shared Hierarchical MIL 준비**이며,
 > SS02A/B는 완료 실험이 아니라 중단된 pilot decision으로만 기록한다.
 
 
@@ -110,6 +110,48 @@ SS04 full single-slice feature cache
 -> SS07 12 binary DINOv2-Small Specialists
 ```
 
+
+## 완료 — SS04
+
+**Full Single-Slice Feature Cache**
+
+목적:
+SS03 adapted DINOv2-Base를 사용해 전체 Train MRI의 모든 실제 single slice를
+1회 feature화하고, SS05 MIL이 공통으로 재사용할 persistent cache를 구축.
+
+결과:
+- **PASS**
+- Studies: **4,407**
+- Series: **24,371**
+- Slices: **819,078**
+- Feature: **CLS768 + PatchMean768 = 1536-d float16**
+- Cache shape: **[819078, 1536]**
+- Cache size: **2.3434 GiB**
+- Batch: **128**
+- T4 x2
+- Runtime: **60.87 min**
+- Throughput: **224.26 slices/s**
+- Decode errors: **0**
+- Sample feature std: **1.3753**
+- Mean per-dim std: **1.2310**
+- Feature cache audit: **PASS**
+
+Artifacts:
+- `ss04_single_slice_features_f16.npy`
+- `ss04_single_slice_manifest.parquet`
+- `ss04_study_index.parquet`
+- `ss04_series_index.parquet`
+- `ss04_run_summary.json`
+
+SHA256:
+- feature: `90d1c84a8ecd1d3d49213abf63ed797329057f15341cb5c46b222bf616536879`
+- manifest: `688466b3da083c13693b5060a1af3ebe31949f7f74f81392643a9bb8e21b892b`
+- study index: `ac79113216866fe4fbee19bc4514cd97ab176cedf92035be7a9306a5820508a1`
+- series index: `36c970d3ef8cfcacb1a98e1836941dd819c75916b643feec0edc13505837b906`
+
+판정:
+**SS04 완료 / SS05 진행 가능**
+
 <!-- SPECIALIST_2026_10_02_CURRENT_END -->
 
 ---
@@ -119,7 +161,8 @@ SS04 full single-slice feature cache
 - **SS01 Full MRI Single-Slice Inventory: 완료**
 - **SS02 target-specific frozen DINOv2-Small selector pilot: 중단 / 확장 폐기**
 - **SS03 Knee MRI Single-Slice DINOv2-Base Domain Adaptation: 완료**
-- **현재: SS04 full single-slice feature cache 준비**
+- **SS04 Full Single-Slice Feature Cache: 완료**
+- **현재: SS05 Shared Hierarchical MIL + 12 target importance 준비**
 - 이후: **SS05 shared Hierarchical MIL -> SS06 target Top-K -> SS07 target별 DINOv2-Small Specialist**
 
 현재 전체 프로젝트 기준 최고 Public LB:
