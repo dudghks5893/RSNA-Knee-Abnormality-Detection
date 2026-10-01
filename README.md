@@ -20,6 +20,39 @@
 > **현재 최고 Public LB:** **0.918** — Exp57 3-Fold B3A + Full-MRI Direct 70:30 Hybrid
 
 
+
+<!-- SPECIALIST_2026_10_02_CURRENT_START -->
+
+## 2026-10-02 — 현재 Specialist 연구 방향
+
+현재 최고 Public LB는 **0.918 (Exp57)** 으로 유지한다.
+
+새 Specialist 계보는 기존의 target별 frozen-DINO selector 12개를 각각 만드는 방식에서
+다음 shared single-slice 구조로 전환했다.
+
+```text
+Single-Slice DINOv2-Base Knee MRI Adaptation
+-> Full Single-Slice Feature Cache
+-> Shared Hierarchical MIL + 12 Target Importance
+-> Target-specific Top-K Single-Slice Cache
+-> 12 Target-specific DINOv2-Small Specialists
+```
+
+이전 SS02A/SS02B pilot은 target 하나당 전체 Run All이 5시간 이상 필요한 구조였고,
+LM에서 best Fixed Val ROC-AUC가 0.685에 그쳐 확장하지 않았다.
+12 target selector + 12 final Specialist까지 고려하면 시간 대비 효율이 낮아
+**target별 selector 12개를 처음부터 독립 학습하는 접근은 중단**했다.
+
+현재 단계:
+**SS03 — generic DINOv2-Base를 Knee MRI single-slice에 self-supervised domain adaptation 중.**
+
+자세한 현재 상태:
+- [Current State / Roadmap](docs/CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md)
+- [Specialist Roadmap](docs/SPECIALIST_EXPERIMENT_ROADMAP.md)
+- [Specialist Experiment Log](docs/SPECIALIST_EXPERIMENT_LOG.md)
+
+<!-- SPECIALIST_2026_10_02_CURRENT_END -->
+
 ---
 
 ## Experiment 01 — 초기 V1.1 Submission
