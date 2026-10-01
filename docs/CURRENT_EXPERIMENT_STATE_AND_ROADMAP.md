@@ -26,7 +26,7 @@ Specialist 연구는 2026-10-02에 기존 target별 frozen DINOv2-Small selector
 ```text
 SS01  Full MRI Single-Slice Inventory / Manifest        [DONE]
 SS02  target별 frozen DINOv2-Small Selector pilot       [STOP / REJECT]
-SS03  Knee MRI Single-Slice DINOv2-Base Domain Adapt.   [CURRENT]
+SS03  Knee MRI Single-Slice DINOv2-Base Domain Adapt.   [DONE]
 SS04  전체 single-slice feature cache                    [NEXT]
 SS05  Shared Hierarchical MIL + 12 target importance     [PLANNED]
 SS06  target별 Top-K single-slice cache                  [PLANNED]
@@ -58,24 +58,46 @@ SS02A/B를 완료 실험 번호나 최종 benchmark로 취급하지 않는다.
 
 ## 새 핵심 설계
 
-### 1. SS03 — Knee MRI Single-Slice DINOv2-Base Domain Adaptation
+### 1. SS03 — Knee MRI Single-Slice DINOv2-Base Domain Adaptation — 완료
 
 목적:
 
-- 기존 3-slice-window checkpoint를 초기값으로 사용하지 않는다.
-- generic pretrained **DINOv2-Base**에서 새로 시작한다.
-- 입력 단위는 실제 **single MRI slice 1장**이다.
-- 각 Series의 중앙 **20~80%** 범위에서 epoch마다 1장을 샘플링한다.
-- 질환 label 없이 self-supervised domain adaptation으로
-  DINOv2-Base를 Knee MRI 영상 분포에 적응시킨다.
-- Fixed pseudo Val study는 학습에서 완전히 제외한다.
-- checkpoint 선택 기준은 **SSL Val Loss 최소값**이다.
-- 현재 설정: 224x224, 130 mm crop, 12 epochs, global batch 16, T4 x2.
-- 기존 Base 계보의 layer-wise backbone LR scale을 유지:
-  early 1e-6 / mid 3e-6 / late 1e-5.
-- 기존 supervised Head768은 사용하지 않는다.
-  SSL 단계는 self-distillation projector를 사용하고,
-  최종 산출물은 best teacher DINOv2-Base backbone이다.
+- generic pretrained **DINOv2-Base**에서 새로 시작
+- 기존 3-slice-window checkpoint는 사용하지 않음
+- 실제 single MRI slice 1장을 입력 단위로 사용
+- 각 Series 중앙 **20~80%**에서 epoch마다 1장 샘플링
+- 질환 label 없이 DINO-style self-distillation로 Knee MRI domain adaptation
+- Fixed Val study는 학습에서 완전히 제외
+
+최종 결과:
+
+- Status: **PASS**
+- Epochs: **12**
+- Global batch: **16**
+- T4 x2
+- Train studies: **3,592**
+- SSL Val studies: **815**
+- Train series: **19,861**
+- Val series: **4,510**
+- Best epoch: **11**
+- Best SSL Val Loss: **0.1376109371**
+- Epoch 12 Val Loss: **0.1379058798**
+- Total training time: **218.72 min**
+- Best checkpoint:
+  `ss03_knee_single_slice_dinov2_base_best.pt`
+- Checkpoint SHA256:
+  `d60811d7a002d539fcabddfb8f8334a3b6a0a697f521dccc98bf24a124959166`
+
+학습 안정성:
+
+- Val SSL Loss는 epoch 1의 0.3484에서 epoch 11의 0.1376까지 하락.
+- epoch 12에서 0.1379로 소폭 상승해 epoch 11 checkpoint 선택이 적절했다.
+- val feature std는 약 1.45 -> 1.49 수준으로 유지되어 representation collapse 신호가 없었다.
+- val view cosine도 약 0.98 수준으로 안정적이었다.
+
+판정:
+
+**SS03 완료. Knee MRI single-slice domain-adapted DINOv2-Base backbone 확보.**
 
 ### 2. SS04 — 전체 single-slice feature cache
 
