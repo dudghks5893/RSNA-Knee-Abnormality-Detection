@@ -2,12 +2,10 @@
 
 최종 업데이트: **2026-10-02**
 
-> 상태: **Lateral Meniscus pilot pre-experiment 단계**
+> 상태: **SS03 — Knee MRI Single-Slice DINOv2-Base Domain Adaptation**
 >
-> Specialist의 큰 구조와 데이터/검증 원칙은 확정했다.
-> Pilot target은 **Lateral Meniscus**로 고정했고, S00-1~S00-3을 완료했다.
-> 현재 남은 핵심 TBD는 target-specific candidate rule, Top-K, Slice Transformer 세부 구조, pseudo supervision 세부 정책이다.
-> 실제 S01 학습 전 S00-4~S00-6에서 입력 계약을 먼저 고정한다.
+> 현재 우선순위는 아래 2026-10-02 Current Specialist Roadmap을 따른다.
+> 2026-09-30의 LM-only candidate-rule 계획은 역사 기록으로만 유지한다.
 
 완료 기록: [SPECIALIST_EXPERIMENT_LOG.md](SPECIALIST_EXPERIMENT_LOG.md)
 
