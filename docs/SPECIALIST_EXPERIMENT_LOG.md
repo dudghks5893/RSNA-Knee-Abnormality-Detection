@@ -1,12 +1,98 @@
 # RSNA Knee — Specialist Model Experiment Log
 
-최종 업데이트: **2026-09-30**
+최종 업데이트: **2026-10-02**
 
 > 이 문서는 12개 질환을 하나의 shared multi-label 모델로 동시에 예측하는 기존 계보와 분리하여,
 > **질환별 binary specialist (Yes / No) 모델** 계보만 기록한다.
 >
 > 아직 Specialist 학습 실험은 시작하지 않았다.
 > 2026-09-30 기준으로 pre-experiment data audit와 Specialist 데이터/validation 설계를 먼저 확정하고 있다.
+
+
+<!-- SPECIALIST_2026_10_02_CURRENT_START -->
+
+# 2026-10-02 Current Specialist Status
+
+## 완료 실험 기록 원칙 유지
+
+이 문서의 완료 실험 표에는
+**Run All 완료 + usable output/result가 확보된 실행만** 정식 실험으로 기록한다.
+
+SS02A/SS02B는 최종 ranking/audit/output까지 완료하지 않고 중단했으므로
+**완료 Specialist 실험으로 카운트하지 않는다.**
+
+다만 architecture 전환 근거가 중요하므로 아래에 중단 의사결정만 남긴다.
+
+## 중단된 SS02 pilot — Frozen Generic DINOv2-Small + Target-specific MIL
+
+### SS02A — Lateral Meniscus
+
+실행 중 확인된 값:
+
+- full single-slice feature extraction: **238.71 min**
+- MIL training: **31.65 min**
+- best epoch: **12**
+- best Fixed Val ROC-AUC: **0.685**
+- epoch 18 early stop
+- Train: Broad pseudo에서 Fixed Val 제외 + Gold58
+- Fixed Val: 80 = 40P / 40N
+
+최종 Top-K reliability audit까지 완료하기 전에 중단했다.
+
+### SS02B — ACL
+
+- A와 동일 구조로 병렬 실행
+- GPU / input mount 지연 후 full feature extraction 진행
+- 최종 MIL training / audit까지 완료하기 전에 중단
+
+### 중단 이유
+
+1. target마다 generic DINOv2-Small로 약 819k single-slice feature를 다시 생성해야 했다.
+2. target 하나의 전체 Run All이 ranking/audit까지 포함하면 **5시간 이상** 예상됐다.
+3. 12 target selector만 직렬 기준 **60+ GPU-hours**가 필요하다.
+4. 그 뒤 12개의 final Specialist 학습이 별도로 남는다.
+5. LM pilot Fixed Val ROC-AUC **0.685**는 계산 비용 대비 기대 이하였다.
+6. 따라서 **12개의 selector를 target별로 처음부터 독립 학습하는 구조는 확장하지 않는다.**
+
+판정:
+**STOP / REJECT AS SCALABLE PIPELINE**
+
+이 pilot은 실패 실험 번호로 승격하지 않고,
+다음 architecture 선택을 위한 중단 근거로만 보존한다.
+
+## 현재 실행 — SS03
+
+**Knee MRI Single-Slice DINOv2-Base Domain Adaptation**
+
+목적:
+전체 target이 공유할 수 있는 강한 single-slice Knee MRI representation을
+DINOv2-Base 1회 적응으로 구축한다.
+
+확정 설정:
+
+- generic pretrained DINOv2-Base 시작
+- 기존 task-tuned 3-slice-window checkpoint 사용 안 함
+- single slice input
+- Series 중앙 20~80%
+- Series당 epoch마다 1장
+- 12 epochs
+- batch 16, T4 x2
+- self-supervised
+- Fixed Val는 train 제외
+- best checkpoint = minimum SSL Val Loss
+- 최종 저장 = teacher DINOv2-Base backbone
+
+다음 순서:
+
+```text
+SS03 adapted Base
+-> SS04 full single-slice feature cache
+-> SS05 shared 12-target Hierarchical MIL
+-> SS06 target Top-K single-slice caches
+-> SS07 12 binary DINOv2-Small Specialists
+```
+
+<!-- SPECIALIST_2026_10_02_CURRENT_END -->
 
 ---
 
