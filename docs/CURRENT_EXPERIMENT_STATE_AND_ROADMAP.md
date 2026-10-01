@@ -1,6 +1,6 @@
 # RSNA Knee Abnormality Detection — 현재 실험 상태 / 데이터 계보 / 다음 로드맵
 
-최종 업데이트: **2026-09-30**
+최종 업데이트: **2026-10-02**
 
 이 문서는 채팅이 바뀌어도 실험을 그대로 이어갈 수 있도록,
 현재까지의 데이터 생성 방식, 모델 계보, 정확한 설정값, 결과, 해석,
@@ -8,6 +8,146 @@
 
 내부 추적용 ID(Exp16B-2, B3A 등)는 보조적으로만 사용한다.
 실험 기록 제목은 가능한 한 **누가 봐도 무엇을 바꿨는지 바로 이해할 수 있는 설명형 이름**을 사용한다.
+
+
+<!-- SPECIALIST_2026_10_02_CURRENT_START -->
+
+# 2026-10-02 — 현재 최우선 Specialist 계보
+
+## 현재 상태
+
+기존 Public LB 최고는 그대로 **0.918 (Exp57)** 이다.
+
+Specialist 연구는 2026-10-02에 기존 target별 frozen DINOv2-Small selector pilot에서
+**shared single-slice representation -> shared target-aware MIL -> target별 Specialist** 구조로 전환했다.
+
+현재 실제 진행 위치:
+
+```text
+SS01  Full MRI Single-Slice Inventory / Manifest        [DONE]
+SS02  target별 frozen DINOv2-Small Selector pilot       [STOP / REJECT]
+SS03  Knee MRI Single-Slice DINOv2-Base Domain Adapt.   [CURRENT]
+SS04  전체 single-slice feature cache                    [NEXT]
+SS05  Shared Hierarchical MIL + 12 target importance     [PLANNED]
+SS06  target별 Top-K single-slice cache                  [PLANNED]
+SS07  target별 DINOv2-Small Binary Specialist            [PLANNED]
+```
+
+### SS02 pilot 중단 이유
+
+SS02A Lateral Meniscus / SS02B ACL은
+**generic frozen DINOv2-Small single-slice feature + target-specific hierarchical MIL** 구조였다.
+
+완료 실험으로 승격하지 않는다.
+두 Run은 최종 output/audit까지 완료하지 않고 중단했으며,
+아래 내용은 **중단 판단 근거**로만 보존한다.
+
+- A/B 모두 전체 약 **819k single-slice**의 generic DINOv2-Small feature를 target별 notebook에서 다시 생성하는 구조였다.
+- SS02A feature extraction: 약 **238.7분**.
+- SS02A MIL training: early stop까지 약 **31.6분**.
+- SS02A best Fixed Val ROC-AUC: **0.685 (epoch 12)**.
+- 이후 Top-K reliability audit / ranking까지 포함하면 **1 target당 Run All 5시간 이상**이 필요한 구조였다.
+- 동일 구조를 12 target에 반복하면 selector 단계만으로 약 **60+ GPU-hours**가 필요하고,
+  그 뒤에 12개의 최종 Specialist 학습이 추가되어 전체 일정상 비효율적이다.
+- 비용 대비 LM Fixed Val 성능도 기대 이하였으므로
+  **12개의 target-specific selector를 각각 처음부터 학습하는 방향은 폐기**한다.
+
+중요:
+이 항목은 실행 오류 기록이 아니라 **실제 학습이 진행된 pilot architecture의 중단 의사결정**이다.
+SS02A/B를 완료 실험 번호나 최종 benchmark로 취급하지 않는다.
+
+## 새 핵심 설계
+
+### 1. SS03 — Knee MRI Single-Slice DINOv2-Base Domain Adaptation
+
+목적:
+
+- 기존 3-slice-window checkpoint를 초기값으로 사용하지 않는다.
+- generic pretrained **DINOv2-Base**에서 새로 시작한다.
+- 입력 단위는 실제 **single MRI slice 1장**이다.
+- 각 Series의 중앙 **20~80%** 범위에서 epoch마다 1장을 샘플링한다.
+- 질환 label 없이 self-supervised domain adaptation으로
+  DINOv2-Base를 Knee MRI 영상 분포에 적응시킨다.
+- Fixed pseudo Val study는 학습에서 완전히 제외한다.
+- checkpoint 선택 기준은 **SSL Val Loss 최소값**이다.
+- 현재 설정: 224x224, 130 mm crop, 12 epochs, global batch 16, T4 x2.
+- 기존 Base 계보의 layer-wise backbone LR scale을 유지:
+  early 1e-6 / mid 3e-6 / late 1e-5.
+- 기존 supervised Head768은 사용하지 않는다.
+  SSL 단계는 self-distillation projector를 사용하고,
+  최종 산출물은 best teacher DINOv2-Base backbone이다.
+
+### 2. SS04 — 전체 single-slice feature cache
+
+SS03 best backbone으로 전체 Train MRI의 single slice를 각각 독립적으로 feature화한다.
+
+```text
+single slice
+-> adapted DINOv2-Base
+-> single-slice feature
+```
+
+이 단계부터 기존 3-slice-window representation과 분리한다.
+
+### 3. SS05 — Shared Hierarchical MIL
+
+첫 기본안은 12개의 MIL을 처음부터 따로 학습하지 않는다.
+
+```text
+all single-slice features
+-> Series-level aggregation / attention
+-> Study-level aggregation
+-> 12 target-specific attention/output heads
+```
+
+역할 구분:
+
+- DINOv2-Base: 각 single slice의 표현(feature)을 생성
+- MIL: 전체 MRI feature를 보고 target별 분류와 target별 slice importance를 학습
+
+Main validation:
+- target별 Fixed Val ROC-AUC
+- BCE / prediction distribution은 secondary
+- 중요도 신뢰성은 Top-K keep / remove / random-K로 별도 검증
+
+공통 MIL에서 특정 target만 약하면 그 target에 한해 binary MIL 분리를 검토한다.
+
+### 4. SS06 / SS07 — target별 Top-K + Specialist
+
+MIL importance로 각 target의 Top-K **single slices**를 생성한다.
+
+```text
+ACL Top-K -> ACL DINOv2-Small Specialist
+LM Top-K  -> LM DINOv2-Small Specialist
+...
+```
+
+각 Specialist는 Positive + Negative를 함께 학습하는 binary model이다.
+
+## 최종 Hidden-Test inference 목표
+
+```text
+Hidden Test 전체 MRI
+-> SS03 adapted DINOv2-Base로 모든 single-slice feature 생성
+-> Shared Hierarchical MIL
+-> 12 target별 importance
+-> target별 Top-K single slices 선택
+-> target별 DINOv2-Small Specialist
+-> 12 target probabilities
+-> submission
+```
+
+핵심 비용 절감:
+
+- Knee MRI용 DINOv2-Base 적응: 1회
+- 전체 single-slice feature 생성: 1회
+- Shared MIL: 우선 1회
+- 이후 target별로 달라지는 부분은 Top-K와 최종 Specialist
+
+따라서 이전 SS02처럼
+**DINO feature extraction + selector MIL을 12번 반복하지 않는다.**
+
+<!-- SPECIALIST_2026_10_02_CURRENT_END -->
 
 ---
 
