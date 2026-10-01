@@ -147,79 +147,48 @@ SS04에서는 SS05 MIL이 전체 MRI에서 target별 중요도를 학습할 수 
 
 ### 3. SS05 — Shared Hierarchical MIL — 완료
 
-목적:
-
-- SS04의 819,078 true single-slice feature를 사용
-- shared projection + 12 target-specific slice attention
-- 12 target-specific series attention
-- 12 target logits 직접 예측
-- Fixed Val union 815 studies는 모든 training에서 완전히 제외
-
-학습:
-
-- Train studies: **3,592**
-  - Gold: **58**
-  - Broad pseudo: **3,534**
-- Fixed Val union: **815**
-- hidden: **384**
-- batch: **24**
-- LR: **3e-4**
-- max epochs: **50**
-- patience: **8**
-- best selection: **Fixed Val Macro ROC-AUC**
-- runtime: **16.14 min**
-- trainable params: **0.761M**
-
-최종 결과:
-
 - Status: **PASS**
+- Train: **3,592 studies** = Gold 58 + Broad pseudo 3,534
+- Fixed Val union: **815 studies**
 - Best epoch: **19**
+- Runtime: **16.14 min**
 - Fixed Val Macro ROC-AUC: **0.881247**
 - Fixed Val Weak-6 ROC-AUC: **0.856870**
 
-Target별 Fixed Val ROC-AUC:
-
-- ACL: **0.940000**
-- MCL: **0.767500**
-- Medial Meniscus: **0.958125**
-- Lateral Meniscus: **0.760625**
-- Medial OA: **0.921250**
-- Lateral OA: **0.861250**
-- PF OA: **0.898125**
-- Effusion: **0.952500**
-- Synovitis: **0.982400**
-- Baker's: **0.883125**
-- Contusion: **0.875625**
-- Fracture: **0.774444**
-
-해석:
-
-- 강한 target: Synovitis / Medial Meniscus / Effusion / ACL / Medial OA
-- 약한 target: Lateral Meniscus / MCL / Fracture
-- generic frozen DINOv2-Small SS02 LM pilot 0.685 대비
-  새 shared adapted single-slice 계보의 LM은 **0.760625**로 개선.
-- single-slice domain adaptation + shared MIL 구조는 계산비용을 크게 줄이면서
-  다수 target에서 유효한 질환 분리 성능을 만들었다.
+Target AUC:
+- ACL 0.940000
+- MCL 0.767500
+- Medial Meniscus 0.958125
+- Lateral Meniscus 0.760625
+- Medial OA 0.921250
+- Lateral OA 0.861250
+- PF OA 0.898125
+- Effusion 0.952500
+- Synovitis 0.982400
+- Baker's 0.883125
+- Contusion 0.875625
+- Fracture 0.774444
 
 Attention concentration:
+- Top24: 약 **31~35%**
+- Top32: 약 **38~42%**
+- Top48: 약 **50~55%**
+- Top64: 약 **60~65%**
 
-- Top-24 평균 attention coverage는 target별 약 **0.307~0.350**
-- Top-32는 약 **0.377~0.423**
-- Top-48은 약 **0.500~0.547**
-- Top-64는 약 **0.604~0.654**
-
-따라서 attention은 소수 slice에 극단적으로 집중되지 않고 비교적 분산되어 있다.
-SS06에서 기존 계보처럼 Top-24를 즉시 고정하지 않는다.
-Top-K keep/remove/random 및 K 후보 비교로 실제 정보 보존성을 먼저 검증한다.
+해석:
+- adapted single-slice representation + shared MIL은 계산비용 대비 유효.
+- SS02A LM 0.685 대비 SS05 LM **0.760625**로 개선.
+- 약한 target: Lateral Meniscus / MCL / Fracture.
+- attention이 넓게 분산되어 있어 Top24를 바로 고정하지 않는다.
+- SS06에서 K=24/32/48/64 중심으로 keep/remove/random-K 진단 후 target별 K를 결정한다.
 
 Checkpoint:
-
-- `ss05_shared_hierarchical_mil_best.bin`
-- SHA256: `febe6f4c6d4b002c769ab24cea3d572da0124838f431b1547afea14edf509a81`
+`ss05_shared_hierarchical_mil_best.bin`
+SHA256:
+`febe6f4c6d4b002c769ab24cea3d572da0124838f431b1547afea14edf509a81`
 
 판정:
-
-**SS05 완료. SS06 target별 Top-K 정책 검증 단계로 진행.**
+**SS05 완료. SS06 target별 Top-K 정책 검증으로 진행.**
 
 ### 4. SS06 / SS07 — target별 Top-K + Specialist
 
