@@ -4,7 +4,7 @@
 
 > 이 문서는 기존 shared multi-label 계보와 분리해 Specialist 계보와 관련 의사결정을 기록한다.
 >
-> 현재 실행은 **SS05 shared Hierarchical MIL 준비**이며,
+> 현재 실행은 **SS06 target-specific Top-K policy 준비**이며,
 > SS02A/B는 완료 실험이 아니라 중단된 pilot decision으로만 기록한다.
 
 
@@ -152,6 +152,59 @@ SHA256:
 판정:
 **SS04 완료 / SS05 진행 가능**
 
+
+## 완료 — SS05
+
+**Shared Hierarchical MIL + 12 Target-Specific Importance**
+
+- Status: **PASS**
+- Train: **3,592 studies** = Gold 58 + Broad pseudo 3,534
+- Fixed Val union: **815 studies**
+- Train / Fixed Val overlap: **0**
+- hidden 384 / batch 24 / LR 3e-4
+- max epochs 50 / patience 8
+- trainable params: **0.761M**
+- runtime: **16.14 min**
+- Best epoch: **19**
+- Fixed Val Macro ROC-AUC: **0.8812474537**
+- Weak-6 ROC-AUC: **0.8568699074**
+
+Target AUC:
+- ACL 0.940000
+- MCL 0.767500
+- Medial Meniscus 0.958125
+- Lateral Meniscus 0.760625
+- Medial OA 0.921250
+- Lateral OA 0.861250
+- PF OA 0.898125
+- Effusion 0.952500
+- Synovitis 0.982400
+- Baker's 0.883125
+- Contusion 0.875625
+- Fracture 0.774444
+
+Attention audit:
+- target-study rows: 910
+- Top64 export rows: 58,240
+- Top24 coverage: 약 0.307~0.350
+- Top32 coverage: 약 0.377~0.423
+- Top48 coverage: 약 0.500~0.547
+- Top64 coverage: 약 0.604~0.654
+
+해석:
+- LM은 이전 SS02A generic frozen Small pilot 0.685 -> **0.760625**로 개선.
+- MCL / LM / Fracture는 상대적으로 약함.
+- attention이 분산되어 있으므로 Top24를 바로 고정하지 않음.
+- SS06에서 K=24/32/48/64 중심으로 keep/remove/random-K 검증 후 target별 K 결정.
+
+Checkpoint:
+`ss05_shared_hierarchical_mil_best.bin`
+SHA256:
+`febe6f4c6d4b002c769ab24cea3d572da0124838f431b1547afea14edf509a81`
+
+판정:
+**SS05 완료 / SS06 진행 가능**
+
 <!-- SPECIALIST_2026_10_02_CURRENT_END -->
 
 ---
@@ -162,8 +215,9 @@ SHA256:
 - **SS02 target-specific frozen DINOv2-Small selector pilot: 중단 / 확장 폐기**
 - **SS03 Knee MRI Single-Slice DINOv2-Base Domain Adaptation: 완료**
 - **SS04 Full Single-Slice Feature Cache: 완료**
-- **현재: SS05 Shared Hierarchical MIL + 12 target importance 준비**
-- 이후: **SS05 shared Hierarchical MIL -> SS06 target Top-K -> SS07 target별 DINOv2-Small Specialist**
+- **SS05 Shared Hierarchical MIL + 12 target importance: 완료**
+- **현재: SS06 target별 Top-K policy / cache 준비**
+- 이후: **SS06 target Top-K -> SS07 target별 DINOv2-Small Specialist**
 
 현재 전체 프로젝트 기준 최고 Public LB:
 - **0.918 — Exp57: 3-Fold Top-24 B3A + 3-Fold Full-MRI Direct 70:30 Hybrid**
