@@ -808,3 +808,60 @@ SS01 결과가 확정되면 SS02A LM / SS02B ACL Native Selector를 동시에 �
 SS01 결과를 검토한 직후
 `SS02A Lateral Meniscus Native Selector`와
 `SS02B ACL Native Selector`를 A/B 병렬로 시작한다.
+
+
+## SS01 — Full MRI Single-Slice Inventory / Manifest — 완료
+
+실행일: **2026-10-01**  
+상태: **PASS**
+
+결과:
+- 전체 DICOM: **819,635**
+- header 성공: **819,635 / 819,635**
+- header failure: **0**
+- Train: **4,407 studies / 24,371 series / 819,078 slices**
+- Visible test sample: **3 studies / 15 series / 557 slices**
+- Train Plane slices:
+  - Sagittal **340,843**
+  - Coronal **243,374**
+  - Axial **234,861**
+- unknown Plane: **0**
+- path fallback Series: **0**
+- duplicate relative path: **0**
+- duplicate non-empty SOP UID: **0**
+- Series <3 slices: **0**
+- Header scan runtime: **66.00 min / CPU 8 workers**
+
+Single-slice cache estimate (Train 819,078 slices):
+- 224x224 uint8 grayscale: **38.28 GiB**
+- 224x224 float16 grayscale: **76.55 GiB**
+- DINOv2-Small CLS384 float16: **0.586 GiB**
+- DINOv2-Small CLS+PatchMean768 float16: **1.172 GiB**
+
+결론:
+- native single-slice lineage의 Study / Series / Slice 계약이 정상 확인됐다.
+- 전체 raw image cache를 무조건 복제하기보다 compact DINO feature cache를 활용하는 selector 경로가 저장공간상 유리하다.
+- 다음 단계는 A/B 병렬:
+  - **SS02A Lateral Meniscus Native Selector**
+  - **SS02B ACL Native Selector**
+
+Artifact fingerprint:
+```text
+ss01_full_mri_single_slice_manifest.parquet
+SHA256 = 315e6443bb2c58d29981b17f92086f35b48a2dfb8bc6ee53bc65000a69bdd1eb
+
+ss01_series_summary.parquet
+SHA256 = d88c8e5a1e2e7507de8cfe16523385d8e1bb07c88da82078bdcd0dab8f8c0409
+
+ss01_inventory_summary.json
+SHA256 = 4d23f8ab468055217fa30365f2efb07470010c85ede36177174fd638e30fe1a8
+
+ss01_integrity_checks.csv
+SHA256 = 0460f4e086ca530b0c52c2b88aef209d6ad69e08633e84d908ef87e4f1db3ec9
+
+ss01_cache_size_estimates.csv
+SHA256 = b5a9d3fa3054fca72563a032a2d7e1c12db96041a18180b1b780cb6ca1de6d3a
+
+rsna_knee_ss01_single_slice_inventory_v1.zip
+SHA256 = 0e66dd3369bb418037db2d979a40d3191f6a6669e3b9833fc59621bc2482577c
+```
