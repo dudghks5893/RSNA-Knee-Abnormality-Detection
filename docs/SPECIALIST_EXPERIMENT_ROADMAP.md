@@ -2,7 +2,7 @@
 
 최종 업데이트: **2026-10-02**
 
-> 상태: **SS05 — Shared Hierarchical MIL + 12 Target Importance 준비**
+> 상태: **SS06 — Target-specific Top-K Single-Slice Policy / Cache 준비**
 >
 > 현재 우선순위는 아래 2026-10-02 Current Specialist Roadmap을 따른다.
 > 2026-09-30의 LM-only candidate-rule 계획은 역사 기록으로만 유지한다.
@@ -14,7 +14,7 @@
 
 # 2026-10-02 Current Specialist Roadmap
 
-> **현재 단계: SS04 완료 -> SS05 Shared Hierarchical MIL**
+> **현재 단계: SS05 완료 -> SS06 Target-specific Top-K policy**
 >
 > 아래 2026-09-30 LM-only candidate-rule 계획은 역사 기록으로 유지한다.
 > 실제 진행 우선순위는 이 섹션을 따른다.
@@ -48,10 +48,10 @@ SS03  DINOv2-Base single-slice Knee MRI adaptation  [DONE]
   ↓
 SS04  Full single-slice feature cache                [DONE]
   ↓
-SS05  Shared Hierarchical MIL                       [CURRENT]
+SS05  Shared Hierarchical MIL                       [DONE]
       + 12 target-specific attention/output heads
   ↓
-SS06  12 target-specific Top-K single-slice caches
+SS06  12 target-specific Top-K single-slice caches [CURRENT]
   ↓
 SS07  12 target-specific DINOv2-Small Specialists
   ↓
@@ -120,6 +120,39 @@ each DICOM slice
 ```
 
 이 cache는 이후 12 target이 공통 사용한다.
+
+## SS05 완료 결과
+
+- PASS
+- best epoch: **19**
+- Fixed Val Macro ROC-AUC: **0.881247**
+- Weak-6 ROC-AUC: **0.856870**
+- runtime: **16.14 min**
+- train: **3,592 studies**
+- Fixed Val union: **815 studies**
+
+Target AUC:
+- ACL 0.9400
+- MCL 0.7675
+- Medial Meniscus 0.9581
+- Lateral Meniscus 0.7606
+- Medial OA 0.9213
+- Lateral OA 0.8613
+- PF OA 0.8981
+- Effusion 0.9525
+- Synovitis 0.9824
+- Baker's 0.8831
+- Contusion 0.8756
+- Fracture 0.7744
+
+Attention coverage:
+- Top24: 약 **31~35%**
+- Top32: 약 **38~42%**
+- Top48: 약 **50~55%**
+- Top64: 약 **60~65%**
+
+SS06에서는 Top24를 고정하지 않는다.
+K=24/32/48/64를 중심으로 keep/remove/random-K 진단 후 target별 K를 결정한다.
 
 ## SS05 — Shared Hierarchical MIL
 
