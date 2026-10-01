@@ -27,8 +27,8 @@ Specialist 연구는 2026-10-02에 기존 target별 frozen DINOv2-Small selector
 SS01  Full MRI Single-Slice Inventory / Manifest        [DONE]
 SS02  target별 frozen DINOv2-Small Selector pilot       [STOP / REJECT]
 SS03  Knee MRI Single-Slice DINOv2-Base Domain Adapt.   [DONE]
-SS04  전체 single-slice feature cache                    [NEXT]
-SS05  Shared Hierarchical MIL + 12 target importance     [PLANNED]
+SS04  전체 single-slice feature cache                    [DONE]
+SS05  Shared Hierarchical MIL + 12 target importance     [CURRENT]
 SS06  target별 Top-K single-slice cache                  [PLANNED]
 SS07  target별 DINOv2-Small Binary Specialist            [PLANNED]
 ```
@@ -99,17 +99,51 @@ SS02A/B를 완료 실험 번호나 최종 benchmark로 취급하지 않는다.
 
 **SS03 완료. Knee MRI single-slice domain-adapted DINOv2-Base backbone 확보.**
 
-### 2. SS04 — 전체 single-slice feature cache
+### 2. SS04 — 전체 single-slice feature cache — 완료
 
-SS03 best backbone으로 전체 Train MRI의 single slice를 각각 독립적으로 feature화한다.
+SS03 best teacher DINOv2-Base backbone으로 전체 Train MRI의 실제 single slice를 모두 feature화했다.
 
-```text
-single slice
--> adapted DINOv2-Base
--> single-slice feature
-```
+결과:
 
-이 단계부터 기존 3-slice-window representation과 분리한다.
+- Status: **PASS**
+- Studies: **4,407**
+- Series: **24,371**
+- Single slices: **819,078**
+- Decode errors: **0**
+- Feature: **CLS 768 + PatchMean 768 = 1536-d**
+- dtype: **float16**
+- Cache shape: **[819078, 1536]**
+- Cache size: **2.3434 GiB**
+- Batch: **128**
+- T4 x2
+- Runtime: **60.87 min**
+- Throughput: **224.26 slices/s**
+- Sample feature std: **1.3753**
+- Mean per-dim std: **1.2310**
+- Feature cache audit: **PASS**
+
+Artifacts:
+
+- `ss04_single_slice_features_f16.npy`
+- `ss04_single_slice_manifest.parquet`
+- `ss04_study_index.parquet`
+- `ss04_series_index.parquet`
+- `ss04_run_summary.json`
+
+Fingerprints:
+
+- feature SHA256: `90d1c84a8ecd1d3d49213abf63ed797329057f15341cb5c46b222bf616536879`
+- manifest SHA256: `688466b3da083c13693b5060a1af3ebe31949f7f74f81392643a9bb8e21b892b`
+- study index SHA256: `ac79113216866fe4fbee19bc4514cd97ab176cedf92035be7a9306a5820508a1`
+- series index SHA256: `36c970d3ef8cfcacb1a98e1836941dd819c75916b643feec0edc13505837b906`
+
+중요:
+SS03에서는 domain adaptation 비용을 줄이기 위해 Series 중앙 20~80%만 샘플링했지만,
+SS04에서는 SS05 MIL이 전체 MRI에서 target별 중요도를 학습할 수 있도록 **819,078장 전체를 보존**했다.
+
+판정:
+
+**SS04 완료. SS05 Shared Hierarchical MIL 학습 준비 완료.**
 
 ### 3. SS05 — Shared Hierarchical MIL
 
