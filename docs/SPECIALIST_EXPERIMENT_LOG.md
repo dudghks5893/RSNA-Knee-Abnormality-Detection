@@ -2,11 +2,10 @@
 
 최종 업데이트: **2026-10-02**
 
-> 이 문서는 12개 질환을 하나의 shared multi-label 모델로 동시에 예측하는 기존 계보와 분리하여,
-> **질환별 binary specialist (Yes / No) 모델** 계보만 기록한다.
+> 이 문서는 기존 shared multi-label 계보와 분리해 Specialist 계보와 관련 의사결정을 기록한다.
 >
-> 아직 Specialist 학습 실험은 시작하지 않았다.
-> 2026-09-30 기준으로 pre-experiment data audit와 Specialist 데이터/validation 설계를 먼저 확정하고 있다.
+> 현재 실행은 **SS03 single-slice DINOv2-Base domain adaptation**이며,
+> SS02A/B는 완료 실험이 아니라 중단된 pilot decision으로만 기록한다.
 
 
 <!-- SPECIALIST_2026_10_02_CURRENT_START -->
@@ -98,27 +97,18 @@ SS03 adapted Base
 
 # 1. 현재 상태
 
-- **Specialist 완료 학습 실험: 없음**
-- **S00-1 Target distribution audit: 완료**
-- **S00-2 Target별 Fixed pseudo Val manifest: 완료**
-- **S00-3 Lateral Meniscus Training Positive MRI localization audit: 완료**
-- 다음 작업: **S00-4 Lateral Meniscus candidate-rule audit Kaggle 실행**
-- 이후: target-specific Top-K -> persistent cache -> S01 baseline
+- **SS01 Full MRI Single-Slice Inventory: 완료**
+- **SS02 target-specific frozen DINOv2-Small selector pilot: 중단 / 확장 폐기**
+- **SS03 Knee MRI Single-Slice DINOv2-Base Domain Adaptation: 현재 진행**
+- 다음: **SS04 full single-slice feature cache**
+- 이후: **SS05 shared Hierarchical MIL -> SS06 target Top-K -> SS07 target별 DINOv2-Small Specialist**
 
 현재 전체 프로젝트 기준 최고 Public LB:
-
 - **0.918 — Exp57: 3-Fold Top-24 B3A + 3-Fold Full-MRI Direct 70:30 Hybrid**
 
-가장 최근 K24 / K32 재검증:
-
-| 실험 | K | Fold2 Macro | Fold2 Weak-6 | Public LB |
-|---|---:|---:|---:|---:|
-| Exp62A-F2-B2Warm | 24 | 0.933333 | 0.911508 | **0.905** |
-| Exp62B-F2-B2Warm | 32 | 0.932837 | 0.884127 | **0.905** |
-
-Specialist는 이 shared 계보와 별도의 독립 실험 lineage로 관리한다.
-S01이 낮더라도 기존 shared Fold2 결과를 pass/fail gate로 사용하지 않고
-Specialist 내부에서 개선 방향을 추적한다.
+완료 실험 기록 원칙:
+- Run All 완료 + usable output/result가 있는 실행만 완료 실험으로 카운트한다.
+- 중단된 SS02A/B는 architecture 의사결정 근거일 뿐 완료 실험이 아니다.
 
 ---
 
