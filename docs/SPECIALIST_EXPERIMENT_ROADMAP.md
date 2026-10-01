@@ -2,7 +2,7 @@
 
 최종 업데이트: **2026-10-02**
 
-> 상태: **SS04 — Full Single-Slice Feature Cache 준비**
+> 상태: **SS05 — Shared Hierarchical MIL + 12 Target Importance 준비**
 >
 > 현재 우선순위는 아래 2026-10-02 Current Specialist Roadmap을 따른다.
 > 2026-09-30의 LM-only candidate-rule 계획은 역사 기록으로만 유지한다.
@@ -14,7 +14,7 @@
 
 # 2026-10-02 Current Specialist Roadmap
 
-> **현재 단계: SS03 완료 -> SS04 Full Single-Slice Feature Cache**
+> **현재 단계: SS04 완료 -> SS05 Shared Hierarchical MIL**
 >
 > 아래 2026-09-30 LM-only candidate-rule 계획은 역사 기록으로 유지한다.
 > 실제 진행 우선순위는 이 섹션을 따른다.
@@ -46,9 +46,9 @@ SS01  Full MRI Single-Slice Inventory / Manifest     [DONE]
   ↓
 SS03  DINOv2-Base single-slice Knee MRI adaptation  [DONE]
   ↓
-SS04  Full single-slice feature cache                [CURRENT]
+SS04  Full single-slice feature cache                [DONE]
   ↓
-SS05  Shared Hierarchical MIL
+SS05  Shared Hierarchical MIL                       [CURRENT]
       + 12 target-specific attention/output heads
   ↓
 SS06  12 target-specific Top-K single-slice caches
@@ -94,6 +94,19 @@ Hidden Test end-to-end inference / submission
 주의:
 single-slice는 batch size 1을 뜻하지 않는다.
 한 training sample이 MRI 1장이라는 뜻이며 batch에는 여러 single slices를 함께 넣는다.
+
+## SS04 완료 결과
+
+- PASS
+- 4,407 studies / 24,371 series / **819,078 true single slices**
+- feature: **CLS768 + PatchMean768 = 1536-d float16**
+- cache shape: **[819078, 1536]**
+- cache size: **2.3434 GiB**
+- runtime: **60.87 min**
+- throughput: **224.26 slices/s**
+- decode errors: **0**
+- feature audit: **PASS**
+- feature SHA256: `90d1c84a8ecd1d3d49213abf63ed797329057f15341cb5c46b222bf616536879`
 
 ## SS04 — Feature cache
 
