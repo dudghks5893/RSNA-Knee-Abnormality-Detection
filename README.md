@@ -43,7 +43,7 @@ LM에서 best Fixed Val ROC-AUC가 0.685에 그쳐 확장하지 않았다.
 **target별 selector 12개를 처음부터 독립 학습하는 접근은 중단**했다.
 
 현재 단계:
-**SS03 — generic DINOv2-Base를 Knee MRI single-slice에 self-supervised domain adaptation 중.**
+**SS03 완료 — Knee MRI single-slice DINOv2-Base domain adaptation PASS. 다음은 SS04 full single-slice feature cache.**
 
 자세한 현재 상태:
 - [Current State / Roadmap](docs/CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md)
