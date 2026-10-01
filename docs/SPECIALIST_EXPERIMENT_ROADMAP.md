@@ -2,7 +2,7 @@
 
 최종 업데이트: **2026-10-02**
 
-> 상태: **SS03 — Knee MRI Single-Slice DINOv2-Base Domain Adaptation**
+> 상태: **SS04 — Full Single-Slice Feature Cache 준비**
 >
 > 현재 우선순위는 아래 2026-10-02 Current Specialist Roadmap을 따른다.
 > 2026-09-30의 LM-only candidate-rule 계획은 역사 기록으로만 유지한다.
@@ -14,7 +14,7 @@
 
 # 2026-10-02 Current Specialist Roadmap
 
-> **현재 단계: SS03 — Knee MRI Single-Slice DINOv2-Base Domain Adaptation 실행 준비/진행**
+> **현재 단계: SS03 완료 -> SS04 Full Single-Slice Feature Cache**
 >
 > 아래 2026-09-30 LM-only candidate-rule 계획은 역사 기록으로 유지한다.
 > 실제 진행 우선순위는 이 섹션을 따른다.
@@ -44,9 +44,9 @@ ranking / reliability audit까지 포함하면 target 하나당 5시간 이상�
 ```text
 SS01  Full MRI Single-Slice Inventory / Manifest     [DONE]
   ↓
-SS03  DINOv2-Base single-slice Knee MRI adaptation  [CURRENT]
+SS03  DINOv2-Base single-slice Knee MRI adaptation  [DONE]
   ↓
-SS04  Full single-slice feature cache                [NEXT]
+SS04  Full single-slice feature cache                [CURRENT]
   ↓
 SS05  Shared Hierarchical MIL
       + 12 target-specific attention/output heads
@@ -57,6 +57,18 @@ SS07  12 target-specific DINOv2-Small Specialists
   ↓
 Hidden Test end-to-end inference / submission
 ```
+
+## SS03 완료 결과
+
+- PASS
+- best epoch: **11**
+- best SSL Val Loss: **0.1376109371**
+- epoch 12 Val Loss: **0.1379058798**
+- total: **218.72 min**
+- train / val studies: **3,592 / 815**
+- checkpoint SHA256: `d60811d7a002d539fcabddfb8f8334a3b6a0a697f521dccc98bf24a124959166`
+- collapse signal 없음: val feature std 약 **1.49**
+- 최종 feature extractor: best teacher DINOv2-Base backbone
 
 ## SS03 확정 계약
 
