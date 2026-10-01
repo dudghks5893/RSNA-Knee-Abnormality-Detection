@@ -1,6 +1,6 @@
 # RSNA Knee — Specialist Model Roadmap
 
-최종 업데이트: **2026-09-30**
+최종 업데이트: **2026-10-02**
 
 > 상태: **Lateral Meniscus pilot pre-experiment 단계**
 >
@@ -10,6 +10,171 @@
 > 실제 S01 학습 전 S00-4~S00-6에서 입력 계약을 먼저 고정한다.
 
 완료 기록: [SPECIALIST_EXPERIMENT_LOG.md](SPECIALIST_EXPERIMENT_LOG.md)
+
+
+<!-- SPECIALIST_2026_10_02_CURRENT_START -->
+
+# 2026-10-02 Current Specialist Roadmap
+
+> **현재 단계: SS03 — Knee MRI Single-Slice DINOv2-Base Domain Adaptation 실행 준비/진행**
+>
+> 아래 2026-09-30 LM-only candidate-rule 계획은 역사 기록으로 유지한다.
+> 실제 진행 우선순위는 이 섹션을 따른다.
+
+## 방향 전환 배경
+
+기존 SS02 pilot은 target마다:
+
+```text
+generic frozen DINOv2-Small
+-> 전체 single-slice feature extraction
+-> target-specific hierarchical MIL
+-> target-specific ranking
+```
+
+을 독립적으로 수행하도록 설계했다.
+
+SS02A LM에서는 feature extraction만 약 238.7분이 걸렸고,
+MIL은 best Fixed Val ROC-AUC **0.685**에서 early stop됐다.
+ranking / reliability audit까지 포함하면 target 하나당 5시간 이상이 필요한 구조였고,
+12 target selector + 12 final Specialist까지 이어지는 전체 비용이 지나치게 컸다.
+
+따라서 이 구조는 **완료 실험으로 기록하지 않고 중단/폐기**한다.
+
+## 새 전체 파이프라인
+
+```text
+SS01  Full MRI Single-Slice Inventory / Manifest     [DONE]
+  ↓
+SS03  DINOv2-Base single-slice Knee MRI adaptation  [CURRENT]
+  ↓
+SS04  Full single-slice feature cache                [NEXT]
+  ↓
+SS05  Shared Hierarchical MIL
+      + 12 target-specific attention/output heads
+  ↓
+SS06  12 target-specific Top-K single-slice caches
+  ↓
+SS07  12 target-specific DINOv2-Small Specialists
+  ↓
+Hidden Test end-to-end inference / submission
+```
+
+## SS03 확정 계약
+
+- backbone init: generic pretrained **DINOv2-Base**
+- 기존 3-slice-window task-tuned checkpoint: **사용하지 않음**
+- input unit: **single MRI slice 1장**
+- Series sampling range: **20~80%**
+- epoch당 Series별 sample: **1장**, epoch마다 위치 변경
+- image: **224x224**, 130 mm physical center crop
+- training: self-supervised domain adaptation
+- disease label: 사용하지 않음
+- Fixed Val UID: train에서 완전 제외
+- checkpoint: SSL Val Loss 최소 best 1개만 유지
+- epochs: **12**
+- global batch: **16** on T4 x2
+- backbone LR:
+  - early **1e-6**
+  - mid **3e-6**
+  - late **1e-5**
+- SSL projector LR: **2e-4**
+- 최종 산출물: adapted **teacher DINOv2-Base backbone**
+
+주의:
+single-slice는 batch size 1을 뜻하지 않는다.
+한 training sample이 MRI 1장이라는 뜻이며 batch에는 여러 single slices를 함께 넣는다.
+
+## SS04 — Feature cache
+
+SS03 best backbone으로 전체 Train MRI를 한 번만 통과시킨다.
+
+```text
+each DICOM slice
+-> adapted DINOv2-Base
+-> CLS / patch representation
+-> persistent feature cache
+```
+
+이 cache는 이후 12 target이 공통 사용한다.
+
+## SS05 — Shared Hierarchical MIL
+
+1차 기본 구조:
+
+```text
+Study
+ ├─ Series 1 -> slice features -> target-aware slice attention
+ ├─ Series 2 -> slice features -> target-aware slice attention
+ └─ ...
+        ↓
+ target-aware series aggregation
+        ↓
+ 12 target predictions
+ + 12 target-specific slice importance maps
+```
+
+처음부터 12개의 MIL을 독립 학습하지 않는다.
+
+검증:
+- 각 target Fixed Val ROC-AUC
+- Top-K keep
+- Top-K remove
+- Random-K
+- attention/ranking stability
+- plane / series coverage
+
+Shared MIL이 특정 target에서 충분히 약한 경우에만
+그 target용 binary MIL을 후속 분리한다.
+
+## SS06 — Target-specific Top-K
+
+MIL이 학습한 **single-slice importance**를 사용한다.
+
+기존 계보의 3-slice-window importance와 구분한다.
+
+```text
+ACL importance -> ACL Top-K single slices
+LM importance  -> LM Top-K single slices
+...
+```
+
+K는 고정하지 않고 reliability audit 결과로 결정한다.
+초기 후보는 16 / 24 / 32 / 48 / 64 범위에서 비교한다.
+
+## SS07 — Target-specific Final Specialist
+
+각 target:
+
+```text
+target Top-K single slices
+-> DINOv2-Small
+-> slice aggregation / transformer
+-> binary head
+-> target probability
+```
+
+- Positive + Negative 모두 학습
+- target별 Fixed Val 사용
+- 최종 Specialist는 target마다 독립
+- Selector 역할의 SS03/SS05 representation은 공통 재사용
+
+## Hidden Test
+
+```text
+Hidden Test raw MRI
+-> adapted DINOv2-Base
+-> single-slice feature cache in-memory
+-> shared MIL
+-> target-specific Top-K
+-> target-specific DINOv2-Small Specialist
+-> 12 probabilities
+```
+
+Hidden Test Top-K는 미리 만들 수 없으며
+실제 test MRI에서 online으로 selector를 실행한다.
+
+<!-- SPECIALIST_2026_10_02_CURRENT_END -->
 
 ---
 
