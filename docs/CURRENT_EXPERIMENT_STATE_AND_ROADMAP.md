@@ -28,8 +28,8 @@ SS01  Full MRI Single-Slice Inventory / Manifest        [DONE]
 SS02  target별 frozen DINOv2-Small Selector pilot       [STOP / REJECT]
 SS03  Knee MRI Single-Slice DINOv2-Base Domain Adapt.   [DONE]
 SS04  전체 single-slice feature cache                    [DONE]
-SS05  Shared Hierarchical MIL + 12 target importance     [CURRENT]
-SS06  target별 Top-K single-slice cache                  [PLANNED]
+SS05  Shared Hierarchical MIL + 12 target importance     [DONE]
+SS06  target별 Top-K single-slice cache                  [CURRENT]
 SS07  target별 DINOv2-Small Binary Specialist            [PLANNED]
 ```
 
@@ -145,28 +145,81 @@ SS04에서는 SS05 MIL이 전체 MRI에서 target별 중요도를 학습할 수 
 
 **SS04 완료. SS05 Shared Hierarchical MIL 학습 준비 완료.**
 
-### 3. SS05 — Shared Hierarchical MIL
+### 3. SS05 — Shared Hierarchical MIL — 완료
 
-첫 기본안은 12개의 MIL을 처음부터 따로 학습하지 않는다.
+목적:
 
-```text
-all single-slice features
--> Series-level aggregation / attention
--> Study-level aggregation
--> 12 target-specific attention/output heads
-```
+- SS04의 819,078 true single-slice feature를 사용
+- shared projection + 12 target-specific slice attention
+- 12 target-specific series attention
+- 12 target logits 직접 예측
+- Fixed Val union 815 studies는 모든 training에서 완전히 제외
 
-역할 구분:
+학습:
 
-- DINOv2-Base: 각 single slice의 표현(feature)을 생성
-- MIL: 전체 MRI feature를 보고 target별 분류와 target별 slice importance를 학습
+- Train studies: **3,592**
+  - Gold: **58**
+  - Broad pseudo: **3,534**
+- Fixed Val union: **815**
+- hidden: **384**
+- batch: **24**
+- LR: **3e-4**
+- max epochs: **50**
+- patience: **8**
+- best selection: **Fixed Val Macro ROC-AUC**
+- runtime: **16.14 min**
+- trainable params: **0.761M**
 
-Main validation:
-- target별 Fixed Val ROC-AUC
-- BCE / prediction distribution은 secondary
-- 중요도 신뢰성은 Top-K keep / remove / random-K로 별도 검증
+최종 결과:
 
-공통 MIL에서 특정 target만 약하면 그 target에 한해 binary MIL 분리를 검토한다.
+- Status: **PASS**
+- Best epoch: **19**
+- Fixed Val Macro ROC-AUC: **0.881247**
+- Fixed Val Weak-6 ROC-AUC: **0.856870**
+
+Target별 Fixed Val ROC-AUC:
+
+- ACL: **0.940000**
+- MCL: **0.767500**
+- Medial Meniscus: **0.958125**
+- Lateral Meniscus: **0.760625**
+- Medial OA: **0.921250**
+- Lateral OA: **0.861250**
+- PF OA: **0.898125**
+- Effusion: **0.952500**
+- Synovitis: **0.982400**
+- Baker's: **0.883125**
+- Contusion: **0.875625**
+- Fracture: **0.774444**
+
+해석:
+
+- 강한 target: Synovitis / Medial Meniscus / Effusion / ACL / Medial OA
+- 약한 target: Lateral Meniscus / MCL / Fracture
+- generic frozen DINOv2-Small SS02 LM pilot 0.685 대비
+  새 shared adapted single-slice 계보의 LM은 **0.760625**로 개선.
+- single-slice domain adaptation + shared MIL 구조는 계산비용을 크게 줄이면서
+  다수 target에서 유효한 질환 분리 성능을 만들었다.
+
+Attention concentration:
+
+- Top-24 평균 attention coverage는 target별 약 **0.307~0.350**
+- Top-32는 약 **0.377~0.423**
+- Top-48은 약 **0.500~0.547**
+- Top-64는 약 **0.604~0.654**
+
+따라서 attention은 소수 slice에 극단적으로 집중되지 않고 비교적 분산되어 있다.
+SS06에서 기존 계보처럼 Top-24를 즉시 고정하지 않는다.
+Top-K keep/remove/random 및 K 후보 비교로 실제 정보 보존성을 먼저 검증한다.
+
+Checkpoint:
+
+- `ss05_shared_hierarchical_mil_best.bin`
+- SHA256: `febe6f4c6d4b002c769ab24cea3d572da0124838f431b1547afea14edf509a81`
+
+판정:
+
+**SS05 완료. SS06 target별 Top-K 정책 검증 단계로 진행.**
 
 ### 4. SS06 / SS07 — target별 Top-K + Specialist
 
