@@ -14,391 +14,107 @@
 
 # 2026-10-03 — 현재 최우선 Specialist 계보
 
-## 현재 상태
+## 현재 진행 위치
 
-기존 Public LB 최고는 그대로 **0.918 (Exp57)** 이다.
-
-Specialist 연구는 2026-10-02에 기존 target별 frozen DINOv2-Small selector pilot에서
-**shared single-slice representation -> shared target-aware MIL -> target별 Specialist** 구조로 전환했다.
-
-현재 실제 진행 위치:
+기존 Public LB 최고는 **0.918 (Exp57)** 이다.
 
 ```text
-SS01  Full MRI Single-Slice Inventory / Manifest        [DONE]
-SS02  target별 frozen DINOv2-Small Selector pilot       [STOP / REJECT]
-SS03  Knee MRI Single-Slice DINOv2-Base Domain Adapt.   [DONE]
-SS04  전체 single-slice feature cache                    [DONE]
-SS05  Shared Hierarchical MIL + 12 target importance     [DONE]
-SS06A Top-K reliability audit                          [DONE]
-SS06A2 weak-selector extended audit                     [DONE]
-SS06B target별 single-slice selection manifest          [DONE]
-SS07A LM DINOv2-Small Specialist pilot                   [DONE: S01/S03]
-SS07A-X LM best-policy continuation / stability check      [CURRENT]
-SS07B~ target별 Specialist 확장                          [PLANNED]
+SS01  Full MRI Single-Slice Inventory / Manifest          [DONE]
+SS02  target별 frozen DINOv2-Small Selector pilot         [STOP / REJECT]
+SS03  Knee MRI Single-Slice DINOv2-Base Domain Adapt.     [DONE]
+SS04  전체 single-slice feature cache                      [DONE]
+SS05  Shared Hierarchical MIL + 12 target importance       [DONE]
+SS06A Top-K reliability audit                              [DONE]
+SS06A2 weak-selector extended audit                        [DONE]
+SS06B target별 single-slice selection manifest             [DONE]
+SS07A LM Specialist S01/S03                                [DONE]
+SS07A-X1 LM low-LR continuation                            [DONE: 0.8940625]
+SS07A-S04 LM Broad class-wise Top-60                       [CURRENT / Lane B]
+SS07B-A MCL Specialist                                     [DONE: 0.904375 / Gate PASS]
+SS07B-B Fracture Specialist                                [NEXT / Lane A]
 ```
 
+내부 완료 Gate:
+**각 target Specialist Fixed Val ROC-AUC >= 0.900000**.
+12 target 모두 Gate를 통과한 뒤 첫 target-composed LB submission을 진행한다.
 
-## SS07A — Lateral Meniscus Specialist pilot 최신 결과
+## Lateral Meniscus 최신
 
-### Persistent raw-image cache
+### S03-B — Broad class-wise Top-75%
+- best epoch: 11
+- Fixed Val AUC: **0.881250**
+- checkpoint: `27a92661e24f190930bc24d7645cfd497837bb2defd0e8ef91fcaf1e365ef7c1`
 
-SS06B frozen selection을 실제 224x224 uint8 single-slice MRI cache로 변환했다.
+### X1 — best checkpoint low-LR cosine continuation
+- start AUC: **0.881250**
+- continuation LR: 기존의 10%
+- warm-up 없음 / pure cosine / max 6 epoch
+- e1: 0.883125
+- e2: **0.8940625** <- new best
+- e3: 0.8640625
+- e4: 0.8621875
+- e5: 0.866250
+- e6: 0.866875
+- best continuation epoch: **2**
+- delta vs S03-B: **+0.0128125**
+- runtime: **24.84 min**
+- Gate: **NOT YET**
+- checkpoint SHA256: `12c4044de1e04e83168f17eb4dea0e5ca4df98ac99ebda6e62dfb3614bfe846a`
 
-**Cache A — LM + ACL + MCL**
+판정:
+e2까지는 train loss와 Val AUC가 같이 개선됐다. e3 이후에는 train loss가 계속 하락하는 반면 Val AUC가 급락/회복하지 못해 overfitting 신호로 본다.
+다음은 추가 continuation보다 **pseudo filtering 강도 비교**를 우선하며, Top-75와 동일 조건에서 **Top-60%**를 12 epoch로 비교한다.
 
-- Status: **PASS**
-- LM K24 / ACL K24 / MCL K24
-- raw entries: **317,304**
-- unique DICOM rows decoded: **120,513**
-- decode reuse reduction: **62.02%**
-- build: **7.43 min**
-- hash: **1.55 min**
-- measured total: **8.98 min**
-- target cache size: 각 **4.9425 GiB**, total 약 **14.83 GiB**
-- LM cache SHA256: `c4e5e131c4dceddd6dceff5557f7e531f020da2d030c07144ab3c47941089195`
-- LM metadata SHA256: `49796c5ad1bf0be68833b75f8cdbb23c564f13dfc1486e776f64882f2d5c6aa6`
+## MCL Specialist — 0.90 Gate 완료
 
-**Cache B — Synovitis + Baker's + Fracture**
+**SS07B-A — Broad class-wise Top-75%**
 
-- Status: **PASS**
-- Synovitis K24 / Baker's K24 / Fracture K32
-- raw entries: **352,560**
-- unique DICOM rows decoded: **147,189**
-- decode reuse reduction: **58.25%**
-- build: **10.45 min**
-- hash: **1.91 min**
-- measured total: **12.36 min**
-- total cache size: 약 **16.48 GiB**
-- Synovitis cache SHA256: `f8199cbaabfde46a8f808c635b358139bf3e5569a9fa726e1c9abe87747abdb3`
-- Baker's cache SHA256: `f1d25ef96bc5c45be929dc482b64fc8df1228bff37d7ad4311ff00379f606ae9`
-- Fracture cache SHA256: `5f69246a8feb45354c562e192e79d4a0d187061e3e24912fd918e80febf08d80`
-
-Cache B는 LM pilot 비교에는 사용하지 않고, 이후 Synovitis / Baker's / Fracture 확장용으로 보존한다.
-
-### S01 — Metadata ablation
-
-공통:
-- target: Lateral Meniscus
 - selector: SS06B attention K24
-- raw MRI K24
+- raw MRI cache: MCL K24
 - DINOv2-Small full fine-tuning
-- CLS only
-- 1-layer set-like Slice Transformer
-- Gold58 + V4 Broad pseudo
-- pseudo weight: 0.70 x confidence
-- Fixed Val 80 = 40P / 40N
-- seed / batch / LR / epochs 동일
-
-결과:
-
-| Run | Metadata | Best epoch | Fixed Val AUC | vs SS05 LM |
-|---|---|---:|---:|---:|
-| SS07A-S01-A | ON | 8 | **0.756875** | -0.003750 |
-| SS07A-S01-B | OFF | 8 | **0.702813** | -0.057813 |
-
-해석:
-- Metadata ON - OFF = **+0.054063 AUC**.
-- Plane / Fluid Sensitive / Fat Suppression / canonical relative position 정보가 현재 set-like Transformer에 의미 있는 신호를 제공한다.
-- 이후 LM Specialist 실험은 **metadata-aware 구조를 고정 baseline**으로 사용한다.
-- No-metadata control은 종료한다.
-
-### S03 — Pseudo supervision filtering
-
-S01-A 모델/입력/optimizer 계약은 유지하고 pseudo 선택만 변경했다.
-
-**S03-A — V4 Strict-only**
-- Gold: 58
-- pseudo after Fixed Val exclusion: **3,830**
-- hard Pos / Neg: **520 / 3,310**
+- Metadata ON
+- pseudo: V4 Broad class-wise Top-75% + 0.70 x confidence
+- Fixed Val: 80 = 40P / 40N
+- pseudo train: 3,202
+- train total: 3,260
 - best epoch: **6**
-- best Fixed Val AUC: **0.870000**
-- runtime: **50.41 min**
-- vs SS05 LM: **+0.109375**
-- vs S01-A: **+0.113125**
-- checkpoint SHA256: `4325f8eb25fd9e75be8ed06ca15489b24f4e9a8ef2630da256bcd1a13f6b19fd`
+- best Fixed Val AUC: **0.904375**
+- SS05 MCL 0.767500 대비: **+0.136875**
+- runtime: **41.56 min**
+- Gate: **PASS**
+- checkpoint SHA256: `891f124dc4ee7cb50b506e88308a0a2040a60647f9f7fb2fd08aeef6d1e3ea5c`
+- val prediction SHA256: `94a442116b1a0b58b9ff84aa1f7dfd1123b22f590a1162cfe7ee3c1ad0a9f98a`
 
-**S03-B — V4 Broad class-wise confidence Top-75%**
-- hard class는 filtering에만 사용, 실제 train target은 original soft target 유지
-- Negative: 3,658 -> **2,744**, minimum kept confidence **0.844780**
-- Positive: 611 -> **459**, minimum kept confidence **0.853400**
-- pseudo total: **3,203**
-- Gold 포함 train total: **3,261**
-- best epoch: **11**
-- epoch 12 AUC: **0.880625**
-- best Fixed Val AUC: **0.881250**
-- runtime: **50.94 min**
-- vs SS05 LM: **+0.120625**
-- vs S01-A: **+0.124375**
-- checkpoint SHA256: `27a92661e24f190930bc24d7645cfd497837bb2defd0e8ef91fcaf1e365ef7c1`
+epoch 6 이후 AUC가 0.834063까지 급락하고 e10 0.869687까지만 회복했다.
+best epoch 6 checkpoint를 최종 MCL Specialist로 보존하고 추가학습 없이 target을 종료한다.
 
-현재 판정:
-- pseudo를 무조건 넓게 사용하는 것보다 **low-confidence pseudo를 제거하는 것이 LM에서 매우 중요**했다.
-- Strict-only도 크게 개선됐지만, **Broad class-wise Top-75%가 현재 최고**다.
-- S03-B를 LM Specialist의 현재 best policy로 채택한다.
-- best가 epoch 11이고 epoch 12가 0.000625만 낮으므로, 다음은 scheduler를 무작정 20 epoch로 재설계하기보다 **best checkpoint에서 low-LR로 짧게 continuation**하여 추가 이득/overfitting을 분리 확인한다.
-- Fixed Val 80은 pseudo-label 기반 development proxy이므로, 작은 차이는 과대해석하지 않는다.
+## Persistent raw-image cache 최신
 
-### SS02 pilot 중단 이유
+기존:
+- Cache A — LM K24 / ACL K24 / MCL K24: PASS
+- Cache B — Synovitis K24 / Baker's K24 / Fracture K32: PASS
 
-SS02A Lateral Meniscus / SS02B ACL은
-**generic frozen DINOv2-Small single-slice feature + target-specific hierarchical MIL** 구조였다.
+추가 완료:
+- **Cache C — Medial Meniscus K48**
+  - shape: [4407,48,224,224] uint8
+  - 9.885 GiB
+  - build 14.17 min / hash 1.11 min / total 15.28 min
+  - cache SHA256: `e9cbc477827331fe4ca599e0471aec23dfb6369f9c3798459d4fe8e1ba99ab74`
+  - metadata SHA256: `66f326b900cc0089804fbb7703e776c059add4a74829d3c552775a34c67d2b47`
+- **Cache D — Contusion K48**
+  - shape: [4407,48,224,224] uint8
+  - 9.885 GiB
+  - build 12.74 min / hash 0.91 min / total 13.65 min
+  - cache SHA256: `41c62cb30737afa7486076790a6fe415c8a84591fdc90ee2b826fe1b9a8f4b29`
+  - metadata SHA256: `d97f9b7ab751e1136ef86daccdb311e4711a04eb21cc966d4f28a6283d8a6697`
 
-완료 실험으로 승격하지 않는다.
-두 Run은 최종 output/audit까지 완료하지 않고 중단했으며,
-아래 내용은 **중단 판단 근거**로만 보존한다.
+현재 CPU cache queue:
+Medial OA K64 / PF OA K96 -> 이후 Lateral OA K96 / Effusion K96.
 
-- A/B 모두 전체 약 **819k single-slice**의 generic DINOv2-Small feature를 target별 notebook에서 다시 생성하는 구조였다.
-- SS02A feature extraction: 약 **238.7분**.
-- SS02A MIL training: early stop까지 약 **31.6분**.
-- SS02A best Fixed Val ROC-AUC: **0.685 (epoch 12)**.
-- 이후 Top-K reliability audit / ranking까지 포함하면 **1 target당 Run All 5시간 이상**이 필요한 구조였다.
-- 동일 구조를 12 target에 반복하면 selector 단계만으로 약 **60+ GPU-hours**가 필요하고,
-  그 뒤에 12개의 최종 Specialist 학습이 추가되어 전체 일정상 비효율적이다.
-- 비용 대비 LM Fixed Val 성능도 기대 이하였으므로
-  **12개의 target-specific selector를 각각 처음부터 학습하는 방향은 폐기**한다.
+## 다음 병렬 실험
 
-중요:
-이 항목은 실행 오류 기록이 아니라 **실제 학습이 진행된 pilot architecture의 중단 의사결정**이다.
-SS02A/B를 완료 실험 번호나 최종 benchmark로 취급하지 않는다.
-
-## 새 핵심 설계
-
-### 1. SS03 — Knee MRI Single-Slice DINOv2-Base Domain Adaptation — 완료
-
-목적:
-
-- generic pretrained **DINOv2-Base**에서 새로 시작
-- 기존 3-slice-window checkpoint는 사용하지 않음
-- 실제 single MRI slice 1장을 입력 단위로 사용
-- 각 Series 중앙 **20~80%**에서 epoch마다 1장 샘플링
-- 질환 label 없이 DINO-style self-distillation로 Knee MRI domain adaptation
-- Fixed Val study는 학습에서 완전히 제외
-
-최종 결과:
-
-- Status: **PASS**
-- Epochs: **12**
-- Global batch: **16**
-- T4 x2
-- Train studies: **3,592**
-- SSL Val studies: **815**
-- Train series: **19,861**
-- Val series: **4,510**
-- Best epoch: **11**
-- Best SSL Val Loss: **0.1376109371**
-- Epoch 12 Val Loss: **0.1379058798**
-- Total training time: **218.72 min**
-- Best checkpoint:
-  `ss03_knee_single_slice_dinov2_base_best.pt`
-- Checkpoint SHA256:
-  `d60811d7a002d539fcabddfb8f8334a3b6a0a697f521dccc98bf24a124959166`
-
-학습 안정성:
-
-- Val SSL Loss는 epoch 1의 0.3484에서 epoch 11의 0.1376까지 하락.
-- epoch 12에서 0.1379로 소폭 상승해 epoch 11 checkpoint 선택이 적절했다.
-- val feature std는 약 1.45 -> 1.49 수준으로 유지되어 representation collapse 신호가 없었다.
-- val view cosine도 약 0.98 수준으로 안정적이었다.
-
-판정:
-
-**SS03 완료. Knee MRI single-slice domain-adapted DINOv2-Base backbone 확보.**
-
-### 2. SS04 — 전체 single-slice feature cache — 완료
-
-SS03 best teacher DINOv2-Base backbone으로 전체 Train MRI의 실제 single slice를 모두 feature화했다.
-
-결과:
-
-- Status: **PASS**
-- Studies: **4,407**
-- Series: **24,371**
-- Single slices: **819,078**
-- Decode errors: **0**
-- Feature: **CLS 768 + PatchMean 768 = 1536-d**
-- dtype: **float16**
-- Cache shape: **[819078, 1536]**
-- Cache size: **2.3434 GiB**
-- Batch: **128**
-- T4 x2
-- Runtime: **60.87 min**
-- Throughput: **224.26 slices/s**
-- Sample feature std: **1.3753**
-- Mean per-dim std: **1.2310**
-- Feature cache audit: **PASS**
-
-Artifacts:
-
-- `ss04_single_slice_features_f16.npy`
-- `ss04_single_slice_manifest.parquet`
-- `ss04_study_index.parquet`
-- `ss04_series_index.parquet`
-- `ss04_run_summary.json`
-
-Fingerprints:
-
-- feature SHA256: `90d1c84a8ecd1d3d49213abf63ed797329057f15341cb5c46b222bf616536879`
-- manifest SHA256: `688466b3da083c13693b5060a1af3ebe31949f7f74f81392643a9bb8e21b892b`
-- study index SHA256: `ac79113216866fe4fbee19bc4514cd97ab176cedf92035be7a9306a5820508a1`
-- series index SHA256: `36c970d3ef8cfcacb1a98e1836941dd819c75916b643feec0edc13505837b906`
-
-중요:
-SS03에서는 domain adaptation 비용을 줄이기 위해 Series 중앙 20~80%만 샘플링했지만,
-SS04에서는 SS05 MIL이 전체 MRI에서 target별 중요도를 학습할 수 있도록 **819,078장 전체를 보존**했다.
-
-판정:
-
-**SS04 완료. SS05 Shared Hierarchical MIL 학습 준비 완료.**
-
-### 3. SS05 — Shared Hierarchical MIL — 완료
-
-- Status: **PASS**
-- Train: **3,592 studies** = Gold 58 + Broad pseudo 3,534
-- Fixed Val union: **815 studies**
-- Best epoch: **19**
-- Runtime: **16.14 min**
-- Fixed Val Macro ROC-AUC: **0.881247**
-- Fixed Val Weak-6 ROC-AUC: **0.856870**
-
-Target AUC:
-- ACL 0.940000
-- MCL 0.767500
-- Medial Meniscus 0.958125
-- Lateral Meniscus 0.760625
-- Medial OA 0.921250
-- Lateral OA 0.861250
-- PF OA 0.898125
-- Effusion 0.952500
-- Synovitis 0.982400
-- Baker's 0.883125
-- Contusion 0.875625
-- Fracture 0.774444
-
-Attention concentration:
-- Top24: 약 **31~35%**
-- Top32: 약 **38~42%**
-- Top48: 약 **50~55%**
-- Top64: 약 **60~65%**
-
-해석:
-- adapted single-slice representation + shared MIL은 계산비용 대비 유효.
-- SS02A LM 0.685 대비 SS05 LM **0.760625**로 개선.
-- 약한 target: Lateral Meniscus / MCL / Fracture.
-- attention이 넓게 분산되어 있어 Top24를 바로 고정하지 않는다.
-- SS06에서 K=24/32/48/64 중심으로 keep/remove/random-K 진단 후 target별 K를 결정한다.
-
-Checkpoint:
-`ss05_shared_hierarchical_mil_best.bin`
-SHA256:
-`febe6f4c6d4b002c769ab24cea3d572da0124838f431b1547afea14edf509a81`
-
-판정:
-**SS05 완료. SS06 target별 Top-K 정책 검증으로 진행.**
-
-### SS06A — Top-K Reliability Audit — 완료
-
-- Status: **PASS**
-- Runtime: **2.11 min**
-- K: 24 / 32 / 48 / 64
-- Random baseline: 5 repeats
-- SS05 Full AUC 전 target 정확히 재현
-
-유력 K:
-- ACL 24
-- MCL 24
-- Medial Meniscus 48
-- Lateral Meniscus 24
-- Medial OA 64
-- Synovitis 24
-- Baker's 24
-- Contusion 48
-- Fracture 32
-
-추가 검증 필요:
-- Lateral OA
-- PF OA
-- Effusion
-
-이 3개 target은 attention Top-K가 Random-K보다 약한 구간이 많아
-provisional K=64를 그대로 확정하지 않는다.
-
-다음:
-**SS06A2 — K=64/96/128 + uniform/random 비교 후 SS06B로 진행**
-
-### SS06A2 — Weak-Selector Extended Audit — 완료
-
-- PASS / runtime **0.49 min**
-- K64 shortage: **0.00%**
-- K96 shortage: **2.72%**
-- K128 shortage: **22.51%**
-- Lateral OA / PF OA / Effusion은 attention보다 uniform selection이 안정적.
-- K128은 padding 비율이 너무 높아 제외.
-- 세 target 모두 **series-balanced Uniform K96** 확정.
-
-최종 selection policy:
-ACL A24 / MCL A24 / Medial Meniscus A48 / Lateral Meniscus A24 /
-Medial OA A64 / Lateral OA U96 / PF OA U96 / Effusion U96 /
-Synovitis A24 / Baker's A24 / Contusion A48 / Fracture A32.
-
-다음:
-**SS06B 전체 4,407 study target-specific selection manifest 생성.**
-
-### SS06B — All-Study Target Selection Manifest — 완료
-
-- PASS
-- 4,407 studies × 12 targets = **52,884 rows**
-- runtime: **0.84 min**
-- selection parquet: **12.19 MiB**
-- integrity audit: **PASS**
-- Attention target padding: **0**
-- Uniform K96 padding: **120/4,407 = 2.72%**
-- padding sentinel: `feature_row=-1`
-
-Artifacts:
-- selection index SHA256:
-  `7385ed4a353c5fe2b0fd315d7c692d32a46c4470c72d7245f2782c220b40bdef`
-- target summary SHA256:
-  `aa88ffb4b4ac92b72e6e91bb4640c09d580ae66ab273d74cfd82bbc3af5055d7`
-- frozen policy SHA256:
-  `927d0c592401f26f1f6a73a510736c0f9f4b686f63e4da51d0274273a936a857`
-
-다음:
-**SS07A — Lateral Meniscus K24 DINOv2-Small Specialist pilot.**
-
-### 4. SS06 / SS07 — target별 Top-K + Specialist
-
-MIL importance로 각 target의 Top-K **single slices**를 생성한다.
-
-```text
-ACL Top-K -> ACL DINOv2-Small Specialist
-LM Top-K  -> LM DINOv2-Small Specialist
-...
-```
-
-각 Specialist는 Positive + Negative를 함께 학습하는 binary model이다.
-
-## 최종 Hidden-Test inference 목표
-
-```text
-Hidden Test 전체 MRI
--> SS03 adapted DINOv2-Base로 모든 single-slice feature 생성
--> Shared Hierarchical MIL
--> 12 target별 importance
--> target별 Top-K single slices 선택
--> target별 DINOv2-Small Specialist
--> 12 target probabilities
--> submission
-```
-
-핵심 비용 절감:
-
-- Knee MRI용 DINOv2-Base 적응: 1회
-- 전체 single-slice feature 생성: 1회
-- Shared MIL: 우선 1회
-- 이후 target별로 달라지는 부분은 Top-K와 최종 Specialist
-
-따라서 이전 SS02처럼
-**DINO feature extraction + selector MIL을 12번 반복하지 않는다.**
+- **Lane A:** Fracture K32 Specialist. MCL에서 Gate를 통과한 metadata-aware + Broad class-wise Top-75% policy를 그대로 첫 baseline으로 적용한다.
+- **Lane B:** LM Broad class-wise Top-60%, Top-75와 나머지 조건 동일.
 
 <!-- SPECIALIST_2026_10_02_CURRENT_END -->
 
