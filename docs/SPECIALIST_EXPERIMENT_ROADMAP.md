@@ -2,7 +2,7 @@
 
 최종 업데이트: **2026-10-02**
 
-> 상태: **SS06A2 — Weak-selector Extended Top-K Audit 준비**
+> 상태: **SS06B — All-Study Target Selection Manifest 준비**
 >
 > 현재 우선순위는 아래 2026-10-02 Current Specialist Roadmap을 따른다.
 > 2026-09-30의 LM-only candidate-rule 계획은 역사 기록으로만 유지한다.
@@ -14,7 +14,7 @@
 
 # 2026-10-02 Current Specialist Roadmap
 
-> **현재 단계: SS06A 완료 -> SS06A2 weak-selector extended audit**
+> **현재 단계: SS06A2 완료 -> SS06B all-study target selection manifest**
 >
 > 아래 2026-09-30 LM-only candidate-rule 계획은 역사 기록으로 유지한다.
 > 실제 진행 우선순위는 이 섹션을 따른다.
@@ -52,8 +52,8 @@ SS05  Shared Hierarchical MIL                       [DONE]
       + 12 target-specific attention/output heads
   ↓
 SS06A Top-K reliability audit                     [DONE]
-SS06A2 weak-selector extended audit                 [CURRENT]
-SS06B 12 target-specific Top-K single-slice caches  [PLANNED]
+SS06A2 weak-selector extended audit                 [DONE]
+SS06B 12 target-specific single-slice manifests     [CURRENT]
   ↓
 SS07  12 target-specific DINOv2-Small Specialists
   ↓
