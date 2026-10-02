@@ -4,7 +4,7 @@
 
 > 이 문서는 기존 shared multi-label 계보와 분리해 Specialist 계보와 관련 의사결정을 기록한다.
 >
-> 현재 실행은 **SS06A2 weak-selector extended Top-K audit 준비**이며,
+> 현재 실행은 **SS06B all-4,407 target selection manifest 준비**이며,
 > SS02A/B는 완료 실험이 아니라 중단된 pilot decision으로만 기록한다.
 
 
@@ -261,6 +261,67 @@ Fixed Val에서 K=24/32/48/64로 검증.
 판정:
 **SS06A 완료 / 3 target 추가 검증 필요 / SS06B는 잠시 보류**
 
+
+## 완료 — SS06A2
+
+**Weak-Selector Extended Top-K Audit v2**
+
+목적:
+SS06A에서 attention selector 신뢰도가 낮았던 Lateral OA / PF OA / Effusion을
+K=64/96/128 및 series-balanced uniform/random과 비교하고,
+Study별 실제 slice 수 부족률까지 함께 검증.
+
+결과:
+- Status: **PASS**
+- runtime: **0.49 min**
+- 전체 Study 최소 slice 수: **67**
+- K64 부족: **0 / 4,407 (0.00%)**
+- K96 부족: **120 / 4,407 (2.72%)**
+- K128 부족: **992 / 4,407 (22.51%)**
+
+Weak-target 결과:
+- Lateral OA
+  - Full 0.86125
+  - Uniform64 0.84938
+  - **Uniform96 0.85938**
+  - Uniform128 0.86063
+- PF OA
+  - Full 0.89813
+  - Uniform64 0.88938
+  - **Uniform96 0.89313**
+  - Uniform128 0.89625
+- Effusion
+  - Full 0.95250
+  - Uniform64 0.93813
+  - **Uniform96 0.95438**
+  - Uniform128 0.95188
+
+판정:
+K128은 AUC 이득이 매우 작고 전체 22.51% Study에 padding이 필요해 비효율적.
+세 target 모두 **series-balanced Uniform K96**으로 freeze.
+
+최종 12-target selection policy:
+- ACL: attention K24
+- MCL: attention K24
+- Medial Meniscus: attention K48
+- Lateral Meniscus: attention K24
+- Medial OA: attention K64
+- Lateral OA: uniform K96
+- PF OA: uniform K96
+- Effusion: uniform K96
+- Synovitis: attention K24
+- Baker's: attention K24
+- Contusion: attention K48
+- Fracture: attention K32
+
+Padding:
+- Attention policies K<=64: 전체 Study에서 padding 불필요
+- Uniform K96: 전체 4,407 중 120 studies만 부족
+- 부족 Study는 valid slice 전체 + zero PAD + mask 방식
+
+판정:
+**SS06A2 완료 / 12-target policy freeze / SS06B 진행**
+
 <!-- SPECIALIST_2026_10_02_CURRENT_END -->
 
 ---
@@ -273,7 +334,8 @@ Fixed Val에서 K=24/32/48/64로 검증.
 - **SS04 Full Single-Slice Feature Cache: 완료**
 - **SS05 Shared Hierarchical MIL + 12 target importance: 완료**
 - **SS06A Top-K reliability audit: 완료**
-- **현재: SS06A2 weak-selector extended audit 준비**
+- **SS06A2 weak-selector extended audit: 완료**
+- **현재: SS06B all-4,407 target selection manifest 준비**
 - 이후: **SS06 target Top-K -> SS07 target별 DINOv2-Small Specialist**
 
 현재 전체 프로젝트 기준 최고 Public LB:
