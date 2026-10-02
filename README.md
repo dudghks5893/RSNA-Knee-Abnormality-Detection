@@ -22,7 +22,7 @@
 
 <!-- SPECIALIST_2026_10_02_CURRENT_START -->
 
-## 2026-10-02 — 현재 Specialist 연구 방향
+## 2026-10-03 — 현재 Specialist 연구 방향
 
 현재 최고 Public LB는 **0.918 (Exp57)** 으로 유지한다.
 
@@ -43,17 +43,24 @@ LM에서 best Fixed Val ROC-AUC가 0.685에 그쳐 확장하지 않았다.
 **target별 selector 12개를 처음부터 독립 학습하는 접근은 중단**했다.
 
 현재 단계:
-**SS03/SS04/SS05/SS06A/SS06A2/SS06B 완료. 다음은 SS07A Lateral Meniscus DINOv2-Small Specialist pilot.**
+**SS07A Lateral Meniscus Specialist pilot의 S01/S03 controlled experiments 완료. 현재 best는 S03-B Broad class-wise Top-75% confidence filtering, Fixed Val ROC-AUC 0.881250.**
 
-SS04 결과: **819,078 single slices / 1536-d float16 / 2.3434 GiB / 60.87분 / decode error 0 / PASS**.
+SS07A 핵심 결과:
+- S01-A Metadata ON + Broad: **0.756875** (best epoch 8)
+- S01-B Metadata OFF + Broad: **0.702813** (best epoch 8)
+- Metadata ON 이득: **+0.054063 AUC**
+- S03-A Metadata ON + Strict-only: **0.870000** (best epoch 6)
+- S03-B Metadata ON + Broad class-wise Top-75%: **0.881250** (best epoch 11)
+- S03-B는 SS05 LM baseline 0.760625 대비 **+0.120625**, S01-A 대비 **+0.124375**
+- S03-B epoch 12 AUC는 **0.880625**로 best 대비 0.000625(1/1600 pair)만 낮아, 단순한 명확한 overfitting으로 보지 않고 추가 low-LR continuation 검증 후보로 유지한다.
+- 현재 LM Specialist 기준안: **metadata-aware + Broad class-wise Top-75% confidence filtering**
 
-SS05 결과: **Fixed Val Macro 0.881247 / Weak-6 0.856870 / best epoch 19 / 16.14분 / PASS**.
+Persistent raw-image cache도 완료:
+- Cache A — LM K24 + ACL K24 + MCL K24: **PASS**, 약 14.83 GiB
+- Cache B — Synovitis K24 + Baker's K24 + Fracture K32: **PASS**, 약 16.48 GiB
 
-SS06A 결과: **PASS / 2.11분**. 9개 target의 attention policy를 좁힘.
-
-SS06A2 결과: **PASS / 0.49분**. K64 shortage 0%, K96 2.72%, K128 22.51%. Lateral OA / PF OA / Effusion은 **series-balanced Uniform K96**으로 확정.
-
-SS06B 결과: **PASS / 0.84분 / 52,884 rows / 12.19 MiB**. 전체 4,407 studies에 12-target frozen selection policy 적용 완료. Attention target은 padding 0, Uniform K96은 120 studies(2.72%)만 PAD 필요. 다음은 LM K24 DINOv2-Small Specialist pilot.
+다음:
+**LM S03-B best를 기준으로 짧은 low-LR continuation / stability 확인 후, target 확장 여부를 결정한다.**
 
 자세한 현재 상태:
 - [Current State / Roadmap](docs/CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md)
