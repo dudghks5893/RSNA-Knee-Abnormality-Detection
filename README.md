@@ -26,41 +26,41 @@
 
 현재 최고 Public LB는 **0.918 (Exp57)** 으로 유지한다.
 
-새 Specialist 계보는 기존의 target별 frozen-DINO selector 12개를 각각 만드는 방식에서
-다음 shared single-slice 구조로 전환했다.
+Specialist 계보:
 
 ```text
-Single-Slice DINOv2-Base Knee MRI Adaptation
--> Full Single-Slice Feature Cache
--> Shared Hierarchical MIL + 12 Target Importance
--> Target-specific Top-K Single-Slice Cache
--> 12 Target-specific DINOv2-Small Specialists
+SS01 Full MRI Single-Slice Inventory
+-> SS03 Knee MRI DINOv2-Base adaptation
+-> SS04 Full single-slice feature cache
+-> SS05 Shared Hierarchical MIL + 12 target importance
+-> SS06B target-specific Top-K single-slice manifests
+-> persistent raw-image target caches
+-> target-specific DINOv2-Small Specialists
 ```
 
-이전 SS02A/SS02B pilot은 target 하나당 전체 Run All이 5시간 이상 필요한 구조였고,
-LM에서 best Fixed Val ROC-AUC가 0.685에 그쳐 확장하지 않았다.
-12 target selector + 12 final Specialist까지 고려하면 시간 대비 효율이 낮아
-**target별 selector 12개를 처음부터 독립 학습하는 접근은 중단**했다.
+최종 LB 제출 전 내부 목표:
+**12개 target 각각 Specialist Fixed Val ROC-AUC >= 0.90**.
+Fixed Val은 pseudo 기반 development proxy이며 Public LB와 동일한 지표로 해석하지 않는다.
 
-현재 단계:
-**SS07A Lateral Meniscus Specialist pilot의 S01/S03 controlled experiments 완료. 현재 best는 S03-B Broad class-wise Top-75% confidence filtering, Fixed Val ROC-AUC 0.881250.**
+현재 target 진행:
+- **MCL: 0.904375 — 0.90 Gate PASS**
+  - SS07B-A / Broad class-wise Top-75%
+  - best epoch 6
+  - checkpoint SHA256: `891f124dc4ee7cb50b506e88308a0a2040a60647f9f7fb2fd08aeef6d1e3ea5c`
+- **Lateral Meniscus: 0.8940625 — Gate NOT YET**
+  - S03-B Top-75% 0.881250에서 X1 low-LR continuation으로 +0.0128125
+  - continuation best epoch 2
+  - X1 checkpoint SHA256: `12c4044de1e04e83168f17eb4dea0e5ca4df98ac99ebda6e62dfb3614bfe846a`
+  - 다음 controlled comparison: Broad class-wise **Top-60%**, 기존 12-epoch 조건 동일
 
-SS07A 핵심 결과:
-- S01-A Metadata ON + Broad: **0.756875** (best epoch 8)
-- S01-B Metadata OFF + Broad: **0.702813** (best epoch 8)
-- Metadata ON 이득: **+0.054063 AUC**
-- S03-A Metadata ON + Strict-only: **0.870000** (best epoch 6)
-- S03-B Metadata ON + Broad class-wise Top-75%: **0.881250** (best epoch 11)
-- S03-B는 SS05 LM baseline 0.760625 대비 **+0.120625**, S01-A 대비 **+0.124375**
-- S03-B epoch 12 AUC는 **0.880625**로 best 대비 0.000625(1/1600 pair)만 낮아, 단순한 명확한 overfitting으로 보지 않고 추가 low-LR continuation 검증 후보로 유지한다.
-- 현재 LM Specialist 기준안: **metadata-aware + Broad class-wise Top-75% confidence filtering**
+추가 persistent cache 완료:
+- Cache C — Medial Meniscus K48: PASS / 9.885 GiB / total 15.28 min
+- Cache D — Contusion K48: PASS / 9.885 GiB / total 13.65 min
 
-Persistent raw-image cache도 완료:
-- Cache A — LM K24 + ACL K24 + MCL K24: **PASS**, 약 14.83 GiB
-- Cache B — Synovitis K24 + Baker's K24 + Fracture K32: **PASS**, 약 16.48 GiB
-
-다음:
-**LM S03-B best를 기준으로 짧은 low-LR continuation / stability 확인 후, target 확장 여부를 결정한다.**
+현재 병렬 운영:
+- **Lane A:** MCL 완료 -> **Fracture K32 Specialist**로 이동
+- **Lane B:** LM **Top-60 pseudo filtering** 비교
+- CPU cache: Medial OA K64 / PF OA K96 진행 후 Lateral OA K96 / Effusion K96
 
 자세한 현재 상태:
 - [Current State / Roadmap](docs/CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md)
