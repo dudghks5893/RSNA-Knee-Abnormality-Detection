@@ -31,8 +31,9 @@ SS04  전체 single-slice feature cache                    [DONE]
 SS05  Shared Hierarchical MIL + 12 target importance     [DONE]
 SS06A Top-K reliability audit                          [DONE]
 SS06A2 weak-selector extended audit                     [DONE]
-SS06B target별 single-slice selection manifest          [CURRENT]
-SS07  target별 DINOv2-Small Binary Specialist            [PLANNED]
+SS06B target별 single-slice selection manifest          [DONE]
+SS07A LM DINOv2-Small Specialist pilot                   [CURRENT]
+SS07B~ target별 Specialist 확장                          [PLANNED]
 ```
 
 ### SS02 pilot 중단 이유
@@ -239,6 +240,28 @@ Synovitis A24 / Baker's A24 / Contusion A48 / Fracture A32.
 
 다음:
 **SS06B 전체 4,407 study target-specific selection manifest 생성.**
+
+### SS06B — All-Study Target Selection Manifest — 완료
+
+- PASS
+- 4,407 studies × 12 targets = **52,884 rows**
+- runtime: **0.84 min**
+- selection parquet: **12.19 MiB**
+- integrity audit: **PASS**
+- Attention target padding: **0**
+- Uniform K96 padding: **120/4,407 = 2.72%**
+- padding sentinel: `feature_row=-1`
+
+Artifacts:
+- selection index SHA256:
+  `7385ed4a353c5fe2b0fd315d7c692d32a46c4470c72d7245f2782c220b40bdef`
+- target summary SHA256:
+  `aa88ffb4b4ac92b72e6e91bb4640c09d580ae66ab273d74cfd82bbc3af5055d7`
+- frozen policy SHA256:
+  `927d0c592401f26f1f6a73a510736c0f9f4b686f63e4da51d0274273a936a857`
+
+다음:
+**SS07A — Lateral Meniscus K24 DINOv2-Small Specialist pilot.**
 
 ### 4. SS06 / SS07 — target별 Top-K + Specialist
 
