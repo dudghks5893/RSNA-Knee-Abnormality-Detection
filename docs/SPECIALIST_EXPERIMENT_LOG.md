@@ -4,7 +4,7 @@
 
 > 이 문서는 기존 shared multi-label 계보와 분리해 Specialist 계보와 관련 의사결정을 기록한다.
 >
-> 현재 실행은 **SS06 target-specific Top-K policy 준비**이며,
+> 현재 실행은 **SS06A2 weak-selector extended Top-K audit 준비**이며,
 > SS02A/B는 완료 실험이 아니라 중단된 pilot decision으로만 기록한다.
 
 
@@ -205,6 +205,62 @@ SHA256:
 판정:
 **SS05 완료 / SS06 진행 가능**
 
+
+## 완료 — SS06A
+
+**Target-Specific Top-K Reliability Audit**
+
+목적:
+SS05 target-specific attention ranking이 실제로 유용한 single slices를 고르는지
+Fixed Val에서 K=24/32/48/64로 검증.
+
+진단:
+- Top-K Keep
+- Top-K Remove
+- Random-K x5
+- 우선순위: Full AUC 유지 -> Random 대비 우위 -> Remove 성능 하락
+
+결과:
+- Status: **PASS**
+- Runtime: **2.11 min**
+- SS05 baseline 12 target AUC 전부 정확히 재현
+
+신뢰도가 높은 selector:
+- ACL: K24 Keep 0.9356 vs Full 0.9400 / Random 0.8319
+- MCL: K24 Keep 0.7719 vs Full 0.7675 / Random 0.6944
+- Medial Meniscus: K48 Keep 0.9813 vs Full 0.9581 / Random 0.9281
+- Lateral Meniscus: K24 Keep 0.7413 vs Full 0.7606 / Random 0.7268
+- Medial OA: K64 Keep 0.9144 vs Full 0.9213 / Random 0.8940
+- Synovitis: K24 Keep 0.9600 vs Full 0.9824 / Random 0.9443
+- Baker's: K24 Keep 0.8769 vs Full 0.8831 / Random 0.7503
+- Contusion: K48 Keep 0.8669 vs Full 0.8756 / Random 0.8485
+- Fracture: K32 Keep 0.7544 vs Full 0.7744 / Random 0.7418
+
+주의 target:
+- Lateral OA: 모든 K에서 Keep < Random, Remove도 Full에 거의 영향 없음
+- PF OA: 모든 K에서 Keep < Random, 특히 K64 Random 0.8948 ~= Full 0.8981
+- Effusion: K32~64에서 Keep < Random, attention-only ranking 신뢰성 부족
+
+해석:
+- 9개 target은 현재 K 후보를 사실상 좁힐 수 있음.
+- Lateral OA / PF OA / Effusion은 provisional K=64를 그대로 freeze하면 근거가 약함.
+- 이 3개는 SS06A2에서 full attention ranking을 다시 계산하고
+  K=64/96/128 + uniform/Random 기준으로 추가 검증한다.
+
+현재 유력 K:
+- ACL 24
+- MCL 24
+- Medial Meniscus 48
+- Lateral Meniscus 24
+- Medial OA 64
+- Synovitis 24
+- Baker's 24
+- Contusion 48
+- Fracture 32
+
+판정:
+**SS06A 완료 / 3 target 추가 검증 필요 / SS06B는 잠시 보류**
+
 <!-- SPECIALIST_2026_10_02_CURRENT_END -->
 
 ---
@@ -216,7 +272,8 @@ SHA256:
 - **SS03 Knee MRI Single-Slice DINOv2-Base Domain Adaptation: 완료**
 - **SS04 Full Single-Slice Feature Cache: 완료**
 - **SS05 Shared Hierarchical MIL + 12 target importance: 완료**
-- **현재: SS06 target별 Top-K policy / cache 준비**
+- **SS06A Top-K reliability audit: 완료**
+- **현재: SS06A2 weak-selector extended audit 준비**
 - 이후: **SS06 target Top-K -> SS07 target별 DINOv2-Small Specialist**
 
 현재 전체 프로젝트 기준 최고 Public LB:
