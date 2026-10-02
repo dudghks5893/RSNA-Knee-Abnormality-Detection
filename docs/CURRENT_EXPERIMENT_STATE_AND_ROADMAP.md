@@ -29,7 +29,9 @@ SS02  target별 frozen DINOv2-Small Selector pilot       [STOP / REJECT]
 SS03  Knee MRI Single-Slice DINOv2-Base Domain Adapt.   [DONE]
 SS04  전체 single-slice feature cache                    [DONE]
 SS05  Shared Hierarchical MIL + 12 target importance     [DONE]
-SS06  target별 Top-K single-slice cache                  [CURRENT]
+SS06A Top-K reliability audit                          [DONE]
+SS06A2 weak-selector extended audit                     [CURRENT]
+SS06B target별 Top-K single-slice cache                 [PLANNED]
 SS07  target별 DINOv2-Small Binary Specialist            [PLANNED]
 ```
 
@@ -189,6 +191,36 @@ SHA256:
 
 판정:
 **SS05 완료. SS06 target별 Top-K 정책 검증으로 진행.**
+
+### SS06A — Top-K Reliability Audit — 완료
+
+- Status: **PASS**
+- Runtime: **2.11 min**
+- K: 24 / 32 / 48 / 64
+- Random baseline: 5 repeats
+- SS05 Full AUC 전 target 정확히 재현
+
+유력 K:
+- ACL 24
+- MCL 24
+- Medial Meniscus 48
+- Lateral Meniscus 24
+- Medial OA 64
+- Synovitis 24
+- Baker's 24
+- Contusion 48
+- Fracture 32
+
+추가 검증 필요:
+- Lateral OA
+- PF OA
+- Effusion
+
+이 3개 target은 attention Top-K가 Random-K보다 약한 구간이 많아
+provisional K=64를 그대로 확정하지 않는다.
+
+다음:
+**SS06A2 — K=64/96/128 + uniform/random 비교 후 SS06B로 진행**
 
 ### 4. SS06 / SS07 — target별 Top-K + Specialist
 
