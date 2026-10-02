@@ -30,8 +30,8 @@ SS03  Knee MRI Single-Slice DINOv2-Base Domain Adapt.   [DONE]
 SS04  전체 single-slice feature cache                    [DONE]
 SS05  Shared Hierarchical MIL + 12 target importance     [DONE]
 SS06A Top-K reliability audit                          [DONE]
-SS06A2 weak-selector extended audit                     [CURRENT]
-SS06B target별 Top-K single-slice cache                 [PLANNED]
+SS06A2 weak-selector extended audit                     [DONE]
+SS06B target별 single-slice selection manifest          [CURRENT]
 SS07  target별 DINOv2-Small Binary Specialist            [PLANNED]
 ```
 
@@ -221,6 +221,24 @@ provisional K=64를 그대로 확정하지 않는다.
 
 다음:
 **SS06A2 — K=64/96/128 + uniform/random 비교 후 SS06B로 진행**
+
+### SS06A2 — Weak-Selector Extended Audit — 완료
+
+- PASS / runtime **0.49 min**
+- K64 shortage: **0.00%**
+- K96 shortage: **2.72%**
+- K128 shortage: **22.51%**
+- Lateral OA / PF OA / Effusion은 attention보다 uniform selection이 안정적.
+- K128은 padding 비율이 너무 높아 제외.
+- 세 target 모두 **series-balanced Uniform K96** 확정.
+
+최종 selection policy:
+ACL A24 / MCL A24 / Medial Meniscus A48 / Lateral Meniscus A24 /
+Medial OA A64 / Lateral OA U96 / PF OA U96 / Effusion U96 /
+Synovitis A24 / Baker's A24 / Contusion A48 / Fracture A32.
+
+다음:
+**SS06B 전체 4,407 study target-specific selection manifest 생성.**
 
 ### 4. SS06 / SS07 — target별 Top-K + Specialist
 
