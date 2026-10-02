@@ -4,7 +4,7 @@
 
 > 이 문서는 기존 shared multi-label 계보와 분리해 Specialist 계보와 관련 의사결정을 기록한다.
 >
-> 현재 실행은 **SS06B all-4,407 target selection manifest 준비**이며,
+> 현재 실행은 **SS07A Lateral Meniscus DINOv2-Small Specialist pilot 준비**이며,
 > SS02A/B는 완료 실험이 아니라 중단된 pilot decision으로만 기록한다.
 
 
@@ -322,6 +322,66 @@ Padding:
 판정:
 **SS06A2 완료 / 12-target policy freeze / SS06B 진행**
 
+
+## 완료 — SS06B
+
+**All-4,407 Study Target-Specific Selection Manifest**
+
+목적:
+SS06A / SS06A2에서 freeze한 target별 selection policy를
+전체 4,407 Train studies에 적용하고 compact feature-row manifest로 저장.
+
+결과:
+- Status: **PASS**
+- Studies: **4,407**
+- Targets: **12**
+- Target-study rows: **52,884**
+- Selection runtime: **0.84 min**
+- Selection parquet: **12.19 MiB**
+- Integrity audit: **PASS**
+
+Frozen policy:
+- ACL: attention K24
+- MCL: attention K24
+- Medial Meniscus: attention K48
+- Lateral Meniscus: attention K24
+- Medial OA: attention K64
+- Lateral OA: uniform K96
+- PF OA: uniform K96
+- Effusion: uniform K96
+- Synovitis: attention K24
+- Baker's: attention K24
+- Contusion: attention K48
+- Fracture: attention K32
+
+Padding:
+- 모든 attention target: **0**
+- Uniform K96 3개 target:
+  - padding Study: **120 / 4,407 = 2.72%**
+  - valid count min: **67**
+  - mean valid count: **95.8269**
+  - target당 pad slots total: **763**
+- sentinel: **feature_row = -1**
+
+Artifacts:
+- `ss06b_target_selection_index.parquet`
+  - SHA256: `7385ed4a353c5fe2b0fd315d7c692d32a46c4470c72d7245f2782c220b40bdef`
+- `ss06b_target_summary.csv`
+  - SHA256: `aa88ffb4b4ac92b72e6e91bb4640c09d580ae66ab273d74cfd82bbc3af5055d7`
+- `ss06b_frozen_policy.json`
+  - SHA256: `927d0c592401f26f1f6a73a510736c0f9f4b686f63e4da51d0274273a936a857`
+
+Ordering:
+- `feature_rows_ranked`
+- `feature_rows_anatomical`
+두 ordering 모두 보존.
+
+판정:
+**SS06B 완료 / SS07 Final Specialist pilot 진행 가능**
+
+다음:
+**SS07A — Lateral Meniscus K24 DINOv2-Small + metadata-aware Slice Set Transformer pilot**
+
 <!-- SPECIALIST_2026_10_02_CURRENT_END -->
 
 ---
@@ -335,7 +395,8 @@ Padding:
 - **SS05 Shared Hierarchical MIL + 12 target importance: 완료**
 - **SS06A Top-K reliability audit: 완료**
 - **SS06A2 weak-selector extended audit: 완료**
-- **현재: SS06B all-4,407 target selection manifest 준비**
+- **SS06B all-4,407 target selection manifest: 완료**
+- **현재: SS07A Lateral Meniscus DINOv2-Small Specialist pilot 준비**
 - 이후: **SS06 target Top-K -> SS07 target별 DINOv2-Small Specialist**
 
 현재 전체 프로젝트 기준 최고 Public LB:
