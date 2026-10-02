@@ -43,11 +43,13 @@ LM에서 best Fixed Val ROC-AUC가 0.685에 그쳐 확장하지 않았다.
 **target별 selector 12개를 처음부터 독립 학습하는 접근은 중단**했다.
 
 현재 단계:
-**SS03/SS04/SS05 완료. 다음은 SS06 target-specific Top-K single-slice policy / cache.**
+**SS03/SS04/SS05/SS06A 완료. 다음은 SS06A2 weak-selector extended Top-K audit.**
 
 SS04 결과: **819,078 single slices / 1536-d float16 / 2.3434 GiB / 60.87분 / decode error 0 / PASS**.
 
-SS05 결과: **Fixed Val Macro 0.881247 / Weak-6 0.856870 / best epoch 19 / 16.14분 / PASS**. 약한 target은 LM 0.7606, MCL 0.7675, Fracture 0.7744이며 attention은 Top64에서도 약 60~65% coverage라 SS06에서 K를 재검증한다.
+SS05 결과: **Fixed Val Macro 0.881247 / Weak-6 0.856870 / best epoch 19 / 16.14분 / PASS**.
+
+SS06A 결과: **PASS / 2.11분**. 9개 target은 K 후보를 좁혔고, Lateral OA / PF OA / Effusion은 attention Top-K가 Random-K보다 약한 경우가 많아 K64를 확정하지 않고 SS06A2에서 K96/128까지 추가 검증한다.
 
 자세한 현재 상태:
 - [Current State / Roadmap](docs/CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md)
