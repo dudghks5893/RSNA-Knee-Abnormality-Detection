@@ -2,7 +2,7 @@
 
 최종 업데이트: **2026-10-02**
 
-> 상태: **SS06 — Target-specific Top-K Single-Slice Policy / Cache 준비**
+> 상태: **SS06A2 — Weak-selector Extended Top-K Audit 준비**
 >
 > 현재 우선순위는 아래 2026-10-02 Current Specialist Roadmap을 따른다.
 > 2026-09-30의 LM-only candidate-rule 계획은 역사 기록으로만 유지한다.
@@ -14,7 +14,7 @@
 
 # 2026-10-02 Current Specialist Roadmap
 
-> **현재 단계: SS05 완료 -> SS06 Target-specific Top-K policy**
+> **현재 단계: SS06A 완료 -> SS06A2 weak-selector extended audit**
 >
 > 아래 2026-09-30 LM-only candidate-rule 계획은 역사 기록으로 유지한다.
 > 실제 진행 우선순위는 이 섹션을 따른다.
@@ -51,7 +51,9 @@ SS04  Full single-slice feature cache                [DONE]
 SS05  Shared Hierarchical MIL                       [DONE]
       + 12 target-specific attention/output heads
   ↓
-SS06  12 target-specific Top-K single-slice caches [CURRENT]
+SS06A Top-K reliability audit                     [DONE]
+SS06A2 weak-selector extended audit                 [CURRENT]
+SS06B 12 target-specific Top-K single-slice caches  [PLANNED]
   ↓
 SS07  12 target-specific DINOv2-Small Specialists
   ↓
@@ -153,6 +155,31 @@ Attention coverage:
 
 SS06에서는 Top24를 고정하지 않는다.
 K=24/32/48/64를 중심으로 keep/remove/random-K 진단 후 target별 K를 결정한다.
+
+## SS06A 완료 결과
+
+- PASS / runtime **2.11 min**
+- K=24/32/48/64, Random-K 5 repeats
+- SS05 Full AUC 12 target 정확히 재현
+
+유력 K:
+- ACL 24
+- MCL 24
+- Medial Meniscus 48
+- Lateral Meniscus 24
+- Medial OA 64
+- Synovitis 24
+- Baker's 24
+- Contusion 48
+- Fracture 32
+
+추가 검증 대상:
+- **Lateral OA**
+- **PF OA**
+- **Effusion**
+
+이 3개는 attention Keep-K가 Random-K보다 약한 경우가 많다.
+따라서 SS06A2에서 **K=64/96/128 + uniform/random**을 비교한 뒤 최종 policy를 freeze한다.
 
 ## SS05 — Shared Hierarchical MIL
 
