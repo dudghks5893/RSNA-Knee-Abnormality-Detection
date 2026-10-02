@@ -1,6 +1,6 @@
 # RSNA Knee Abnormality Detection — 현재 실험 상태 / 데이터 계보 / 다음 로드맵
 
-최종 업데이트: **2026-10-02**
+최종 업데이트: **2026-10-03**
 
 이 문서는 채팅이 바뀌어도 실험을 그대로 이어갈 수 있도록,
 현재까지의 데이터 생성 방식, 모델 계보, 정확한 설정값, 결과, 해석,
@@ -12,7 +12,7 @@
 
 <!-- SPECIALIST_2026_10_02_CURRENT_START -->
 
-# 2026-10-02 — 현재 최우선 Specialist 계보
+# 2026-10-03 — 현재 최우선 Specialist 계보
 
 ## 현재 상태
 
@@ -32,9 +32,111 @@ SS05  Shared Hierarchical MIL + 12 target importance     [DONE]
 SS06A Top-K reliability audit                          [DONE]
 SS06A2 weak-selector extended audit                     [DONE]
 SS06B target별 single-slice selection manifest          [DONE]
-SS07A LM DINOv2-Small Specialist pilot                   [CURRENT]
+SS07A LM DINOv2-Small Specialist pilot                   [DONE: S01/S03]
+SS07A-X LM best-policy continuation / stability check      [CURRENT]
 SS07B~ target별 Specialist 확장                          [PLANNED]
 ```
+
+
+## SS07A — Lateral Meniscus Specialist pilot 최신 결과
+
+### Persistent raw-image cache
+
+SS06B frozen selection을 실제 224x224 uint8 single-slice MRI cache로 변환했다.
+
+**Cache A — LM + ACL + MCL**
+
+- Status: **PASS**
+- LM K24 / ACL K24 / MCL K24
+- raw entries: **317,304**
+- unique DICOM rows decoded: **120,513**
+- decode reuse reduction: **62.02%**
+- build: **7.43 min**
+- hash: **1.55 min**
+- measured total: **8.98 min**
+- target cache size: 각 **4.9425 GiB**, total 약 **14.83 GiB**
+- LM cache SHA256: `c4e5e131c4dceddd6dceff5557f7e531f020da2d030c07144ab3c47941089195`
+- LM metadata SHA256: `49796c5ad1bf0be68833b75f8cdbb23c564f13dfc1486e776f64882f2d5c6aa6`
+
+**Cache B — Synovitis + Baker's + Fracture**
+
+- Status: **PASS**
+- Synovitis K24 / Baker's K24 / Fracture K32
+- raw entries: **352,560**
+- unique DICOM rows decoded: **147,189**
+- decode reuse reduction: **58.25%**
+- build: **10.45 min**
+- hash: **1.91 min**
+- measured total: **12.36 min**
+- total cache size: 약 **16.48 GiB**
+- Synovitis cache SHA256: `f8199cbaabfde46a8f808c635b358139bf3e5569a9fa726e1c9abe87747abdb3`
+- Baker's cache SHA256: `f1d25ef96bc5c45be929dc482b64fc8df1228bff37d7ad4311ff00379f606ae9`
+- Fracture cache SHA256: `5f69246a8feb45354c562e192e79d4a0d187061e3e24912fd918e80febf08d80`
+
+Cache B는 LM pilot 비교에는 사용하지 않고, 이후 Synovitis / Baker's / Fracture 확장용으로 보존한다.
+
+### S01 — Metadata ablation
+
+공통:
+- target: Lateral Meniscus
+- selector: SS06B attention K24
+- raw MRI K24
+- DINOv2-Small full fine-tuning
+- CLS only
+- 1-layer set-like Slice Transformer
+- Gold58 + V4 Broad pseudo
+- pseudo weight: 0.70 x confidence
+- Fixed Val 80 = 40P / 40N
+- seed / batch / LR / epochs 동일
+
+결과:
+
+| Run | Metadata | Best epoch | Fixed Val AUC | vs SS05 LM |
+|---|---|---:|---:|---:|
+| SS07A-S01-A | ON | 8 | **0.756875** | -0.003750 |
+| SS07A-S01-B | OFF | 8 | **0.702813** | -0.057813 |
+
+해석:
+- Metadata ON - OFF = **+0.054063 AUC**.
+- Plane / Fluid Sensitive / Fat Suppression / canonical relative position 정보가 현재 set-like Transformer에 의미 있는 신호를 제공한다.
+- 이후 LM Specialist 실험은 **metadata-aware 구조를 고정 baseline**으로 사용한다.
+- No-metadata control은 종료한다.
+
+### S03 — Pseudo supervision filtering
+
+S01-A 모델/입력/optimizer 계약은 유지하고 pseudo 선택만 변경했다.
+
+**S03-A — V4 Strict-only**
+- Gold: 58
+- pseudo after Fixed Val exclusion: **3,830**
+- hard Pos / Neg: **520 / 3,310**
+- best epoch: **6**
+- best Fixed Val AUC: **0.870000**
+- runtime: **50.41 min**
+- vs SS05 LM: **+0.109375**
+- vs S01-A: **+0.113125**
+- checkpoint SHA256: `4325f8eb25fd9e75be8ed06ca15489b24f4e9a8ef2630da256bcd1a13f6b19fd`
+
+**S03-B — V4 Broad class-wise confidence Top-75%**
+- hard class는 filtering에만 사용, 실제 train target은 original soft target 유지
+- Negative: 3,658 -> **2,744**, minimum kept confidence **0.844780**
+- Positive: 611 -> **459**, minimum kept confidence **0.853400**
+- pseudo total: **3,203**
+- Gold 포함 train total: **3,261**
+- best epoch: **11**
+- epoch 12 AUC: **0.880625**
+- best Fixed Val AUC: **0.881250**
+- runtime: **50.94 min**
+- vs SS05 LM: **+0.120625**
+- vs S01-A: **+0.124375**
+- checkpoint SHA256: `27a92661e24f190930bc24d7645cfd497837bb2defd0e8ef91fcaf1e365ef7c1`
+
+현재 판정:
+- pseudo를 무조건 넓게 사용하는 것보다 **low-confidence pseudo를 제거하는 것이 LM에서 매우 중요**했다.
+- Strict-only도 크게 개선됐지만, **Broad class-wise Top-75%가 현재 최고**다.
+- S03-B를 LM Specialist의 현재 best policy로 채택한다.
+- best가 epoch 11이고 epoch 12가 0.000625만 낮으므로, 다음은 scheduler를 무작정 20 epoch로 재설계하기보다 **best checkpoint에서 low-LR로 짧게 continuation**하여 추가 이득/overfitting을 분리 확인한다.
+- Fixed Val 80은 pseudo-label 기반 development proxy이므로, 작은 차이는 과대해석하지 않는다.
 
 ### SS02 pilot 중단 이유
 
