@@ -1,16 +1,17 @@
 # RSNA Knee — Specialist Model Experiment Log
 
-최종 업데이트: **2026-10-02**
+최종 업데이트: **2026-10-03**
 
 > 이 문서는 기존 shared multi-label 계보와 분리해 Specialist 계보와 관련 의사결정을 기록한다.
 >
-> 현재 실행은 **SS07A Lateral Meniscus DINOv2-Small Specialist pilot 준비**이며,
+> SS07A Lateral Meniscus Specialist의 S01 metadata ablation과 S03 pseudo-supervision filtering까지 완료했다.
+> 현재 best는 **S03-B Broad class-wise Top-75%**, Fixed Val ROC-AUC **0.881250**이다.
 > SS02A/B는 완료 실험이 아니라 중단된 pilot decision으로만 기록한다.
 
 
 <!-- SPECIALIST_2026_10_02_CURRENT_START -->
 
-# 2026-10-02 Current Specialist Status
+# 2026-10-03 Current Specialist Status
 
 ## 완료 실험 기록 원칙 유지
 
@@ -21,6 +22,202 @@ SS02A/SS02B는 최종 ranking/audit/output까지 완료하지 않고 중단했�
 **완료 Specialist 실험으로 카운트하지 않는다.**
 
 다만 architecture 전환 근거가 중요하므로 아래에 중단 의사결정만 남긴다.
+
+
+## 완료 — SS07A Persistent Raw-Image Cache A/B
+
+SS06B frozen target selection을 최종 Specialist가 직접 사용할 raw single-slice MRI cache로 materialize했다.
+
+### Cache A — LM / ACL / MCL
+
+- Status: **PASS**
+- LM K24 / ACL K24 / MCL K24
+- raw target entries: **317,304**
+- unique decoded DICOM rows: **120,513**
+- reused entries: **196,791**
+- decode reduction: **62.0197%**
+- rows shared by >=2 target slots: **104,571**
+- max reuse: **3**
+- build: **7.4298 min**
+- hash: **1.5541 min**
+- measured total: **8.9839 min**
+- each target cache: **[4407, 24, 224, 224] uint8 / 4.9425 GiB**
+- LM cache SHA256: `c4e5e131c4dceddd6dceff5557f7e531f020da2d030c07144ab3c47941089195`
+- ACL cache SHA256: `8fd9b0b3c2c0723005a80b0414419302541b0048a41cd7df7941ee67c1523553`
+- MCL cache SHA256: `30555707da0b8af6a5723f771f94dffb58cbb08af19ffa489ac778cce718a967`
+- audit SHA256: `eed66263dea440f5a1dd653df6d7930f6dd608c225dc7eaa4b3f29d5460cc264`
+
+### Cache B — Synovitis / Baker's / Fracture
+
+- Status: **PASS**
+- Synovitis K24 / Baker's K24 / Fracture K32
+- raw target entries: **352,560**
+- unique decoded DICOM rows: **147,189**
+- reused entries: **205,371**
+- decode reduction: **58.2514%**
+- rows shared by >=2 target slots: **113,629**
+- max reuse: **3**
+- build: **10.4518 min**
+- hash: **1.9085 min**
+- measured total: **12.3604 min**
+- Synovitis cache SHA256: `f8199cbaabfde46a8f808c635b358139bf3e5569a9fa726e1c9abe87747abdb3`
+- Baker's cache SHA256: `f1d25ef96bc5c45be929dc482b64fc8df1228bff37d7ad4311ff00379f606ae9`
+- Fracture cache SHA256: `5f69246a8feb45354c562e192e79d4a0d187061e3e24912fd918e80febf08d80`
+- audit SHA256: `b67d34cbd27decd684743428695ae575df328e2a8e38bc1200f82070b5ccd420`
+
+판정:
+**PASS / 캐시 재생성 불필요.**
+Cache B는 LM pilot에는 사용하지 않고 이후 해당 target Specialist 확장에 사용한다.
+
+---
+
+## 완료 — SS07A-S01 Lateral Meniscus Metadata Ablation
+
+공통 계약:
+- LM / SS06B attention K24
+- true raw single-slice MRI K24
+- DINOv2-Small full fine-tuning
+- CLS only
+- 1-layer set-like Slice Transformer
+- Gold58 + V4 Broad pseudo
+- pseudo loss weight: **0.70 x confidence**
+- Fixed Val: **80 = 40P / 40N**
+- max epochs 12
+- T4 x2
+
+### S01-A — Metadata-aware
+
+Metadata:
+- Plane
+- Fluid Sensitive
+- Fat Suppression
+- canonical relative position
+
+결과:
+- Status: **PASS**
+- pseudo train: **4,269**
+- train total: **4,327**
+- best epoch: **8**
+- best Fixed Val ROC-AUC: **0.756875**
+- SS05 LM 0.760625 대비: **-0.003750**
+- runtime: **63.5071 min**
+- checkpoint SHA256: `444acac147bcb553755889624e8b5dfe27e3f97368be324afc3e1f1591e3c38a`
+- val prediction SHA256: `533875ca18e72c862a8b60ba3ea374c763ae5a32bc7c4c47a06a2e224f949c3f`
+
+### S01-B — No-metadata control
+
+B는 input/cache/seed/LR/batch/epoch를 동일하게 유지하고,
+metadata module 초기화 순서도 A와 맞춘 뒤 forward에서 metadata를 사용하지 않았다.
+
+결과:
+- Status: **PASS**
+- best epoch: **8**
+- best Fixed Val ROC-AUC: **0.7028125**
+- SS05 LM 대비: **-0.0578125**
+- runtime: **70.9744 min**
+- checkpoint SHA256: `68eff5292ec0d0817eaffa6bb4a77eb5c4da9f4e756758ddf37c2d53f716171e`
+- val prediction SHA256: `cf32e4fc88a07ddf7abc108535743295ac329c8e19d2cc23340e3adfec094821`
+
+A/B 차이:
+**0.756875 - 0.7028125 = +0.0540625 AUC**
+
+판정:
+**Metadata-aware 구조 유지. No-metadata control reject.**
+
+---
+
+## 완료 — SS07A-S03 Pseudo Supervision Filtering
+
+S01-A의 모델 구조와 주요 학습 설정은 고정하고 pseudo selection만 변경했다.
+
+### S03-A — Strict-only
+
+Policy:
+- V4 Strict only
+- LM documented strict threshold: **0.45**
+- pseudo weight: **0.70 x confidence**
+- Fixed Val UID 제외
+
+학습 분포:
+- Gold: **58**
+- Strict pseudo: **3,830**
+- hard Positive: **520**
+- hard Negative: **3,310**
+- train total: **3,888**
+
+결과:
+- Status: **PASS**
+- best epoch: **6**
+- best Fixed Val ROC-AUC: **0.870000**
+- SS05 LM 대비: **+0.109375**
+- S01-A 대비: **+0.113125**
+- runtime: **50.4077 min**
+- checkpoint SHA256: `4325f8eb25fd9e75be8ed06ca15489b24f4e9a8ef2630da256bcd1a13f6b19fd`
+- history SHA256: `bc82c44a3fa0f26f54404a3026f2a4e89bb0b5cb1a7d8c4ee20f3a2d6edf0c6f`
+- val prediction SHA256: `37458448d57d752d41c67f615864832a86b15cc3db382271b52a7a7fe5bd1e87`
+
+Epoch AUC:
+- e4 0.750000
+- e5 0.765313
+- e6 **0.870000**
+- e7 0.812812
+- e8 0.858125
+- e9 0.864062
+- e10 0.854688 -> early stop
+
+해석:
+Strict filtering 자체가 Broad baseline보다 큰 개선을 만들었다.
+
+### S03-B — Broad class-wise Top-75% confidence
+
+Policy:
+- Broad pseudo를 hard class(soft target >= 0.5 / < 0.5)로 나눔
+- 각 class에서 confidence 상위 **75%** 유지
+- hard class는 selection에만 사용
+- 실제 training target은 original soft target 유지
+- pseudo weight는 계속 **0.70 x confidence**
+
+Filtering:
+- Negative: **3,658 -> 2,744**, removed 914, minimum kept confidence **0.844780**
+- Positive: **611 -> 459**, removed 152, minimum kept confidence **0.853400**
+- pseudo total: **3,203**
+- Gold 포함 train total: **3,261**
+
+결과:
+- Status: **PASS**
+- best epoch: **11**
+- best Fixed Val ROC-AUC: **0.881250**
+- epoch 12: **0.880625**
+- SS05 LM 대비: **+0.120625**
+- S01-A 대비: **+0.124375**
+- S03-A 대비: **+0.011250**
+- runtime: **50.9425 min**
+- checkpoint SHA256: `27a92661e24f190930bc24d7645cfd497837bb2defd0e8ef91fcaf1e365ef7c1`
+- history SHA256: `75ccff77ca3d5b775c4d8c18ff758e309299673c2fd7f4cebef9bc7f1e233a67`
+- val prediction SHA256: `93cbac67fb2c38f9c074b6db57941f0e6a3a87a4536a1bbcda62ce9328f13818`
+
+Epoch AUC:
+- e5 0.782813
+- e6 0.844063
+- e7 0.870937
+- e8 0.823438
+- e9 0.873437
+- e10 0.871562
+- e11 **0.881250**
+- e12 0.880625
+
+해석:
+- LM에서 low-confidence pseudo가 성능 병목이었다는 강한 신호.
+- Strict-only도 유효하지만 class-wise Top-75%가 더 높았다.
+- S03-B를 현재 LM Specialist best supervision policy로 채택한다.
+- e11/e12 차이는 **0.000625**, Fixed Val 40P x 40N의 ranking pair 1개 차이이므로 명확한 overfitting으로 단정하지 않는다.
+- 다음은 S03-B best checkpoint에서 **짧은 low-LR continuation**으로 plateau / 추가 상승 / overfitting을 구분한다.
+- Fixed Val은 pseudo development proxy이며 external ground truth validation이 아니다.
+
+판정:
+**CURRENT BEST LM SPECIALIST = S03-B, Fixed Val ROC-AUC 0.881250.**
+
+---
 
 ## 중단된 SS02 pilot — Frozen Generic DINOv2-Small + Target-specific MIL
 
