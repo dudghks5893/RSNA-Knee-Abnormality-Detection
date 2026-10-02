@@ -2,7 +2,7 @@
 
 최종 업데이트: **2026-10-02**
 
-> 상태: **SS06B — All-Study Target Selection Manifest 준비**
+> 상태: **SS07A — Lateral Meniscus DINOv2-Small Specialist Pilot 준비**
 >
 > 현재 우선순위는 아래 2026-10-02 Current Specialist Roadmap을 따른다.
 > 2026-09-30의 LM-only candidate-rule 계획은 역사 기록으로만 유지한다.
@@ -14,7 +14,7 @@
 
 # 2026-10-02 Current Specialist Roadmap
 
-> **현재 단계: SS06A2 완료 -> SS06B all-study target selection manifest**
+> **현재 단계: SS06B 완료 -> SS07A Lateral Meniscus Specialist pilot**
 >
 > 아래 2026-09-30 LM-only candidate-rule 계획은 역사 기록으로 유지한다.
 > 실제 진행 우선순위는 이 섹션을 따른다.
@@ -53,9 +53,11 @@ SS05  Shared Hierarchical MIL                       [DONE]
   ↓
 SS06A Top-K reliability audit                     [DONE]
 SS06A2 weak-selector extended audit                 [DONE]
-SS06B 12 target-specific single-slice manifests     [CURRENT]
+SS06B 12 target-specific single-slice manifests     [DONE]
   ↓
-SS07  12 target-specific DINOv2-Small Specialists
+SS07A LM DINOv2-Small Specialist pilot               [CURRENT]
+  ↓
+SS07B~ remaining target-specific Specialists
   ↓
 Hidden Test end-to-end inference / submission
 ```
@@ -180,6 +182,32 @@ K=24/32/48/64를 중심으로 keep/remove/random-K 진단 후 target별 K를 결
 
 이 3개는 attention Keep-K가 Random-K보다 약한 경우가 많다.
 따라서 SS06A2에서 **K=64/96/128 + uniform/random**을 비교한 뒤 최종 policy를 freeze한다.
+
+## SS06B 완료 결과
+
+- PASS
+- 4,407 studies × 12 targets = **52,884 target-study rows**
+- runtime: **0.84 min**
+- selection parquet: **12.19 MiB**
+- integrity audit: **PASS**
+- attention target padding: **0**
+- Uniform K96 padding: **120 / 4,407 = 2.72%**
+- padding sentinel: **feature_row = -1**
+
+Artifacts:
+- selection index SHA256:
+  `7385ed4a353c5fe2b0fd315d7c692d32a46c4470c72d7245f2782c220b40bdef`
+- target summary SHA256:
+  `aa88ffb4b4ac92b72e6e91bb4640c09d580ae66ab273d74cfd82bbc3af5055d7`
+- frozen policy SHA256:
+  `927d0c592401f26f1f6a73a510736c0f9f4b686f63e4da51d0274273a936a857`
+
+SS07A pilot:
+- target: **Lateral Meniscus**
+- selector: **attention K24**
+- backbone: **DINOv2-Small**
+- aggregator: **metadata-aware set-like Slice Transformer**
+- first goal: Fixed Val LM ROC-AUC가 SS05 LM baseline **0.760625**를 개선하는지 확인.
 
 ## SS05 — Shared Hierarchical MIL
 
