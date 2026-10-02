@@ -1,8 +1,8 @@
 # RSNA Knee — Specialist Model Roadmap
 
-최종 업데이트: **2026-10-02**
+최종 업데이트: **2026-10-03**
 
-> 상태: **SS07A — Lateral Meniscus DINOv2-Small Specialist Pilot 준비**
+> 상태: **SS07A LM pilot S01/S03 완료 — Broad class-wise Top-75%가 현재 best**
 >
 > 현재 우선순위는 아래 2026-10-02 Current Specialist Roadmap을 따른다.
 > 2026-09-30의 LM-only candidate-rule 계획은 역사 기록으로만 유지한다.
@@ -12,9 +12,9 @@
 
 <!-- SPECIALIST_2026_10_02_CURRENT_START -->
 
-# 2026-10-02 Current Specialist Roadmap
+# 2026-10-03 Current Specialist Roadmap
 
-> **현재 단계: SS06B 완료 -> SS07A Lateral Meniscus Specialist pilot**
+> **현재 단계: SS07A S01/S03 완료 -> LM best-policy continuation / stability 확인**
 >
 > 아래 2026-09-30 LM-only candidate-rule 계획은 역사 기록으로 유지한다.
 > 실제 진행 우선순위는 이 섹션을 따른다.
@@ -55,12 +55,56 @@ SS06A Top-K reliability audit                     [DONE]
 SS06A2 weak-selector extended audit                 [DONE]
 SS06B 12 target-specific single-slice manifests     [DONE]
   ↓
-SS07A LM DINOv2-Small Specialist pilot               [CURRENT]
+SS07A LM DINOv2-Small Specialist pilot               [DONE: S01/S03]
+  ↓
+SS07A-X best-policy low-LR continuation / stability   [CURRENT]
   ↓
 SS07B~ remaining target-specific Specialists
   ↓
 Hidden Test end-to-end inference / submission
 ```
+
+
+## SS07A LM pilot 결과 및 현재 채택안
+
+### S01 — Metadata ablation 완료
+
+| Run | Pseudo | Metadata | Best epoch | Fixed Val AUC |
+|---|---|---|---:|---:|
+| S01-A | Broad + 0.70 x confidence | ON | 8 | **0.756875** |
+| S01-B | Broad + 0.70 x confidence | OFF | 8 | **0.702813** |
+
+결론:
+- Metadata ON 효과: **+0.054063 AUC**
+- 이후 LM Specialist는 Plane / Fluid / Fat / canonical relative position을 사용하는 **metadata-aware 구조를 유지**한다.
+- No-metadata control은 더 이상 확장하지 않는다.
+
+### S03 — Pseudo supervision filtering 완료
+
+| Run | Pseudo policy | Pseudo train | Best epoch | Fixed Val AUC |
+|---|---|---:|---:|---:|
+| S03-A | Strict-only + 0.70 x confidence | 3,830 | 6 | **0.870000** |
+| S03-B | Broad class-wise Top-75% + 0.70 x confidence | 3,203 | 11 | **0.881250** |
+
+Reference:
+- SS05 LM baseline: **0.760625**
+- S01-A Broad baseline: **0.756875**
+
+S03-B:
+- Negative keep threshold(actual minimum): **0.844780**
+- Positive keep threshold(actual minimum): **0.853400**
+- epoch 12 AUC: **0.880625**
+- best - epoch12 차이: **0.000625 = Fixed Val 40x40 ranking pair 1개**
+- current checkpoint: `27a92661e24f190930bc24d7645cfd497837bb2defd0e8ef91fcaf1e365ef7c1`
+
+현재 채택:
+**LM = SS06B attention K24 + raw MRI + DINOv2-Small full FT + metadata-aware Slice Transformer + Broad class-wise Top-75% pseudo**
+
+다음 controlled experiment:
+1. S03-B best checkpoint에서 짧은 **low-LR continuation**.
+2. 기존 12-epoch run의 scheduler를 통째로 20 epoch로 늘려 처음부터 다시 학습하지 않는다.
+3. continuation에서 Fixed Val이 더 오르는지, plateau인지, 명확히 하락하는지 확인한다.
+4. 안정성 확인 후 다른 target 확장 정책을 결정한다.
 
 ## SS03 완료 결과
 
