@@ -43,7 +43,7 @@ LM에서 best Fixed Val ROC-AUC가 0.685에 그쳐 확장하지 않았다.
 **target별 selector 12개를 처음부터 독립 학습하는 접근은 중단**했다.
 
 현재 단계:
-**SS03/SS04/SS05/SS06A/SS06A2 완료. 다음은 SS06B all-study target-specific selection manifest.**
+**SS03/SS04/SS05/SS06A/SS06A2/SS06B 완료. 다음은 SS07A Lateral Meniscus DINOv2-Small Specialist pilot.**
 
 SS04 결과: **819,078 single slices / 1536-d float16 / 2.3434 GiB / 60.87분 / decode error 0 / PASS**.
 
@@ -51,7 +51,9 @@ SS05 결과: **Fixed Val Macro 0.881247 / Weak-6 0.856870 / best epoch 19 / 16.1
 
 SS06A 결과: **PASS / 2.11분**. 9개 target의 attention policy를 좁힘.
 
-SS06A2 결과: **PASS / 0.49분**. K64 shortage 0%, K96 2.72%, K128 22.51%. Lateral OA / PF OA / Effusion은 **series-balanced Uniform K96**으로 확정했으며, 12-target selection policy를 freeze하고 SS06B로 진행.
+SS06A2 결과: **PASS / 0.49분**. K64 shortage 0%, K96 2.72%, K128 22.51%. Lateral OA / PF OA / Effusion은 **series-balanced Uniform K96**으로 확정.
+
+SS06B 결과: **PASS / 0.84분 / 52,884 rows / 12.19 MiB**. 전체 4,407 studies에 12-target frozen selection policy 적용 완료. Attention target은 padding 0, Uniform K96은 120 studies(2.72%)만 PAD 필요. 다음은 LM K24 DINOv2-Small Specialist pilot.
 
 자세한 현재 상태:
 - [Current State / Roadmap](docs/CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md)
