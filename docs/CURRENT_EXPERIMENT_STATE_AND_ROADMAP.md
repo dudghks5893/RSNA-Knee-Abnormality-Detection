@@ -25,154 +25,93 @@
 
 | Target | Best Fixed Val AUC | SS05 ref | Status | Best experiment |
 |---|---:|---:|---|---|
+| Medial Meniscus | **0.993750** | 0.958125 | **PASS** | SS07B-G Broad Top-75 |
 | Synovitis | **0.981600** | 0.982400 | **PASS** | SS07B-H Broad Top-75 |
 | Baker's | **0.975000** | 0.883125 | **PASS** | SS07B-F Broad Top-75 |
 | ACL | **0.9609375** | 0.940000 | **PASS** | SS07B-E Broad Top-75 |
 | MCL | **0.904375** | 0.767500 | **PASS** | SS07B-A Broad Top-75 |
-| Lateral Meniscus | **0.8940625** | 0.760625 | freeze / NOT YET | SS07A-X1 continuation |
+| Lateral Meniscus | **0.8940625** | 0.760625 | freeze / NOT YET | SS07A-X1 |
 | Fracture | **0.8788889** | 0.774444 | freeze / NOT YET | SS07B-C Strict-only |
 
-현재 independent Gate PASS = **4 / 12**.
+현재 independent Gate PASS = **5 / 12**.
 
-### 3. SS07B-F — Baker's 완료
+### 3. SS07B-G — Medial Meniscus 완료
 
-Supervision:
-- V4 Broad
-- class-wise confidence Top-75%
-- original soft target
-- pseudo weight = 0.70 x confidence
-- Gold58
-
-Fixed Val:
-- 80 = 40P / 40N
-- pair step = 0.000625
+실제 실행 contract:
+- selector: **SS06B attention K48**
+- cache: **Cache C — Medial Meniscus K48**
+- cache file: `medial_meniscus_k48_images_uint8.npy`
+- cache SHA256: `e9cbc477827331fe4ca599e0471aec23dfb6369f9c3798459d4fe8e1ba99ab74`
+- metadata SHA256: `66f326b900cc0089804fbb7703e776c059add4a74829d3c552775a34c67d2b47`
+- physical batch 4 / grad accumulation 1
+- Fixed Val 80 = 40P / 40N
 
 결과:
-- best epoch: **4**
-- best Fixed Val AUC: **0.975000**
-- SS05 reference: 0.883125
-- delta vs SS05: **+0.091875**
-- runtime: **35.59 min**
+- best epoch: **8**
+- best Fixed Val AUC: **0.993750**
+- SS05 reference: 0.958125
+- delta vs SS05: **+0.035625**
+- runtime: **87.28 min**
 - Gate: **PASS**
-- checkpoint SHA256: `853ee3e042d26f388756b65b6b090ef311a47fd1aadf4f01e60acd92e268bf97`
-- history SHA256: `221138b68b32dcf3cc9848d28a0382728b62d81e299645220cd3dd63d55df9f4`
-- val prediction SHA256: `098a31d64b8a0f2e59e9f206217f9b194dacc0a0472c03723d463d37393dc645`
+- checkpoint SHA256: `e67161eec0a206d9bc15c813e7034ab6069cf92a1e67916871901d8177b96d45`
+- history SHA256: `9144a3754a5e3b2819d322334667a1d1a1b409ae07d907a67ebda6ad1a154f5d`
+- val prediction SHA256: `355f5041a2ac8bbcb601c8984e5a1b8c230180b2bdc59c44447874279f7ea913`
 
 Epoch:
 ```text
-e1 0.926875
-e2 0.947188
-e3 0.967500
-e4 0.975000 <- BEST
-e5 0.962500
-e6 0.954063
-e7 0.955000
-e8 0.940000
+e1  0.972500
+e2  0.968750
+e3  0.972187
+e4  0.974375
+e5  0.971875
+e6  0.987500
+e7  0.985313
+e8  0.993750 <- BEST
+e9  0.986250
+e10 0.983125
+e11 0.977500
+e12 0.976250
 ```
 
-### 4. SS07B-H — Synovitis 완료
+주의:
+실행 notebook의 최종 summary JSON 일부 설명 필드에 이전 template의
+`K24 / Cache A` 문자열이 남았으나, 실제 config / cache shape / input file / SHA는 모두 **K48 / Cache C**였다.
+Git 기록은 실제 실행 contract 기준으로 정정한다.
 
-Supervision:
-- V4 Broad
-- class-wise confidence Top-75%
-- original soft target
-- pseudo weight = 0.70 x confidence
-- Gold58
+### 4. 완료 target
 
-Filtered pseudo:
-- total: 3,225
-- hard positive: 385
-- hard negative: 2,840
-
-Fixed Val:
-- 50 = 25P / 25N
-- AUC pair step = 0.0016
-
-결과:
-- best epoch: **6**
-- best Fixed Val AUC: **0.981600**
-- SS05 reference: 0.982400
-- delta vs SS05: **-0.000800**
-- runtime: **41.76 min**
-- Gate: **PASS**
-- checkpoint SHA256: `d4820ee535f1d54e72e1775d47b996e1a6aee4a64c9e115f7f766e8615a64aae`
-- history SHA256: `78882c3cd749d5f9b81c7ee3c1f1120c2968cfca76e91b900c6b447777174448`
-- val prediction SHA256: `ffa9b600fed3dfbf358682b35bbe14d208d057dbef873b132c9b95b612190d03`
-
-Epoch:
-```text
-e1  0.9152
-e2  0.9536
-e3  0.9512
-e4  0.9792
-e5  0.9728
-e6  0.9816 <- BEST
-e7  0.9792
-e8  0.9552
-e9  0.9664
-e10 0.9440
-```
-
-Synovitis는 independent Gate를 통과했지만 SS05 reference보다 0.0008 낮다.
-Fixed Val 25P/25N의 작은 development proxy이므로 이 차이를 과대해석하지 않는다.
-다만 **첫 LB 확인 후 성능 개선 후보**로 기록한다.
+- Synovitis: 0.981600 PASS
+- Baker's: 0.975000 PASS
+- ACL: 0.9609375 PASS
+- MCL: 0.904375 PASS
 
 ### 5. Freeze target
 
-**Lateral Meniscus**
-- current best = 0.8940625
-- X2 ultra-low-LR continuation이 개선하지 못함
-- freeze
-
-**Fracture**
-- Broad Top-75 = 0.8138889
-- Strict-only = **0.8788889**
-- Strict + sqrt balance = 0.8744444
-- freeze
+- Lateral Meniscus: 0.8940625
+- Fracture: 0.8788889
 
 ### 6. Post-LB 개선 우선순위
 
-12-target Specialist를 우선 완성하고 첫 LB를 확인한다.
+1. Fixed Val < 0.90
+2. Gate PASS지만 independent Specialist < SS05
+3. LB 결과상 약한 target
 
-이후:
-1. **Fixed Val < 0.90** target 우선
-2. 그 다음 **independent Specialist < SS05 shared reference** target
-3. LB target-level behavior와 error analysis를 반영해 추가 개선
-
-현재 명확한 재방문 후보:
+현재 후보:
 - Lateral Meniscus
 - Fracture
 - Synovitis
 
-### 7. Persistent cache
+### 7. 현재 A/B 실행
 
-**12 / 12 완료.**
+- Lane A: **Contusion K48 / Broad Top-75**
+- Lane B: Medial Meniscus 완료, 다음 target 준비
 
-- Cache A — LM K24 / ACL K24 / MCL K24
-- Cache B — Synovitis K24 / Baker's K24 / Fracture K32
-- Cache C — Medial Meniscus K48
-- Cache D — Contusion K48
-- Cache E — Medial OA K64
-- Cache F — PF OA K96 HDF5
-- Cache G — Lateral OA K96 HDF5
-- Cache H — Effusion K96 HDF5
+### 8. 운영 원칙
 
-### 8. 현재 A/B 실행
-
-**Lane A**
-- Cache B 완료
-- 다음: **Contusion K48 / Broad class-wise Top-75%**
-
-**Lane B**
-- **Medial Meniscus K48 / Broad class-wise Top-75%** 진행
-
-### 9. 운영 원칙
-
-- 현재는 target coverage를 우선한다.
-- 동일 Fixed Val에 대한 반복 micro-search는 제한한다.
-- Gate PASS checkpoint는 보존하고 다음 target으로 이동한다.
-- 첫 LB 이후 low target / below-SS05 target을 우선 재개한다.
-- 이미 경로가 확인된 input은 전체 `/kaggle/input` rglob을 하지 않는다.
+- 12-target coverage 우선
+- Gate PASS checkpoint 보존 후 다음 target 이동
+- 동일 Fixed Val micro-search 반복 제한
+- exact input root가 있으면 전체 `/kaggle/input` rglob 금지
 
 <!-- SPECIALIST_2026_10_02_CURRENT_END -->
 
