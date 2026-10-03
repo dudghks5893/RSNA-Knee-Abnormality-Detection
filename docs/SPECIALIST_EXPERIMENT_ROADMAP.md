@@ -15,8 +15,8 @@
 # 2026-10-03 Current Specialist Roadmap
 
 > **현재 병렬 단계**
-> - Lane A: **Fracture K32 Specialist**
-> - Lane B: LM current best 0.8940625 -> **Broad class-wise Top-80% controlled run**
+> - Lane A: Fracture Broad Top-75 0.8138889 -> **V4 Strict-only**
+> - Lane B: LM X1 0.8940625 -> **X2 ultra-low-LR continuation**
 > - 최종 내부 목표: 12 target 각각 Fixed Val AUC >= 0.90
 
 ## 현재 채택 파이프라인
@@ -32,26 +32,34 @@ SS03 adapted DINOv2-Base
 -> target binary probability
 ```
 
-## LM filtering 진행
+## LM
 
-현재 결과:
+Filtering sweep:
+- Top-60: 0.831875
+- Top-70: 0.7646875
+- Top-75: **0.881250**
+- Top-80: 0.823125
 
-| Run | Pseudo keep | Fixed Val AUC | 비고 |
-|---|---:|---:|---|
-| S03-B | Top-75% | **0.881250** | base best |
-| X1 | Top-75% + low-LR continuation | **0.8940625** | 현재 LM 최고 |
-| S04 | Top-60% | 0.831875 | Top-75 미달 |
-| S05 | Top-70% | 0.7646875 | Top-75 / Top-60 미달 |
-| S06 | **Top-80%** | pending | 다음 controlled run |
+결론:
+Top-75를 current pseudo-filtering sweet spot으로 유지한다.
 
-다음 **SS07A-S06 Top-80**:
-- KEEP_FRACTION = 0.80
-- selector K24 / architecture / Metadata / seed / LR / batch / scheduler / max12 / patience4 동일
-- Fixed Val LM80 동일
-- Top-75 base 0.881250을 1차 비교 기준으로 사용
-- X1 0.8940625는 continuation reference로 별도 유지
-- Top-80 >= 0.90이면 LM Gate PASS
-- Top-80이 Top-75를 넘지 못하면 Top-75 filtering을 현재 sweet-spot 후보로 유지하고 X1 checkpoint의 마지막 미세조정을 검토
+X1 low-LR continuation:
+- start: 0.881250
+- best: **0.8940625**
+- best continuation epoch: 2
+- Gate NOT YET
+- checkpoint: `12c4044de1e04e83168f17eb4dea0e5ca4df98ac99ebda6e62dfb3614bfe846a`
+
+다음 — X2:
+- X1 best checkpoint에서 시작
+- Broad Top-75 supervision 그대로
+- optimizer 새로 시작
+- X1보다 더 낮은 ultra-low LR
+- no warm-up
+- 짧은 cosine continuation
+- 최대 3 epochs
+- 0.90 도달 시 즉시 종료
+- 0.90 미달 시 X1 best를 LM 보존 checkpoint로 유지하고 LM 반복 탐색 종료
 
 ## MCL
 
@@ -61,19 +69,39 @@ SS07B-A Top-75:
 - Gate **PASS**
 - checkpoint `891f124dc4ee7cb50b506e88308a0a2040a60647f9f7fb2fd08aeef6d1e3ea5c`
 
-MCL은 종료하고 checkpoint를 보존한다.
+## Fracture
 
-## Lane A — Fracture
+Broad Top-75:
+- K32
+- best epoch 2
+- AUC **0.8138889**
+- SS05 0.774444 대비 +0.039445
+- Gate NOT YET
 
-첫 baseline:
-- SS06B attention K32
-- DINOv2-Small full fine-tuning
-- Metadata ON
-- Broad class-wise Top-75%
-- pseudo weight 0.70 x confidence
-- same seed / batch / LR / cosine / max12 / patience4
-- Fixed Val manifest 고정
-- Gate 0.90
+다음 — Strict-only:
+- 동일 K32
+- 동일 DINOv2-Small / Metadata / Transformer
+- 동일 seed / batch / LR / scheduler
+- Fixed Val 60 유지
+- supervision source만 V4 Strict-only로 변경
+- 추가 Top-% filtering 없음
+- Strict best가 0.8138889를 넘는지 우선 비교
+
+## Cache
+
+완료:
+- A: LM/ACL/MCL
+- B: Synovitis/Baker's/Fracture
+- C: Medial Meniscus K48
+- D: Contusion K48
+- E: Medial OA K64
+- F: PF OA K96 HDF5 recovery PASS
+- G: Lateral OA K96 HDF5 recovery PASS
+
+남음:
+- H: Effusion K96 HDF5 — notebook prepared / execution result pending
+
+K96 uniform target은 padding sentinel -1을 갖는 study가 있으므로 raw cache metadata의 valid_mask를 final Specialist Transformer padding mask로 사용한다.
 
 <!-- SPECIALIST_2026_10_02_CURRENT_END -->
 
