@@ -16,25 +16,35 @@
 
 ### 목표
 
-12개 target마다 independent Specialist를 하나씩 완성하고,
-각 target의 **Fixed Val ROC-AUC >= 0.90**을 내부 Gate로 사용한다.
+12개 target마다 independent Specialist를 완성하고
+**Fixed Val ROC-AUC >= 0.90**을 내부 Gate로 사용한다.
 
 현재:
-- PASS: **ACL, MCL = 2 / 12**
+- PASS: **MCL, ACL, Baker's, Synovitis = 4 / 12**
 - freeze / NOT YET: **Lateral Meniscus, Fracture**
 
-### 완료된 핵심 결과
+### 현재 결과
 
 ```text
+Synovitis          0.9816000  PASS
+Baker's            0.9750000  PASS
 ACL                0.9609375  PASS
 MCL                0.9043750  PASS
 Lateral Meniscus   0.8940625  freeze
 Fracture           0.8788889  freeze
 ```
 
-### first-baseline transfer policy
+Synovitis:
+- SS05 shared reference 0.982400
+- independent 0.981600
+- Gate PASS이지만 SS05보다 0.000800 낮음
+- 첫 LB 이후 improvement candidate
 
-새 target 첫 실험은 현재 성공 사례가 있는 아래 구조를 우선 사용한다.
+### 현재 전략
+
+지금은 한 target을 계속 미세조정하기보다 **12-target coverage**를 먼저 완성한다.
+
+새 target 첫 실험:
 
 ```text
 SS06B target-specific Top-K raw MRI
@@ -50,87 +60,61 @@ V4 Broad
 -> Gold58
 ```
 
-MCL과 ACL에서 Gate PASS가 확인되었으므로,
-새 target의 first baseline으로 사용할 근거가 생겼다.
+현재 이 baseline은 MCL / ACL / Baker's / Synovitis에서 모두 Gate PASS했다.
 
-단, target별 pseudo 품질과 class imbalance가 다르므로
-실패 target에 동일한 micro-tuning을 무한 반복하지 않는다.
-
-### 현재 병렬 순서
+### 현재 A/B 순서
 
 #### Lane A
+Cache B 완료:
+- Fracture freeze
+- Baker's PASS
+- Synovitis PASS
 
-현재 Kaggle input:
-`/kaggle/input/rsna-knee-ss07a-cache-b-syn-baker-fracture-v1/rsna-knee-ss07a-cache-b-syn-baker-fracture-v1`
-
-따라서 Cache B를 먼저 소진한다.
-
-```text
-Fracture  -> freeze 0.8788889
-Baker's   -> Broad Top-75 first baseline
-Synovitis -> Baker's 후 동일 Cache B로 진행
-```
-
-Input을 바꾸지 않아도 된다는 운영상 이점이 있다.
+다음:
+- **Contusion K48**
+- Cache D
+- Broad class-wise Top-75 first baseline
+- Fixed Val 80 = 40P / 40N
+- SS05 reference 0.875625
 
 #### Lane B
+- **Medial Meniscus K48**
+- Broad class-wise Top-75 first baseline
+- Fixed Val 80 = 40P / 40N
+- SS05 reference 0.958125
 
-ACL 완료 후 다음:
+### Post-LB 성능 개선 우선순위
 
-```text
-Medial Meniscus
-SS06B attention K48
-Broad class-wise Top-75%
-Fixed Val 80 = 40P / 40N
-Gate 0.90
-SS05 reference 0.958125
-```
+첫 Specialist LB 제출 완료 후:
 
-Medial Meniscus cache:
-- Dataset: `rsna-knee-ss07a-cache-c-medial-meniscus-k48-v1`
-- image: `medial_meniscus_k48_images_uint8.npy`
-- metadata: `medial_meniscus_metadata.npz`
-- cache SHA256: `e9cbc477827331fe4ca599e0471aec23dfb6369f9c3798459d4fe8e1ba99ab74`
-- metadata SHA256: `66f326b900cc0089804fbb7703e776c059add4a74829d3c552775a34c67d2b47`
+1. **Fixed Val < 0.90**
+2. **Gate PASS이지만 independent Specialist < SS05**
+3. LB target-level 결과가 약한 target
 
-### target 처리 우선순위
+현재:
+- 1순위 후보: Lateral Meniscus, Fracture
+- 2순위 후보: Synovitis
 
-현재는 한 target을 0.90에 억지로 맞추는 것보다
-**12개 independent Specialist의 coverage를 먼저 넓히는 것**을 우선한다.
-
-Gate를 넘으면 target 완료 처리하고 다음 target으로 이동한다.
-
-Gate 미달 시:
-1. best checkpoint 보존
-2. 학습 곡선 / pseudo 분포 / selector 특성 확인
-3. 가장 근거가 강한 controlled experiment 1회
-4. 반복 micro-tuning보다 다음 target coverage를 우선
-
-### validation overfitting 방지
-
-LM에서는 Top-% filtering sweep과 X1/X2 continuation까지 수행했다.
-X2 ultra-low-LR에서도 start 0.8940625를 넘지 못했다.
-
-Fracture에서는 Strict-only 0.8788889가 best였고
-sqrt class-balance가 0.874444로 개선되지 않았다.
-
-따라서:
-- 동일 Fixed Val을 반복해서 보는 hyperparameter micro-search를 제한한다.
-- freeze target은 다른 target이 충분히 진행된 뒤 error analysis와 함께 재방문한다.
+추가 외부 knee MRI 데이터는 현재 즉시 도입하지 않는다.
+내부 데이터/구조로 개선이 정체될 때 auxiliary pretraining 또는 selector 개선 후보로 검토한다.
 
 ### cache
 
 Persistent target cache **12 / 12 완료**.
-이제 cache-generation phase는 종료하고 GPU Specialist training에 집중한다.
 
-### Kaggle notebook 공통 규칙
+Contusion Cache D:
+- Dataset: `rsna-knee-ss07a-cache-d-contusion-k48-v1`
+- image: `contusion_k48_images_uint8.npy`
+- metadata: `contusion_metadata.npz`
+- cache SHA256: `41c62cb30737afa7486076790a6fe415c8a84591fdc90ee2b826fe1b9a8f4b29`
+- metadata SHA256: `d97f9b7ab751e1136ef86daccdb311e4711a04eb21cc966d4f28a6283d8a6697`
 
-- Import -> Run All
-- Accelerator / Internet / Save Version 명시
-- Fixed Val / Public LB 용어 분리
-- artifact hash / contract 검증
-- 이미 경로가 확인된 input은 전체 `/kaggle/input` rglob 금지
-- known Dataset root + exact filename을 직접 확인
+### 운영 원칙
+
+- Gate PASS checkpoint는 보존하고 다음 target으로 이동
+- 같은 Fixed Val micro-search 반복 제한
+- first LB 이후 low-score / below-SS05 target 재방문
+- exact input root를 알고 있으면 전체 `/kaggle/input` rglob 금지
 
 <!-- SPECIALIST_2026_10_02_CURRENT_END -->
 
