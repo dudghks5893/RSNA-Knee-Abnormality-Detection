@@ -48,19 +48,17 @@ Fixed Val은 pseudo 기반 development proxy이며 Public LB와 동일한 지표
   - best epoch 6
   - checkpoint SHA256: `891f124dc4ee7cb50b506e88308a0a2040a60647f9f7fb2fd08aeef6d1e3ea5c`
 - **Lateral Meniscus: 0.8940625 — Gate NOT YET**
-  - S03-B Top-75% 0.881250에서 X1 low-LR continuation으로 +0.0128125
-  - continuation best epoch 2
-  - X1 checkpoint SHA256: `12c4044de1e04e83168f17eb4dea0e5ca4df98ac99ebda6e62dfb3614bfe846a`
-  - 다음 controlled comparison: Broad class-wise **Top-60%**, 기존 12-epoch 조건 동일
-
-추가 persistent cache 완료:
-- Cache C — Medial Meniscus K48: PASS / 9.885 GiB / total 15.28 min
-- Cache D — Contusion K48: PASS / 9.885 GiB / total 13.65 min
+  - Top-75 base: 0.881250
+  - Top-75 + X1 low-LR continuation: **0.8940625** (현재 최고)
+  - Top-60 controlled run: **0.831875**
+  - Top-70 controlled run: **0.7646875**
+  - 다음 controlled comparison: Broad class-wise **Top-80%**
+  - Top-80은 Top-75보다 pseudo pool을 넓히는 방향의 검증이며 나머지 조건은 동일 유지
 
 현재 병렬 운영:
-- **Lane A:** MCL 완료 -> **Fracture K32 Specialist**로 이동
-- **Lane B:** LM **Top-60 pseudo filtering** 비교
-- CPU cache: Medial OA K64 / PF OA K96 진행 후 Lateral OA K96 / Effusion K96
+- **Lane A:** Fracture K32 Specialist
+- **Lane B:** LM **Top-80 pseudo filtering** 비교
+- LM Gate는 아직 미통과이며, Top-80 결과 확인 전 X1 0.8940625 checkpoint를 보존한다.
 
 자세한 현재 상태:
 - [Current State / Roadmap](docs/CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md)
