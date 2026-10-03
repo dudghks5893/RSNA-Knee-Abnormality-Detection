@@ -15,8 +15,8 @@
 # 2026-10-03 Current Specialist Roadmap
 
 > **현재 병렬 단계**
-> - Lane A: MCL Gate PASS -> **Fracture K32 Specialist**
-> - Lane B: LM 0.8940625 -> **Broad class-wise Top-60% 비교**
+> - Lane A: **Fracture K32 Specialist**
+> - Lane B: LM current best 0.8940625 -> **Broad class-wise Top-80% controlled run**
 > - 최종 내부 목표: 12 target 각각 Fixed Val AUC >= 0.90
 
 ## 현재 채택 파이프라인
@@ -32,38 +32,38 @@ SS03 adapted DINOv2-Base
 -> target binary probability
 ```
 
-## LM
+## LM filtering 진행
 
-S03-B Top-75:
-- best epoch 11
-- AUC **0.881250**
+현재 결과:
 
-X1 low-LR continuation:
-- best continuation epoch 2
-- AUC **0.8940625**
-- +0.0128125
-- Gate NOT YET
+| Run | Pseudo keep | Fixed Val AUC | 비고 |
+|---|---:|---:|---|
+| S03-B | Top-75% | **0.881250** | base best |
+| X1 | Top-75% + low-LR continuation | **0.8940625** | 현재 LM 최고 |
+| S04 | Top-60% | 0.831875 | Top-75 미달 |
+| S05 | Top-70% | 0.7646875 | Top-75 / Top-60 미달 |
+| S06 | **Top-80%** | pending | 다음 controlled run |
 
-다음:
-**Top-60 filtering을 Top-75와 동일 seed/LR/batch/12-epoch 조건으로 처음부터 학습**.
-추가학습 여부는 결과를 본 뒤 결정한다.
+다음 **SS07A-S06 Top-80**:
+- KEEP_FRACTION = 0.80
+- selector K24 / architecture / Metadata / seed / LR / batch / scheduler / max12 / patience4 동일
+- Fixed Val LM80 동일
+- Top-75 base 0.881250을 1차 비교 기준으로 사용
+- X1 0.8940625는 continuation reference로 별도 유지
+- Top-80 >= 0.90이면 LM Gate PASS
+- Top-80이 Top-75를 넘지 못하면 Top-75 filtering을 현재 sweet-spot 후보로 유지하고 X1 checkpoint의 마지막 미세조정을 검토
 
 ## MCL
 
 SS07B-A Top-75:
-- best epoch **6**
+- best epoch 6
 - AUC **0.904375**
 - Gate **PASS**
 - checkpoint `891f124dc4ee7cb50b506e88308a0a2040a60647f9f7fb2fd08aeef6d1e3ea5c`
 
-MCL은 종료하고 Lane A를 다음 target으로 이동한다.
+MCL은 종료하고 checkpoint를 보존한다.
 
-## Lane A 다음 target — Fracture
-
-선정:
-- Persistent Cache B에 **Fracture K32**가 이미 준비되어 있어 즉시 학습 가능
-- SS05 reference AUC가 0.774444로 약했던 target
-- MCL에서 성공한 동일 Specialist policy의 target 확장성을 확인하기 좋음
+## Lane A — Fracture
 
 첫 baseline:
 - SS06B attention K32
@@ -71,24 +71,9 @@ MCL은 종료하고 Lane A를 다음 target으로 이동한다.
 - Metadata ON
 - Broad class-wise Top-75%
 - pseudo weight 0.70 x confidence
-- same seed / batch / LR / cosine / max 12 / patience 4
+- same seed / batch / LR / cosine / max12 / patience4
 - Fixed Val manifest 고정
 - Gate 0.90
-
-## Cache
-
-완료:
-- A: LM/ACL/MCL
-- B: Synovitis/Baker's/Fracture
-- C: Medial Meniscus K48
-- D: Contusion K48
-
-진행 queue:
-- E: Medial OA K64
-- F: PF OA K96
-- 이후: Lateral OA K96 / Effusion K96
-
-K96 uniform target은 padding sentinel -1을 갖는 study가 있으므로 raw cache metadata에 valid_mask를 저장하고 final Specialist에서 Transformer padding mask로 사용한다.
 
 <!-- SPECIALIST_2026_10_02_CURRENT_END -->
 
