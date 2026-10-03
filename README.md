@@ -22,60 +22,52 @@
 
 <!-- SPECIALIST_2026_10_02_CURRENT_START -->
 
-## 2026-10-03 — 현재 Specialist 연구 방향
+## 2026-10-03 — Specialist 현재 상태
 
 현재 최고 Public LB는 **0.918 (Exp57)** 으로 유지한다.
 
-Specialist 계보:
-
-```text
-SS01 Full MRI Single-Slice Inventory
--> SS03 Knee MRI DINOv2-Base adaptation
--> SS04 Full single-slice feature cache
--> SS05 Shared Hierarchical MIL + 12 target importance
--> SS06B target-specific Top-K single-slice manifests
--> persistent raw-image target caches
--> target-specific DINOv2-Small Specialists
-```
-
-최종 LB 제출 전 내부 목표:
-**12개 target 각각 Specialist Fixed Val ROC-AUC >= 0.90**.
+최종 LB 제출 전 내부 목표는 **12개 target 각각 independent Specialist Fixed Val ROC-AUC >= 0.90**이다.
 Fixed Val은 pseudo 기반 development proxy이며 Public LB와 동일한 지표로 해석하지 않는다.
 
-현재 target 진행:
-- **MCL: 0.904375 — 0.90 Gate PASS**
+### Independent Specialist 현황
+
+- **ACL: 0.9609375 — Gate PASS**
+  - SS07B-E / Broad class-wise Top-75%
+  - best epoch 8
+  - SS05 shared reference 0.940000 대비 **+0.0209375**
+  - checkpoint SHA256: `d9765e83c2048910a1ba688677014cea4545089c5246ac11af6e85f2c96dda4d`
+- **MCL: 0.904375 — Gate PASS**
   - SS07B-A / Broad class-wise Top-75%
   - best epoch 6
   - checkpoint SHA256: `891f124dc4ee7cb50b506e88308a0a2040a60647f9f7fb2fd08aeef6d1e3ea5c`
-- **Lateral Meniscus: 0.8940625 — Gate NOT YET**
-  - Top-60: 0.831875
-  - Top-70: 0.7646875
-  - Top-75 base: **0.881250**
-  - Top-80: 0.823125
-  - Top-75 + X1 low-LR continuation: **0.8940625** (현재 최고)
-  - filtering 비교상 Top-75를 current sweet spot으로 유지
-  - 다음: **X1 best checkpoint에서 X2 ultra-low-LR continuation**
-- **Fracture: 0.8138889 — Gate NOT YET**
-  - SS07B-B / Broad class-wise Top-75%
-  - best epoch 2
-  - SS05 0.774444 대비 +0.039445
-  - 다음: **SS07B-C V4 Strict-only controlled experiment**
+- **Lateral Meniscus: 0.8940625 — freeze / Gate NOT YET**
+  - Top-75 + X1 low-LR continuation이 현재 best
+  - X2 ultra-low-LR continuation은 시작 checkpoint를 넘지 못함
+- **Fracture: 0.8788889 — freeze / Gate NOT YET**
+  - V4 Strict-only가 현재 best
+  - Strict + sqrt pseudo-positive class balance는 0.874444로 개선 없음
 
-Persistent cache:
-- Cache A: LM K24 / ACL K24 / MCL K24 — PASS
-- Cache B: Synovitis K24 / Baker's K24 / Fracture K32 — PASS
-- Cache C: Medial Meniscus K48 — PASS
-- Cache D: Contusion K48 — PASS
-- Cache E: Medial OA K64 — PASS
-- Cache F: PF OA K96 HDF5 — recovery audit PASS
-- Cache G: Lateral OA K96 HDF5 — recovery audit PASS
-- Cache H: Effusion K96 HDF5 — notebook prepared / execution result pending
+현재 independent Gate PASS = **2 / 12 (ACL, MCL)**.
 
-현재 병렬 운영:
-- **Lane A:** Fracture Strict-only
-- **Lane B:** LM X2 ultra-low-LR continuation
+### Persistent cache
 
-자세한 현재 상태:
+**12 / 12 target cache 완료.**
+
+- Cache A: Lateral Meniscus K24 / ACL K24 / MCL K24
+- Cache B: Synovitis K24 / Baker's K24 / Fracture K32
+- Cache C: Medial Meniscus K48
+- Cache D: Contusion K48
+- Cache E: Medial OA K64
+- Cache F: PF OA K96 HDF5
+- Cache G: Lateral OA K96 HDF5
+- Cache H: Effusion K96 HDF5
+
+### 현재 병렬 운영
+
+- **Lane A:** Baker's Broad class-wise Top-75% — Cache B를 그대로 사용해 실행
+- **Lane B:** Medial Meniscus Broad class-wise Top-75% — 다음 independent Specialist
+
+자세한 상태:
 - [Current State / Roadmap](docs/CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md)
 - [Specialist Roadmap](docs/SPECIALIST_EXPERIMENT_ROADMAP.md)
 - [Specialist Experiment Log](docs/SPECIALIST_EXPERIMENT_LOG.md)
