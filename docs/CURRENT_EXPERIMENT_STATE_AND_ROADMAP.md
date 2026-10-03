@@ -12,7 +12,7 @@
 
 <!-- SPECIALIST_2026_10_02_CURRENT_START -->
 
-## 2026-10-03 — Current Specialist State
+## 2026-10-04 — Current Specialist State
 
 ### 1. 목표 / 평가 규칙
 
@@ -25,93 +25,131 @@
 
 | Target | Best Fixed Val AUC | SS05 ref | Status | Best experiment |
 |---|---:|---:|---|---|
-| Medial Meniscus | **0.993750** | 0.958125 | **PASS** | SS07B-G Broad Top-75 |
-| Synovitis | **0.981600** | 0.982400 | **PASS** | SS07B-H Broad Top-75 |
-| Baker's | **0.975000** | 0.883125 | **PASS** | SS07B-F Broad Top-75 |
-| ACL | **0.9609375** | 0.940000 | **PASS** | SS07B-E Broad Top-75 |
-| MCL | **0.904375** | 0.767500 | **PASS** | SS07B-A Broad Top-75 |
+| Medial Meniscus | **0.993750** | 0.958125 | **PASS** | SS07B-G |
+| Synovitis | **0.981600** | 0.982400 | **PASS** | SS07B-H |
+| Baker's | **0.975000** | 0.883125 | **PASS** | SS07B-F |
+| ACL | **0.9609375** | 0.940000 | **PASS** | SS07B-E |
+| Contusion | **0.9540625** | 0.875625 | **PASS** | SS07B-I2 patience-6 rerun |
+| Medial OA | **0.920000** | 0.921250 | **PASS** | SS07B-J |
+| MCL | **0.904375** | 0.767500 | **PASS** | SS07B-A |
 | Lateral Meniscus | **0.8940625** | 0.760625 | freeze / NOT YET | SS07A-X1 |
-| Fracture | **0.8788889** | 0.774444 | freeze / NOT YET | SS07B-C Strict-only |
+| PF OA | **0.892500** | 0.898125 | freeze / NOT YET | SS07B-K |
+| Fracture | **0.8788889** | 0.774444 | freeze / NOT YET | SS07B-C |
+| Lateral OA | — | 0.861250 | untrained | — |
+| Effusion | — | 0.952500 | untrained | — |
 
-현재 independent Gate PASS = **5 / 12**.
+현재 independent Gate PASS = **7 / 12**.
 
-### 3. SS07B-G — Medial Meniscus 완료
+### 3. SS07B-I2 — Contusion patience-6 rerun
 
-실제 실행 contract:
-- selector: **SS06B attention K48**
-- cache: **Cache C — Medial Meniscus K48**
-- cache file: `medial_meniscus_k48_images_uint8.npy`
-- cache SHA256: `e9cbc477827331fe4ca599e0471aec23dfb6369f9c3798459d4fe8e1ba99ab74`
-- metadata SHA256: `66f326b900cc0089804fbb7703e776c059add4a74829d3c552775a34c67d2b47`
-- physical batch 4 / grad accumulation 1
-- Fixed Val 80 = 40P / 40N
-
-결과:
-- best epoch: **8**
-- best Fixed Val AUC: **0.993750**
-- SS05 reference: 0.958125
-- delta vs SS05: **+0.035625**
-- runtime: **87.28 min**
-- Gate: **PASS**
-- checkpoint SHA256: `e67161eec0a206d9bc15c813e7034ab6069cf92a1e67916871901d8177b96d45`
-- history SHA256: `9144a3754a5e3b2819d322334667a1d1a1b409ae07d907a67ebda6ad1a154f5d`
-- val prediction SHA256: `355f5041a2ac8bbcb601c8984e5a1b8c230180b2bdc59c44447874279f7ea913`
+Controlled change:
+- 이전 SS07B-I와 동일 seed / data / batch 4 / grad accumulation 1 / LR / scheduler
+- patience만 **4 → 6**
+- K48 attention / Broad class-wise Top-75%
 
 Epoch:
 ```text
-e1  0.972500
-e2  0.968750
-e3  0.972187
-e4  0.974375
-e5  0.971875
-e6  0.987500
-e7  0.985313
-e8  0.993750 <- BEST
-e9  0.986250
-e10 0.983125
-e11 0.977500
-e12 0.976250
+e1  0.954063 <- BEST
+e2  0.906875
+e3  0.868125
+e4  0.905625
+e5  0.868750
+e6  0.813125
+e7  0.903125
 ```
 
-주의:
-실행 notebook의 최종 summary JSON 일부 설명 필드에 이전 template의
-`K24 / Cache A` 문자열이 남았으나, 실제 config / cache shape / input file / SHA는 모두 **K48 / Cache C**였다.
-Git 기록은 실제 실행 contract 기준으로 정정한다.
+Result:
+- best epoch: **1**
+- best Fixed Val AUC: **0.9540625**
+- previous SS07B-I: 0.9371875
+- delta vs previous: **+0.016875**
+- delta vs SS05: **+0.0784375**
+- runtime: **53.59 min**
+- checkpoint SHA256: `6854595836eff585dde5acd8cb20e92817d83fc68c442c77392363d8763c6805`
 
-### 4. 완료 target
+Insight:
+- 이전 run의 e3→e5 회복이 e6 이후 계속된다는 가설은 이번 rerun에서 재현되지 않았다.
+- 두 run 모두 best epoch가 1이므로 Contusion은 빠른 early peak 특성을 보인다.
+- 동일 nominal seed/recipe에서도 best AUC가 0.9372 → 0.9541로 달라졌다. 원인을 특정하지 않고 training stochasticity / Fixed Val selection sensitivity로 기록한다.
+- 새 checkpoint를 채택하고 추가 micro-tuning은 중단한다.
 
-- Synovitis: 0.981600 PASS
-- Baker's: 0.975000 PASS
-- ACL: 0.9609375 PASS
-- MCL: 0.904375 PASS
+### 4. SS07B-J — Medial OA
 
-### 5. Freeze target
+- selector: SS06B attention K64
+- Broad class-wise Top-75%
+- Fixed Val 80 = 40P / 40N
+- best epoch: **6**
+- best AUC: **0.920000**
+- SS05: 0.921250
+- delta: **-0.001250**
+- Gate: **PASS**
+- checkpoint SHA256: `f90fdf5e1ba886c05de8075c83828d57ec70cc13b6937dc56ae1a694e4e13c19`
 
-- Lateral Meniscus: 0.8940625
-- Fracture: 0.8788889
+### 5. SS07B-K — PF OA K96 HDF5
 
-### 6. Post-LB 개선 우선순위
+Execution contract:
+- selector: **SS06B uniform K96**
+- HDF5 lossless gzip cache
+- valid_mask -> Transformer src_key_padding_mask
+- padding studies: **120**
+- padding entries: **763**
+- batch 4 / grad accumulation 1
+- Fixed Val 80 = 40P / 40N
 
-1. Fixed Val < 0.90
-2. Gate PASS지만 independent Specialist < SS05
-3. LB 결과상 약한 target
+Epoch:
+```text
+e1  0.813437
+e2  0.879375
+e3  0.861875
+e4  0.867500
+e5  0.875625
+e6  0.892500 <- BEST
+e7  0.883750
+e8  0.852812
+e9  0.873438
+e10 0.866875
+```
 
-현재 후보:
-- Lateral Meniscus
-- Fracture
-- Synovitis
+Result:
+- best epoch: **6**
+- best AUC: **0.892500**
+- SS05: 0.898125
+- delta: **-0.005625**
+- Gate: **NOT YET**
+- runtime: **164.35 min**
+- checkpoint SHA256: `b83b16ab42d43d8b741969136d7c1681a1ba5a84b549aff269b572c9b5677719`
 
-### 7. 현재 A/B 실행
+Insight:
+- K96 HDF5 + worker-local read + valid_mask pipeline은 정상 동작했다.
+- e6 이후 train loss는 계속 감소했지만 validation AUC는 best를 회복하지 못했다.
+- Broad Top-75 negative minimum confidence = **0.175325**, positive = **0.533502**.
+- negative supervision quality는 추후 점검 후보이나 현재 원인으로 단정하지 않는다.
+- 현재 checkpoint를 보존하고 첫-pass coverage를 우선한다.
 
-- Lane A: **Contusion K48 / Broad Top-75**
-- Lane B: Medial Meniscus 완료, 다음 target 준비
+### 6. Freeze / revisit
+
+1순위 — Fixed Val < 0.90:
+- Lateral Meniscus 0.8940625
+- PF OA 0.892500
+- Fracture 0.8788889
+
+2순위 — PASS지만 SS05보다 낮음:
+- Medial OA 0.920000 vs 0.921250
+- Synovitis 0.981600 vs 0.982400
+
+### 7. 마지막 first-pass A/B
+
+- Lane A: **Lateral OA K96 HDF5**
+- Lane B: **Effusion K96 HDF5**
+
+두 target 완료 후 12/12 independent Specialist first-pass coverage가 완료된다.
 
 ### 8. 운영 원칙
 
-- 12-target coverage 우선
-- Gate PASS checkpoint 보존 후 다음 target 이동
-- 동일 Fixed Val micro-search 반복 제한
-- exact input root가 있으면 전체 `/kaggle/input` rglob 금지
+- exact input root 우선, 전체 `/kaggle/input` rglob 금지
+- K96은 valid_mask를 Transformer padding mask로 반드시 사용
+- Gate PASS checkpoint 보존
+- 같은 Fixed Val에 대한 반복 micro-search 제한
 
 <!-- SPECIALIST_2026_10_02_CURRENT_END -->
 
