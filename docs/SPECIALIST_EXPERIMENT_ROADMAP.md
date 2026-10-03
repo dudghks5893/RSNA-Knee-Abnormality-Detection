@@ -12,16 +12,17 @@
 
 <!-- SPECIALIST_2026_10_02_CURRENT_START -->
 
-## 2026-10-03 — Current Specialist Roadmap
+## 2026-10-04 — Current Specialist Roadmap
 
 ### 목표
 
-12개 target마다 independent Specialist를 완성하고
+12개 target마다 independent Specialist first-pass를 완료하고
 **Fixed Val ROC-AUC >= 0.90**을 내부 Gate로 사용한다.
 
 현재:
-- PASS: **Medial Meniscus, Synovitis, Baker's, ACL, MCL = 5 / 12**
-- freeze / NOT YET: **Lateral Meniscus, Fracture**
+- PASS = **7 / 12**
+- NOT YET = **3 / 12**
+- untrained = **2 / 12**
 
 ### 현재 결과
 
@@ -30,62 +31,72 @@ Medial Meniscus   0.9937500  PASS
 Synovitis         0.9816000  PASS
 Baker's           0.9750000  PASS
 ACL               0.9609375  PASS
+Contusion         0.9540625  PASS
+Medial OA         0.9200000  PASS
 MCL               0.9043750  PASS
-Lateral Meniscus  0.8940625  freeze
-Fracture          0.8788889  freeze
+
+Lateral Meniscus  0.8940625  NOT YET
+PF OA             0.8925000  NOT YET
+Fracture          0.8788889  NOT YET
+
+Lateral OA        untrained
+Effusion          untrained
 ```
 
-### 현재 전략
+### 마지막 first-pass targets
 
-12-target coverage를 먼저 완성한다.
+- **Lane A → Lateral OA / Uniform K96 / HDF5**
+- **Lane B → Effusion / Uniform K96 / HDF5**
 
-새 target first baseline:
+두 target 모두:
 ```text
-SS06B target-specific Top-K raw MRI
--> DINOv2-Small full fine-tuning
--> metadata ON
--> 1-layer set-like Slice Transformer
--> binary head
-
-V4 Broad
--> class-wise confidence Top-75%
--> original soft target
--> pseudo weight = 0.70 x confidence
--> Gold58
+raw MRI K96
+→ HDF5 lossless gzip
+→ DINOv2-Small full fine-tuning
+→ metadata ON
+→ valid_mask padding mask
+→ 1-layer set-like Slice Transformer
+→ Broad class-wise Top-75%
+→ Gold58
 ```
 
-### K / batch 운영 원칙
+### K96 운영 원칙
 
-K는 study당 선택 slice 수이고, physical batch는 optimizer update당 study 수다.
+PF OA 첫 K96 training으로 아래 pipeline이 검증됨:
+- worker-local HDF5 read
+- valid_mask -> src_key_padding_mask
+- 120 padded studies / 763 padded slots
+- T4 x2 / physical batch 4
+- no OOM
 
-따라서 K가 증가해도 batch=4를 유지하면:
-- optimizer step당 **study 수는 동일**
-- epoch당 optimizer update 수는 training study 수가 같다면 거의 동일
-- 대신 step당 처리 slice 수는 `4 x K`로 증가
-- backbone compute / VRAM은 K에 거의 비례해 증가
-- Slice Transformer attention cost는 K 증가에 따라 더 커진다
+따라서 Lateral OA / Effusion도 동일 training recipe를 유지한다.
 
-비교 실험에서는 memory가 허용하는 한 batch / grad accumulation / LR / epoch를 유지해
-K만 바뀌는 controlled setting을 보존한다.
-실제 OOM 또는 training instability가 확인될 때만 batch를 조정한다.
+### Contusion rerun insight
 
-Medial Meniscus K48에서 batch 4 / 12 epochs로 **0.993750**을 달성했으므로
-현재 설정은 K48에서 문제가 없었던 것으로 기록한다.
+- patience 6 rerun best = **0.9540625**
+- previous 0.9371875 대비 **+0.016875**
+- 하지만 두 run 모두 epoch 1 best
+- e5 이후 지속 회복 가설은 재현되지 않음
+- 더 이상의 Contusion micro-tuning은 중단
 
-### 현재 A/B
+### PF OA insight
 
-- Lane A: **Contusion K48 / Broad Top-75**
-- Lane B: Medial Meniscus 완료 → 다음 target 준비
+- best = **0.892500**, Gate NOT YET
+- e6 이후 train-validation divergence
+- Broad Top-75 negative min confidence = 0.175325
+- supervision quality는 post-LB 점검 후보
+- 현재는 freeze
 
 ### Post-LB 성능 개선 우선순위
 
 1. Fixed Val < 0.90
-2. Gate PASS지만 independent Specialist < SS05
-3. LB target-level 결과가 약한 target
-
-현재:
-- 1순위: Lateral Meniscus, Fracture
-- 2순위: Synovitis
+   - Lateral Meniscus
+   - PF OA
+   - Fracture
+2. PASS지만 independent Specialist < SS05
+   - Medial OA
+   - Synovitis
+3. LB target-level error analysis
 
 ### cache
 
