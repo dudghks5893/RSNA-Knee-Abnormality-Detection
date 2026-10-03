@@ -48,17 +48,32 @@ Fixed Val은 pseudo 기반 development proxy이며 Public LB와 동일한 지표
   - best epoch 6
   - checkpoint SHA256: `891f124dc4ee7cb50b506e88308a0a2040a60647f9f7fb2fd08aeef6d1e3ea5c`
 - **Lateral Meniscus: 0.8940625 — Gate NOT YET**
-  - Top-75 base: 0.881250
+  - Top-60: 0.831875
+  - Top-70: 0.7646875
+  - Top-75 base: **0.881250**
+  - Top-80: 0.823125
   - Top-75 + X1 low-LR continuation: **0.8940625** (현재 최고)
-  - Top-60 controlled run: **0.831875**
-  - Top-70 controlled run: **0.7646875**
-  - 다음 controlled comparison: Broad class-wise **Top-80%**
-  - Top-80은 Top-75보다 pseudo pool을 넓히는 방향의 검증이며 나머지 조건은 동일 유지
+  - filtering 비교상 Top-75를 current sweet spot으로 유지
+  - 다음: **X1 best checkpoint에서 X2 ultra-low-LR continuation**
+- **Fracture: 0.8138889 — Gate NOT YET**
+  - SS07B-B / Broad class-wise Top-75%
+  - best epoch 2
+  - SS05 0.774444 대비 +0.039445
+  - 다음: **SS07B-C V4 Strict-only controlled experiment**
+
+Persistent cache:
+- Cache A: LM K24 / ACL K24 / MCL K24 — PASS
+- Cache B: Synovitis K24 / Baker's K24 / Fracture K32 — PASS
+- Cache C: Medial Meniscus K48 — PASS
+- Cache D: Contusion K48 — PASS
+- Cache E: Medial OA K64 — PASS
+- Cache F: PF OA K96 HDF5 — recovery audit PASS
+- Cache G: Lateral OA K96 HDF5 — recovery audit PASS
+- Cache H: Effusion K96 HDF5 — notebook prepared / execution result pending
 
 현재 병렬 운영:
-- **Lane A:** Fracture K32 Specialist
-- **Lane B:** LM **Top-80 pseudo filtering** 비교
-- LM Gate는 아직 미통과이며, Top-80 결과 확인 전 X1 0.8940625 checkpoint를 보존한다.
+- **Lane A:** Fracture Strict-only
+- **Lane B:** LM X2 ultra-low-LR continuation
 
 자세한 현재 상태:
 - [Current State / Roadmap](docs/CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md)
