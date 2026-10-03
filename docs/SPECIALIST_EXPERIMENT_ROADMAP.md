@@ -20,32 +20,26 @@
 **Fixed Val ROC-AUC >= 0.90**을 내부 Gate로 사용한다.
 
 현재:
-- PASS: **MCL, ACL, Baker's, Synovitis = 4 / 12**
+- PASS: **Medial Meniscus, Synovitis, Baker's, ACL, MCL = 5 / 12**
 - freeze / NOT YET: **Lateral Meniscus, Fracture**
 
 ### 현재 결과
 
 ```text
-Synovitis          0.9816000  PASS
-Baker's            0.9750000  PASS
-ACL                0.9609375  PASS
-MCL                0.9043750  PASS
-Lateral Meniscus   0.8940625  freeze
-Fracture           0.8788889  freeze
+Medial Meniscus   0.9937500  PASS
+Synovitis         0.9816000  PASS
+Baker's           0.9750000  PASS
+ACL               0.9609375  PASS
+MCL               0.9043750  PASS
+Lateral Meniscus  0.8940625  freeze
+Fracture          0.8788889  freeze
 ```
-
-Synovitis:
-- SS05 shared reference 0.982400
-- independent 0.981600
-- Gate PASS이지만 SS05보다 0.000800 낮음
-- 첫 LB 이후 improvement candidate
 
 ### 현재 전략
 
-지금은 한 target을 계속 미세조정하기보다 **12-target coverage**를 먼저 완성한다.
+12-target coverage를 먼저 완성한다.
 
-새 target 첫 실험:
-
+새 target first baseline:
 ```text
 SS06B target-specific Top-K raw MRI
 -> DINOv2-Small full fine-tuning
@@ -60,61 +54,42 @@ V4 Broad
 -> Gold58
 ```
 
-현재 이 baseline은 MCL / ACL / Baker's / Synovitis에서 모두 Gate PASS했다.
+### K / batch 운영 원칙
 
-### 현재 A/B 순서
+K는 study당 선택 slice 수이고, physical batch는 optimizer update당 study 수다.
 
-#### Lane A
-Cache B 완료:
-- Fracture freeze
-- Baker's PASS
-- Synovitis PASS
+따라서 K가 증가해도 batch=4를 유지하면:
+- optimizer step당 **study 수는 동일**
+- epoch당 optimizer update 수는 training study 수가 같다면 거의 동일
+- 대신 step당 처리 slice 수는 `4 x K`로 증가
+- backbone compute / VRAM은 K에 거의 비례해 증가
+- Slice Transformer attention cost는 K 증가에 따라 더 커진다
 
-다음:
-- **Contusion K48**
-- Cache D
-- Broad class-wise Top-75 first baseline
-- Fixed Val 80 = 40P / 40N
-- SS05 reference 0.875625
+비교 실험에서는 memory가 허용하는 한 batch / grad accumulation / LR / epoch를 유지해
+K만 바뀌는 controlled setting을 보존한다.
+실제 OOM 또는 training instability가 확인될 때만 batch를 조정한다.
 
-#### Lane B
-- **Medial Meniscus K48**
-- Broad class-wise Top-75 first baseline
-- Fixed Val 80 = 40P / 40N
-- SS05 reference 0.958125
+Medial Meniscus K48에서 batch 4 / 12 epochs로 **0.993750**을 달성했으므로
+현재 설정은 K48에서 문제가 없었던 것으로 기록한다.
+
+### 현재 A/B
+
+- Lane A: **Contusion K48 / Broad Top-75**
+- Lane B: Medial Meniscus 완료 → 다음 target 준비
 
 ### Post-LB 성능 개선 우선순위
 
-첫 Specialist LB 제출 완료 후:
-
-1. **Fixed Val < 0.90**
-2. **Gate PASS이지만 independent Specialist < SS05**
+1. Fixed Val < 0.90
+2. Gate PASS지만 independent Specialist < SS05
 3. LB target-level 결과가 약한 target
 
 현재:
-- 1순위 후보: Lateral Meniscus, Fracture
-- 2순위 후보: Synovitis
-
-추가 외부 knee MRI 데이터는 현재 즉시 도입하지 않는다.
-내부 데이터/구조로 개선이 정체될 때 auxiliary pretraining 또는 selector 개선 후보로 검토한다.
+- 1순위: Lateral Meniscus, Fracture
+- 2순위: Synovitis
 
 ### cache
 
 Persistent target cache **12 / 12 완료**.
-
-Contusion Cache D:
-- Dataset: `rsna-knee-ss07a-cache-d-contusion-k48-v1`
-- image: `contusion_k48_images_uint8.npy`
-- metadata: `contusion_metadata.npz`
-- cache SHA256: `41c62cb30737afa7486076790a6fe415c8a84591fdc90ee2b826fe1b9a8f4b29`
-- metadata SHA256: `d97f9b7ab751e1136ef86daccdb311e4711a04eb21cc966d4f28a6283d8a6697`
-
-### 운영 원칙
-
-- Gate PASS checkpoint는 보존하고 다음 target으로 이동
-- 같은 Fixed Val micro-search 반복 제한
-- first LB 이후 low-score / below-SS05 target 재방문
-- exact input root를 알고 있으면 전체 `/kaggle/input` rglob 금지
 
 <!-- SPECIALIST_2026_10_02_CURRENT_END -->
 
