@@ -10,100 +10,128 @@
 
 <!-- SPECIALIST_2026_10_02_CURRENT_START -->
 
-## 2026-10-03 — Specialist Experiment Update
+## 2026-10-04 — Specialist Experiment Update
 
-### 현재 완료 현황
+### 현재 현황
 
 ```text
-Medial Meniscus  0.9937500  PASS
-Synovitis        0.9816000  PASS
-Baker's          0.9750000  PASS
-ACL              0.9609375  PASS
-MCL              0.9043750  PASS
+Medial Meniscus   0.9937500  PASS
+Synovitis         0.9816000  PASS
+Baker's           0.9750000  PASS
+ACL               0.9609375  PASS
+Contusion         0.9540625  PASS
+Medial OA         0.9200000  PASS
+MCL               0.9043750  PASS
 
-Lateral Meniscus 0.8940625  freeze / NOT YET
-Fracture         0.8788889  freeze / NOT YET
+Lateral Meniscus  0.8940625  freeze / NOT YET
+PF OA             0.8925000  freeze / NOT YET
+Fracture          0.8788889  freeze / NOT YET
+
+Lateral OA        untrained
+Effusion          untrained
 ```
 
-Independent Gate PASS = **5 / 12**.
+Independent Gate PASS = **7 / 12**.
 
 ---
 
-### SS07B-G — Medial Meniscus / Broad Class-wise Top-75% — PASS
+### SS07B-I2 — Contusion / Patience-6 Rerun — PASS
 
-Actual execution:
-- selector: **SS06B attention K48**
-- Cache C
-- physical batch 4
-- grad accumulation 1
-- Fixed Val 80 = 40P / 40N
-- pseudo 3,203
-  - hard positive 1,289
-  - hard negative 1,914
-- Gold 58
+Controlled variable:
+- patience 4 → 6 only
+- seed / data / K48 / batch 4 / LR / scheduler unchanged
 
 Epoch:
 ```text
-e1  0.972500
-e2  0.968750
-e3  0.972187
-e4  0.974375
-e5  0.971875
-e6  0.987500
-e7  0.985313
-e8  0.993750 <- BEST
-e9  0.986250
-e10 0.983125
-e11 0.977500
-e12 0.976250
+e1  0.954063 <- BEST
+e2  0.906875
+e3  0.868125
+e4  0.905625
+e5  0.868750
+e6  0.813125
+e7  0.903125
 ```
 
 Result:
-- best epoch: **8**
-- best Fixed Val AUC: **0.993750**
-- SS05 reference: 0.958125
-- delta vs SS05: **+0.035625**
-- runtime: **87.2795 min**
-- Gate: **PASS**
-- checkpoint: `ss07b_g_medial_meniscus_broad_top75_best.bin`
-- checkpoint SHA256: `e67161eec0a206d9bc15c813e7034ab6069cf92a1e67916871901d8177b96d45`
-- history SHA256: `9144a3754a5e3b2819d322334667a1d1a1b409ae07d907a67ebda6ad1a154f5d`
-- val prediction SHA256: `355f5041a2ac8bbcb601c8984e5a1b8c230180b2bdc59c44447874279f7ea913`
+- best AUC: **0.9540625**
+- previous: 0.9371875
+- delta vs previous: **+0.016875**
+- delta vs SS05: **+0.0784375**
+- best epoch: **1**
+- runtime: 53.59 min
+- checkpoint SHA256: `6854595836eff585dde5acd8cb20e92817d83fc68c442c77392363d8763c6805`
 
-Metadata correction:
-- notebook summary의 `selector.k=24`, Cache A 설명은 template 잔재
-- 실제 실행은 **K48 / Cache C**
-- 실제 input file과 SHA가 K48 Cache C를 검증했으므로 성능 결과에는 영향 없음
+Insight:
+- e5 이후 지속 상승 가설은 재현되지 않음.
+- 두 run 모두 epoch 1이 best.
+- run 간 best 차이가 커 training stochasticity / Fixed Val selection sensitivity를 주의.
+- 새 checkpoint 채택, Contusion tuning 종료.
 
 ---
 
-### Existing PASS
+### SS07B-J — Medial OA — PASS
 
-- Synovitis 0.981600
-- Baker's 0.975000
-- ACL 0.9609375
-- MCL 0.904375
+- K64 attention
+- Broad Top-75
+- Fixed Val 80 / 40P / 40N
+- best epoch 6
+- best AUC **0.920000**
+- SS05 0.921250
+- delta **-0.001250**
+- checkpoint SHA256: `f90fdf5e1ba886c05de8075c83828d57ec70cc13b6937dc56ae1a694e4e13c19`
 
-### Freeze
+---
 
-- Lateral Meniscus 0.8940625
-- Fracture 0.8788889
+### SS07B-K — PF OA K96 HDF5 — NOT YET
 
-### Post-LB revisit policy
+- Uniform K96
+- lossless HDF5
+- valid_mask applied as Transformer padding mask
+- padding: 120 studies / 763 entries
+- Broad class-wise Top-75%
+- pseudo 3,203 = hard positive 1,452 / hard negative 1,751
+- Fixed Val 80 / 40P / 40N
 
-1. Fixed Val < 0.90
-2. independent Specialist < SS05
-3. LB 결과상 약한 target
+Epoch:
+```text
+e1  0.813437
+e2  0.879375
+e3  0.861875
+e4  0.867500
+e5  0.875625
+e6  0.892500 <- BEST
+e7  0.883750
+e8  0.852812
+e9  0.873438
+e10 0.866875
+```
 
-현재 후보:
-- LM
-- Fracture
-- Synovitis
+Result:
+- best AUC **0.892500**
+- SS05 0.898125
+- delta **-0.005625**
+- Gate **NOT YET**
+- checkpoint SHA256: `b83b16ab42d43d8b741969136d7c1681a1ba5a84b549aff269b572c9b5677719`
+
+Filter observation:
+- negative min kept confidence **0.175325**
+- positive min kept confidence **0.533502**
+- supervision quality 점검 후보로만 기록, 원인 확정하지 않음.
+
+Pipeline:
+- HDF5 read PASS
+- valid_mask PASS
+- batch 4 PASS
+- padding 763 PASS
+
+---
 
 ### 다음
 
-- Lane A: **Contusion K48 Broad Top-75**
-- Lane B: 다음 target 준비
+- Lane A: **Lateral OA K96 HDF5**
+- Lane B: **Effusion K96 HDF5**
+
+이 두 target이 마지막 untrained targets이다.
 
 <!-- SPECIALIST_2026_10_02_CURRENT_END -->
 
