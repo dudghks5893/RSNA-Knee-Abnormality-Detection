@@ -12,116 +12,103 @@
 
 # 2026-10-03 Current Specialist Status
 
-## 완료 — LM X1 low-LR continuation
+## LM 현재 최고 — X1 low-LR continuation
 
-출발점:
-- SS07A-S03-B
-- Broad class-wise Top-75%
-- Fixed Val AUC **0.881250**
-
-X1:
-- model weight는 S03-B best epoch 11에서 시작
-- optimizer는 새로 시작
-- 기존 LR의 10%
-- no warm-up + pure cosine
-- max 6 epochs / patience 4
-
-결과:
-- e1 0.883125
-- e2 **0.8940625**
-- e3 0.8640625
-- e4 0.8621875
-- e5 0.866250
-- e6 0.866875
-- best continuation epoch: **2**
-- delta: **+0.0128125**
-- runtime: **24.8446 min**
+- source: SS07A-S03-B Top-75 best
+- start AUC: 0.881250
+- best continuation epoch: 2
+- Fixed Val AUC: **0.8940625**
+- delta: +0.0128125
+- runtime: 24.8446 min
 - 0.90 Gate: **NOT YET**
 - checkpoint SHA256: `12c4044de1e04e83168f17eb4dea0e5ca4df98ac99ebda6e62dfb3614bfe846a`
-- history SHA256: `a7739eef87843a905a3490202d4f8648cfc58019566443741049560bc9907be6`
-- val prediction SHA256: `bb12d141721034994b286f9c3bfdf97def6e80acd4c15fd68ede5c3052cb72d1`
+
+X1은 현재 LM 최고 checkpoint로 보존한다.
+
+---
+
+## 완료 — SS07A-S04 LM Broad class-wise Top-60%
+
+Controlled variable:
+- Top-75 baseline과 동일 구조/seed/LR/batch/max epoch
+- class-wise pseudo keep fraction만 **0.60**
+
+결과:
+- pseudo train: **2,562**
+- train total: **2,620**
+- best epoch: **11**
+- Fixed Val AUC: **0.831875**
+- Top-75 0.881250 대비: **-0.049375**
+- runtime: **39.5752 min**
+- Gate: **NOT YET**
+- checkpoint SHA256: `0d887f05d8e469a56e373e29fa1edc1f5d7fe1a20da5e462d1c3b4e995f2a185`
+- history SHA256: `608e6c01cefe8fe7ea8da0bdc4b6ffb0a1d9e9c1a937128a25ae168646f3ab02`
+- val prediction SHA256: `53bbdb96156e77196928ed342d84e02d5e725f182dc7408558e688e37c8d102f`
 
 판정:
-e2는 train loss와 Val AUC가 동시에 개선된 정상 best다.
-e3 이후에는 train loss 하락과 Val AUC 급락이 동반되어 overfitting 구간으로 본다.
-LM 다음 실험은 Top-75와 동일 12-epoch 조건에서 **Broad class-wise Top-60%** filtering을 비교한다.
+Top-60은 Top-75보다 낮았다. 이 checkpoint는 LM best 후보로 채택하지 않는다.
+
+---
+
+## 완료 — SS07A-S05 LM Broad class-wise Top-70%
+
+Controlled variable:
+- Top-75 / Top-60과 동일 구조/seed/LR/batch/max epoch
+- class-wise pseudo keep fraction만 **0.70**
+
+Pseudo filtering:
+- pre-filter Negative: 3,658
+- pre-filter Positive: 611
+- kept Negative: **2,561**
+- kept Positive: **428**
+- pseudo total: **2,989**
+- Gold58 포함 train total: **3,047**
+
+Epoch AUC:
+- e1 0.604375
+- e2 0.656562
+- e3 0.637188
+- e4 0.608438
+- e5 0.668750
+- e6 0.647187
+- e7 0.694063
+- e8 0.712813
+- e9 0.739688
+- e10 0.748437
+- e11 0.744688
+- e12 **0.7646875**
+
+결과:
+- best epoch: **12**
+- Fixed Val AUC: **0.7646875**
+- Top-75 0.881250 대비: **-0.1165625**
+- Top-60 0.831875 대비: **-0.0671875**
+- runtime: **47.6118 min**
+- Gate: **NOT YET**
+- checkpoint SHA256: `9dd6756f6989778943f1802813c83143884d7cb872d3dcb92e6d9191ccabe025`
+- history SHA256: `a8f547b2dcc23d44d0095925a5540ec8e8744fb0e4b31270f67c38d83f2cc10a`
+- val prediction SHA256: `5db5a85eea6f37282fe4e3cc508853d71f189dc75fad92cb3910990f748136e5`
+
+판정:
+- Top-70은 Top-75와 Top-60 모두 넘지 못했다.
+- best가 마지막 epoch 12에서 나왔지만 절대 AUC는 0.7646875로 낮다.
+- filtering 결과가 Top-60 < Top-75, Top-70 < Top-60처럼 단순한 비율 순서로 설명되지 않으므로 한 번 더 반대 방향을 확인한다.
+- 다음 controlled run은 **Top-80**이며, 나머지 조건은 동일하게 유지한다.
 
 ---
 
 ## 완료 — SS07B-A MCL Specialist / Broad class-wise Top-75%
 
-공통 구조:
 - MCL / SS06B attention K24
-- true raw single-slice MRI K24
 - DINOv2-Small full fine-tuning
-- CLS
 - Metadata ON
-- 1-layer set-like Slice Transformer
-- Gold58 + V4 Broad pseudo
-- class-wise Top-75%
-- pseudo weight 0.70 x confidence
 - Fixed Val 80 = 40P / 40N
-- seed 20261002 / batch 4 / max 12 / patience 4
-
-Pseudo:
-- Negative 3,629 -> 2,722 / minimum kept confidence 0.859787
-- Positive 640 -> 480 / minimum kept confidence 0.633466
-- pseudo total 3,202
-- train total 3,260
-
-Epoch AUC:
-- e1 0.719062
-- e2 0.847812
-- e3 0.807187
-- e4 0.883438
-- e5 0.886875
-- e6 **0.904375**
-- e7 0.834063
-- e8 0.850938
-- e9 0.854375
-- e10 0.869687 -> early stop
-
-결과:
-- Status: **PASS**
 - best epoch: **6**
-- Fixed Val ROC-AUC: **0.904375**
+- Fixed Val AUC: **0.904375**
 - 0.90 Gate: **PASS**
-- vs SS05 MCL 0.767500: **+0.136875**
-- runtime: **41.5605 min**
 - checkpoint SHA256: `891f124dc4ee7cb50b506e88308a0a2040a60647f9f7fb2fd08aeef6d1e3ea5c`
-- history SHA256: `1224d1effd3bea82c35e4338fcbdab46d97b6352c12442e74763df50ed321f62`
-- val prediction SHA256: `94a442116b1a0b58b9ff84aa1f7dfd1123b22f590a1162cfe7ee3c1ad0a9f98a`
 
-판정:
-MCL은 0.90 Gate를 통과했다.
-best epoch 6 checkpoint를 채택하고 추가학습하지 않는다.
-Lane A는 다음 target인 **Fracture K32**로 이동한다.
-
----
-
-## 완료 — Persistent Cache C / D
-
-### Cache C — Medial Meniscus K48
-- PASS
-- [4407,48,224,224] uint8
-- size 9.885086 GiB
-- unique decode 211,536 / reuse 0
-- build 14.1703 min
-- hash 1.1074 min
-- total 15.2778 min
-- cache SHA256: `e9cbc477827331fe4ca599e0471aec23dfb6369f9c3798459d4fe8e1ba99ab74`
-- metadata SHA256: `66f326b900cc0089804fbb7703e776c059add4a74829d3c552775a34c67d2b47`
-
-### Cache D — Contusion K48
-- PASS
-- [4407,48,224,224] uint8
-- size 9.885086 GiB
-- unique decode 211,536 / reuse 0
-- build 12.7408 min
-- hash 0.9122 min
-- total 13.6530 min
-- cache SHA256: `41c62cb30737afa7486076790a6fe415c8a84591fdc90ee2b826fe1b9a8f4b29`
-- metadata SHA256: `d97f9b7ab751e1136ef86daccdb311e4711a04eb21cc966d4f28a6283d8a6697`
+MCL은 완료 상태로 보존한다.
 
 ---
 
@@ -134,8 +121,8 @@ Lane A는 다음 target인 **Fracture K32**로 이동한다.
 - MCL **0.904375**
 
 현재 진행:
-- Lane B LM: **0.8940625**, Top-60 filtering 비교
-- Lane A: **Fracture Specialist** 시작
+- Lane B LM: current best **0.8940625**, 다음 **SS07A-S06 Top-80**
+- Lane A: Fracture Specialist
 
 <!-- SPECIALIST_2026_10_02_CURRENT_END -->
 
