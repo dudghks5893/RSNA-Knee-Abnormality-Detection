@@ -12,167 +12,136 @@
 
 ## 2026-10-03 — Specialist Experiment Update
 
-### 완료 현황
-
-Independent Specialist Gate PASS:
+### 현재 완료 현황
 
 ```text
-ACL  0.9609375  PASS
-MCL  0.9043750  PASS
+Synovitis  0.9816000  PASS
+Baker's    0.9750000  PASS
+ACL        0.9609375  PASS
+MCL        0.9043750  PASS
+
+Lateral Meniscus  0.8940625  freeze / NOT YET
+Fracture          0.8788889  freeze / NOT YET
 ```
 
-현재 **2 / 12 target 완료**.
-
-Freeze:
-
-```text
-Lateral Meniscus  0.8940625  NOT YET
-Fracture          0.8788889  NOT YET
-```
+Independent Gate PASS = **4 / 12**.
 
 ---
 
-### SS07B-E — ACL / Broad Class-wise Top-75% — PASS
-
-구조:
-
-```text
-ACL attention K24 raw MRI
--> DINOv2-Small full fine-tuning
--> metadata-aware 1-layer set-like Slice Transformer
--> ACL probability
-```
-
-Supervision:
-- V4 Broad
-- hard class는 filtering에만 사용
-- class별 confidence Top-75%
-- original soft target 유지
-- pseudo weight = 0.70 x confidence
-- Gold58
-
-Training:
-- seed 20261002
-- physical batch 4
-- grad accumulation 1
-- max epoch 12
-- 5% warm-up + cosine
-- early/mid/late/head LR = 1e-6 / 3e-6 / 1e-5 / 2e-4
-
-Pseudo after filtering:
-- total 3,203
-- positive 866
-- negative 2,337
-- Gold 58
-- Train total 3,261
+### SS07B-F — Baker's / Broad Class-wise Top-75% — PASS
 
 Fixed Val:
 - 80 = 40P / 40N
 - pair step = 0.000625
 
-Epoch:
+Pseudo after filtering:
+- total 3,203
+- positive 776
+- negative 2,427
+- Gold 58
 
+Epoch:
 ```text
-e1  0.801875
-e2  0.814375
-e3  0.862500
-e4  0.868437
-e5  0.930625
-e6  0.925625
-e7  0.926875
-e8  0.9609375  <- BEST
-e9  0.951563
-e10 0.939063
-e11 0.949688
-e12 0.948125
+e1 0.926875
+e2 0.947188
+e3 0.967500
+e4 0.975000 <- BEST
+e5 0.962500
+e6 0.954063
+e7 0.955000
+e8 0.940000
 ```
 
 Result:
-- best epoch: **8**
-- best Fixed Val AUC: **0.9609375**
-- SS05 reference: 0.940000
-- delta vs SS05: **+0.0209375**
-- runtime: **48.7324 min**
+- best epoch: **4**
+- best Fixed Val AUC: **0.975000**
+- SS05 reference: 0.883125
+- delta vs SS05: **+0.091875**
+- runtime: **35.5895 min**
 - Gate: **PASS**
-- checkpoint: `ss07b_e_acl_broad_top75_best.bin`
-- checkpoint SHA256: `d9765e83c2048910a1ba688677014cea4545089c5246ac11af6e85f2c96dda4d`
-- history SHA256: `10fd8048758c846704c3a3f2d3470df934febcf1f9b8c631f952d97e0be8aba8`
-- val prediction SHA256: `06004c0fd209ae561d38c4b93cf05973f6d47c40804ef5deea2607f3236bf059`
+- checkpoint: `ss07b_f_bakers_broad_top75_best.bin`
+- checkpoint SHA256: `853ee3e042d26f388756b65b6b090ef311a47fd1aadf4f01e60acd92e268bf97`
+- history SHA256: `221138b68b32dcf3cc9848d28a0382728b62d81e299645220cd3dd63d55df9f4`
+- val prediction SHA256: `098a31d64b8a0f2e59e9f206217f9b194dacc0a0472c03723d463d37393dc645`
+
+---
+
+### SS07B-H — Synovitis / Broad Class-wise Top-75% — PASS
+
+Fixed Val:
+- 50 = 25P / 25N
+- pair step = 0.0016
+
+Pseudo after filtering:
+- total 3,225
+- hard positive 385
+- hard negative 2,840
+- Gold 58
+
+Epoch:
+```text
+e1  0.9152
+e2  0.9536
+e3  0.9512
+e4  0.9792
+e5  0.9728
+e6  0.9816 <- BEST
+e7  0.9792
+e8  0.9552
+e9  0.9664
+e10 0.9440
+```
+
+Result:
+- best epoch: **6**
+- best Fixed Val AUC: **0.981600**
+- SS05 reference: 0.982400
+- delta vs SS05: **-0.000800**
+- runtime: **41.7625 min**
+- Gate: **PASS**
+- checkpoint: `ss07b_h_synovitis_broad_top75_best.bin`
+- checkpoint SHA256: `d4820ee535f1d54e72e1775d47b996e1a6aee4a64c9e115f7f766e8615a64aae`
+- history SHA256: `78882c3cd749d5f9b81c7ee3c1f1120c2968cfca76e91b900c6b447777174448`
+- val prediction SHA256: `ffa9b600fed3dfbf358682b35bbe14d208d057dbef873b132c9b95b612190d03`
 
 Interpretation:
-- independent ACL Specialist가 Gate를 명확히 통과했다.
-- MCL에서 성공한 Broad Top-75 first-baseline policy가 ACL에도 transfer되었다.
-- best 이후에도 AUC가 0.94~0.95를 유지해 training collapse 신호는 강하지 않다.
+- independent Gate는 명확히 PASS.
+- SS05보다 0.0008 낮지만 Fixed Val이 25P/25N이라 차이를 과대해석하지 않는다.
+- 첫 LB 확인 후 **below-SS05 improvement candidate**로 기록한다.
 
 ---
 
-### SS07A-X2 — Lateral Meniscus Ultra-Low-LR Continuation — no improvement
+### Freeze state
 
-Start:
-- X1 best = **0.8940625**
+**Lateral Meniscus**
+- best 0.8940625
+- X2 no improvement
 
-X2:
-- LR = X1의 25% / original base의 2.5%
-- max 3 continuation epochs
-- no warm-up / pure cosine
-
-```text
-start 0.8940625
-e1    0.883437
-e2    0.872500
-e3    0.877812
-```
-
-Result:
-- best continuation epoch = **0**
-- best = **0.8940625**
-- Gate NOT YET
-- X1 checkpoint 보존
-- LM 추가 continuation / filtering micro-search 종료
+**Fracture**
+- Strict-only best 0.8788889
+- sqrt balance 0.8744444
+- no improvement
 
 ---
 
-### SS07B-C / D — Fracture
+### Post-LB revisit policy
 
-Broad Top-75:
-- best = 0.8138889
+첫 Specialist submission을 먼저 완성한 후 개선 실험을 재개한다.
 
-Strict-only:
-- best epoch 4
-- best = **0.8788889**
-- 현재 Fracture best
-- checkpoint SHA256: `c52285d2e2bc536b4ee667bdbb45663c62f630ab75c4abf81a32a038351392d6`
+우선순위:
+1. Fixed Val < 0.90
+2. Gate PASS이지만 independent Specialist < SS05
+3. LB 결과상 약한 target
 
-Strict + sqrt class balance:
-- pseudo negative = 1,564
-- pseudo positive = 216
-- pseudo-positive multiplier = 2.690862
-- best epoch 4
-- best = **0.8744444**
-- delta vs Strict-only = -0.0044444
-- improvement 없음
-
-Decision:
-- Fracture 0.8788889 freeze
-- 추가 multiplier sweep / micro continuation은 당분간 중단
-
----
-
-### Cache 상태
-
-Persistent raw-image cache는 **12 / 12 target 완료**.
-
-Cache B에는 현재:
-- Synovitis K24
-- Baker's K24
-- Fracture K32
-
-가 함께 있어 Lane A는 input 교체 없이 Baker's -> Synovitis 순으로 진행한다.
+현재 후보:
+- LM
+- Fracture
+- Synovitis
 
 ### 다음
 
-- Lane A: **Baker's Broad Top-75** 실행 중
-- Lane B: **Medial Meniscus Broad Top-75** 준비
+- Lane A: **Contusion K48 Broad Top-75**
+- Lane B: **Medial Meniscus K48 Broad Top-75**
 
 <!-- SPECIALIST_2026_10_02_CURRENT_END -->
 
