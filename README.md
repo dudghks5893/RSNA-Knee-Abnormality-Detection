@@ -31,42 +31,35 @@ Fixed Val은 pseudo 기반 development proxy이며 Public LB와 동일한 지표
 
 ### Independent Specialist 현황
 
+- **Medial Meniscus: 0.993750 — Gate PASS**
+  - SS07B-G / Broad class-wise Top-75%
+  - best epoch 8
+  - SS05 shared reference 0.958125 대비 **+0.035625**
+  - 실제 input: **SS06B attention K48 / Cache C**
+  - checkpoint SHA256: `e67161eec0a206d9bc15c813e7034ab6069cf92a1e67916871901d8177b96d45`
 - **Synovitis: 0.981600 — Gate PASS**
   - SS07B-H / Broad class-wise Top-75%
-  - best epoch 6
-  - SS05 shared reference 0.982400 대비 **-0.000800**
-  - checkpoint SHA256: `d4820ee535f1d54e72e1775d47b996e1a6aee4a64c9e115f7f766e8615a64aae`
+  - SS05 0.982400 대비 **-0.000800**
 - **Baker's: 0.975000 — Gate PASS**
-  - SS07B-F / Broad class-wise Top-75%
-  - best epoch 4
-  - SS05 shared reference 0.883125 대비 **+0.091875**
-  - checkpoint SHA256: `853ee3e042d26f388756b65b6b090ef311a47fd1aadf4f01e60acd92e268bf97`
 - **ACL: 0.9609375 — Gate PASS**
-  - SS07B-E / Broad class-wise Top-75%
-  - best epoch 8
-  - SS05 shared reference 0.940000 대비 **+0.0209375**
-  - checkpoint SHA256: `d9765e83c2048910a1ba688677014cea4545089c5246ac11af6e85f2c96dda4d`
 - **MCL: 0.904375 — Gate PASS**
-  - SS07B-A / Broad class-wise Top-75%
-  - best epoch 6
-  - checkpoint SHA256: `891f124dc4ee7cb50b506e88308a0a2040a60647f9f7fb2fd08aeef6d1e3ea5c`
 - **Lateral Meniscus: 0.8940625 — freeze / Gate NOT YET**
 - **Fracture: 0.8788889 — freeze / Gate NOT YET**
 
-현재 independent Gate PASS = **4 / 12**.
+현재 independent Gate PASS = **5 / 12**.
 
 ### Post-LB 개선 우선순위
 
 첫 Specialist LB 제출과 결과 확인 전에는 12-target coverage 완성을 우선한다.
 
-LB 확인 후 추가 개선은 다음 순서로 진행한다.
+1. Fixed Val < 0.90 target
+2. Gate PASS지만 independent Specialist가 SS05 shared reference보다 낮은 target
+3. LB 결과상 약한 target
 
-1. **Fixed Val < 0.90 target**
-2. **Gate는 통과했지만 independent Specialist가 SS05 shared reference보다 낮은 target**
-3. 그 외 target은 LB 결과와 error analysis를 보고 선택
-
-현재 2번 후보는 **Synovitis (0.9816 vs SS05 0.9824)** 이다.
-차이는 작지만 개선 후보로 기록한다.
+현재 재방문 후보:
+- Lateral Meniscus
+- Fracture
+- Synovitis
 
 ### Persistent cache
 
@@ -84,12 +77,7 @@ LB 확인 후 추가 개선은 다음 순서로 진행한다.
 ### 현재 병렬 운영
 
 - **Lane A:** Contusion K48 / Broad class-wise Top-75%
-- **Lane B:** Medial Meniscus K48 / Broad class-wise Top-75%
-
-자세한 상태:
-- [Current State / Roadmap](docs/CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md)
-- [Specialist Roadmap](docs/SPECIALIST_EXPERIMENT_ROADMAP.md)
-- [Specialist Experiment Log](docs/SPECIALIST_EXPERIMENT_LOG.md)
+- **Lane B:** Medial Meniscus 완료 → 다음 target 준비
 
 <!-- SPECIALIST_2026_10_02_CURRENT_END -->
 
