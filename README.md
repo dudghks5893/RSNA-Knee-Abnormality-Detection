@@ -22,7 +22,7 @@
 
 <!-- SPECIALIST_2026_10_02_CURRENT_START -->
 
-## 2026-10-03 — Specialist 현재 상태
+## 2026-10-04 — Specialist 현재 상태
 
 현재 최고 Public LB는 **0.918 (Exp57)** 으로 유지한다.
 
@@ -31,53 +31,56 @@ Fixed Val은 pseudo 기반 development proxy이며 Public LB와 동일한 지표
 
 ### Independent Specialist 현황
 
-- **Medial Meniscus: 0.993750 — Gate PASS**
-  - SS07B-G / Broad class-wise Top-75%
-  - best epoch 8
-  - SS05 shared reference 0.958125 대비 **+0.035625**
-  - 실제 input: **SS06B attention K48 / Cache C**
-  - checkpoint SHA256: `e67161eec0a206d9bc15c813e7034ab6069cf92a1e67916871901d8177b96d45`
-- **Synovitis: 0.981600 — Gate PASS**
-  - SS07B-H / Broad class-wise Top-75%
-  - SS05 0.982400 대비 **-0.000800**
-- **Baker's: 0.975000 — Gate PASS**
-- **ACL: 0.9609375 — Gate PASS**
-- **MCL: 0.904375 — Gate PASS**
-- **Lateral Meniscus: 0.8940625 — freeze / Gate NOT YET**
-- **Fracture: 0.8788889 — freeze / Gate NOT YET**
+- **Medial Meniscus: 0.993750 — PASS**
+- **Synovitis: 0.981600 — PASS**
+- **Baker's: 0.975000 — PASS**
+- **ACL: 0.9609375 — PASS**
+- **Contusion: 0.9540625 — PASS**
+  - SS07B-I2 patience-6 rerun
+  - 이전 SS07B-I 0.9371875 대비 **+0.016875**
+  - SS05 0.875625 대비 **+0.0784375**
+- **Medial OA: 0.920000 — PASS**
+  - SS05 0.921250 대비 **-0.001250**
+- **MCL: 0.904375 — PASS**
+- **Lateral Meniscus: 0.8940625 — freeze / NOT YET**
+- **PF OA: 0.892500 — freeze / NOT YET**
+- **Fracture: 0.8788889 — freeze / NOT YET**
+- **Lateral OA: untrained**
+- **Effusion: untrained**
 
-현재 independent Gate PASS = **5 / 12**.
+현재 independent Gate PASS = **7 / 12**.
+
+### 현재 인사이트
+
+- Contusion은 patience 4→6 controlled rerun에서 **0.9540625**로 개선되었지만 다시 best epoch는 1이었다.
+  - 즉 이전 e3→e5 회복이 이후 지속된다는 가설은 재현되지 않았다.
+  - 동일 nominal seed/recipe에서도 run 간 결과 차이가 커서 이 target은 training stochasticity와 Fixed Val selection sensitivity를 기록해 둔다.
+  - 추가 micro-tuning은 중단하고 새 checkpoint를 채택한다.
+- PF OA K96 HDF5 pipeline은 정상 동작했다.
+  - HDF5 worker-local read, valid_mask, 120 studies / 763 padding entries, batch 4 모두 PASS.
+  - best는 epoch 6의 **0.892500**으로 Gate 미달, SS05보다 -0.005625.
+  - epoch 6 이후 train loss는 계속 하락하지만 Val AUC는 회복하지 못해 train-validation divergence가 보인다.
+  - Broad Top-75 negative 최소 confidence가 **0.175325**까지 내려간 점은 추후 supervision quality 점검 후보이며 원인으로 단정하지 않는다.
 
 ### Post-LB 개선 우선순위
 
-첫 Specialist LB 제출과 결과 확인 전에는 12-target coverage 완성을 우선한다.
-
-1. Fixed Val < 0.90 target
-2. Gate PASS지만 independent Specialist가 SS05 shared reference보다 낮은 target
+1. Fixed Val < 0.90
+2. Gate PASS지만 independent Specialist < SS05
 3. LB 결과상 약한 target
 
 현재 재방문 후보:
 - Lateral Meniscus
+- PF OA
 - Fracture
+- Medial OA
 - Synovitis
 
-### Persistent cache
+### 남은 first-pass target
 
-**12 / 12 target cache 완료.**
+- **Lane A: Lateral OA K96 HDF5**
+- **Lane B: Effusion K96 HDF5**
 
-- Cache A: Lateral Meniscus K24 / ACL K24 / MCL K24
-- Cache B: Synovitis K24 / Baker's K24 / Fracture K32
-- Cache C: Medial Meniscus K48
-- Cache D: Contusion K48
-- Cache E: Medial OA K64
-- Cache F: PF OA K96 HDF5
-- Cache G: Lateral OA K96 HDF5
-- Cache H: Effusion K96 HDF5
-
-### 현재 병렬 운영
-
-- **Lane A:** Contusion K48 / Broad class-wise Top-75%
-- **Lane B:** Medial Meniscus 완료 → 다음 target 준비
+Persistent target cache는 **12 / 12 완료**.
 
 <!-- SPECIALIST_2026_10_02_CURRENT_END -->
 
