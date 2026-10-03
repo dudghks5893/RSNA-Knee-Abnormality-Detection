@@ -29,9 +29,11 @@ SS06A2 weak-selector extended audit                        [DONE]
 SS06B target별 single-slice selection manifest             [DONE]
 SS07A LM Specialist S01/S03                                [DONE]
 SS07A-X1 LM low-LR continuation                            [DONE: 0.8940625]
-SS07A-S04 LM Broad class-wise Top-60                       [CURRENT / Lane B]
+SS07A-S04 LM Broad Top-60                                  [DONE: 0.831875]
+SS07A-S05 LM Broad Top-70                                  [DONE: 0.7646875]
+SS07A-S06 LM Broad Top-80                                  [NEXT / Lane B]
 SS07B-A MCL Specialist                                     [DONE: 0.904375 / Gate PASS]
-SS07B-B Fracture Specialist                                [NEXT / Lane A]
+SS07B-B Fracture Specialist                                [Lane A]
 ```
 
 내부 완료 Gate:
@@ -40,30 +42,69 @@ SS07B-B Fracture Specialist                                [NEXT / Lane A]
 
 ## Lateral Meniscus 최신
 
+동일 Fixed Val:
+- 80 = 40P / 40N
+- SHA256: `4e80375e688b8419b075a97b63508bb4523512fa91bbde1b3b9003a0bde8fe4a`
+
+공통 baseline:
+- SS06B attention K24
+- raw MRI K24
+- DINOv2-Small full fine-tuning
+- Metadata ON
+- 1-layer set-like Slice Transformer
+- Gold58 + V4 Broad pseudo
+- pseudo weight = 0.70 x confidence
+- seed 20261002 / batch 4 / max 12 / patience 4
+
 ### S03-B — Broad class-wise Top-75%
 - best epoch: 11
 - Fixed Val AUC: **0.881250**
-- checkpoint: `27a92661e24f190930bc24d7645cfd497837bb2defd0e8ef91fcaf1e365ef7c1`
+- checkpoint SHA256: `27a92661e24f190930bc24d7645cfd497837bb2defd0e8ef91fcaf1e365ef7c1`
 
-### X1 — best checkpoint low-LR cosine continuation
-- start AUC: **0.881250**
-- continuation LR: 기존의 10%
-- warm-up 없음 / pure cosine / max 6 epoch
-- e1: 0.883125
-- e2: **0.8940625** <- new best
-- e3: 0.8640625
-- e4: 0.8621875
-- e5: 0.866250
-- e6: 0.866875
-- best continuation epoch: **2**
-- delta vs S03-B: **+0.0128125**
-- runtime: **24.84 min**
+### X1 — Top-75 best low-LR continuation
+- start: 0.881250
+- e1 0.883125
+- e2 **0.8940625**
+- e3 0.8640625
+- e4 0.8621875
+- e5 0.866250
+- e6 0.866875
+- best continuation epoch: 2
+- runtime: 24.8446 min
 - Gate: **NOT YET**
 - checkpoint SHA256: `12c4044de1e04e83168f17eb4dea0e5ca4df98ac99ebda6e62dfb3614bfe846a`
 
+### S04 — Broad class-wise Top-60%
+- pseudo: 2,562
+- train total: 2,620
+- best epoch: 11
+- Fixed Val AUC: **0.831875**
+- delta vs Top-75: **-0.049375**
+- runtime: 39.5752 min
+- Gate: **NOT YET**
+- checkpoint SHA256: `0d887f05d8e469a56e373e29fa1edc1f5d7fe1a20da5e462d1c3b4e995f2a185`
+
+### S05 — Broad class-wise Top-70%
+- pseudo: 2,989
+  - Negative 3,658 -> 2,561
+  - Positive 611 -> 428
+- train total: 3,047
+- best epoch: **12**
+- Fixed Val AUC: **0.7646875**
+- delta vs Top-75: **-0.1165625**
+- delta vs Top-60: **-0.0671875**
+- runtime: **47.6118 min**
+- Gate: **NOT YET**
+- checkpoint SHA256: `9dd6756f6989778943f1802813c83143884d7cb872d3dcb92e6d9191ccabe025`
+- history SHA256: `a8f547b2dcc23d44d0095925a5540ec8e8744fb0e4b31270f67c38d83f2cc10a`
+- val prediction SHA256: `5db5a85eea6f37282fe4e3cc508853d71f189dc75fad92cb3910990f748136e5`
+
 판정:
-e2까지는 train loss와 Val AUC가 같이 개선됐다. e3 이후에는 train loss가 계속 하락하는 반면 Val AUC가 급락/회복하지 못해 overfitting 신호로 본다.
-다음은 추가 continuation보다 **pseudo filtering 강도 비교**를 우선하며, Top-75와 동일 조건에서 **Top-60%**를 12 epoch로 비교한다.
+- Top-60과 Top-70 모두 Top-75 base를 넘지 못했다.
+- filtering 비율에 따른 결과가 단조롭지 않으므로 Top-70 하락만으로 단순한 “더 강한 filtering이 항상 나쁘다”는 결론은 내리지 않는다.
+- 현재 LM 최고는 X1 **0.8940625**로 유지한다.
+- 다음은 Top-75보다 pseudo pool을 넓히는 **Top-80**을 동일 조건에서 처음부터 학습한다.
+- Top-80 base는 먼저 Top-75 base 0.881250과 비교하고, X1 0.8940625는 continuation reference로 분리한다.
 
 ## MCL Specialist — 0.90 Gate 완료
 
@@ -85,36 +126,12 @@ e2까지는 train loss와 Val AUC가 같이 개선됐다. e3 이후에는 train 
 - checkpoint SHA256: `891f124dc4ee7cb50b506e88308a0a2040a60647f9f7fb2fd08aeef6d1e3ea5c`
 - val prediction SHA256: `94a442116b1a0b58b9ff84aa1f7dfd1123b22f590a1162cfe7ee3c1ad0a9f98a`
 
-epoch 6 이후 AUC가 0.834063까지 급락하고 e10 0.869687까지만 회복했다.
-best epoch 6 checkpoint를 최종 MCL Specialist로 보존하고 추가학습 없이 target을 종료한다.
-
-## Persistent raw-image cache 최신
-
-기존:
-- Cache A — LM K24 / ACL K24 / MCL K24: PASS
-- Cache B — Synovitis K24 / Baker's K24 / Fracture K32: PASS
-
-추가 완료:
-- **Cache C — Medial Meniscus K48**
-  - shape: [4407,48,224,224] uint8
-  - 9.885 GiB
-  - build 14.17 min / hash 1.11 min / total 15.28 min
-  - cache SHA256: `e9cbc477827331fe4ca599e0471aec23dfb6369f9c3798459d4fe8e1ba99ab74`
-  - metadata SHA256: `66f326b900cc0089804fbb7703e776c059add4a74829d3c552775a34c67d2b47`
-- **Cache D — Contusion K48**
-  - shape: [4407,48,224,224] uint8
-  - 9.885 GiB
-  - build 12.74 min / hash 0.91 min / total 13.65 min
-  - cache SHA256: `41c62cb30737afa7486076790a6fe415c8a84591fdc90ee2b826fe1b9a8f4b29`
-  - metadata SHA256: `d97f9b7ab751e1136ef86daccdb311e4711a04eb21cc966d4f28a6283d8a6697`
-
-현재 CPU cache queue:
-Medial OA K64 / PF OA K96 -> 이후 Lateral OA K96 / Effusion K96.
+MCL은 best epoch 6 checkpoint를 보존하고 추가학습 없이 종료한다.
 
 ## 다음 병렬 실험
 
-- **Lane A:** Fracture K32 Specialist. MCL에서 Gate를 통과한 metadata-aware + Broad class-wise Top-75% policy를 그대로 첫 baseline으로 적용한다.
-- **Lane B:** LM Broad class-wise Top-60%, Top-75와 나머지 조건 동일.
+- **Lane A:** Fracture K32 Specialist.
+- **Lane B:** **SS07A-S06 LM Broad class-wise Top-80%**. Top-75와 seed/LR/batch/12-epoch 조건을 동일하게 유지하고 filtering 비율만 80%로 변경한다.
 
 <!-- SPECIALIST_2026_10_02_CURRENT_END -->
 
