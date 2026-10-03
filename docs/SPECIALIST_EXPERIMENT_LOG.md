@@ -15,122 +15,84 @@
 ### 현재 완료 현황
 
 ```text
-Synovitis  0.9816000  PASS
-Baker's    0.9750000  PASS
-ACL        0.9609375  PASS
-MCL        0.9043750  PASS
+Medial Meniscus  0.9937500  PASS
+Synovitis        0.9816000  PASS
+Baker's          0.9750000  PASS
+ACL              0.9609375  PASS
+MCL              0.9043750  PASS
 
-Lateral Meniscus  0.8940625  freeze / NOT YET
-Fracture          0.8788889  freeze / NOT YET
+Lateral Meniscus 0.8940625  freeze / NOT YET
+Fracture         0.8788889  freeze / NOT YET
 ```
 
-Independent Gate PASS = **4 / 12**.
+Independent Gate PASS = **5 / 12**.
 
 ---
 
-### SS07B-F — Baker's / Broad Class-wise Top-75% — PASS
+### SS07B-G — Medial Meniscus / Broad Class-wise Top-75% — PASS
 
-Fixed Val:
-- 80 = 40P / 40N
-- pair step = 0.000625
-
-Pseudo after filtering:
-- total 3,203
-- positive 776
-- negative 2,427
+Actual execution:
+- selector: **SS06B attention K48**
+- Cache C
+- physical batch 4
+- grad accumulation 1
+- Fixed Val 80 = 40P / 40N
+- pseudo 3,203
+  - hard positive 1,289
+  - hard negative 1,914
 - Gold 58
 
 Epoch:
 ```text
-e1 0.926875
-e2 0.947188
-e3 0.967500
-e4 0.975000 <- BEST
-e5 0.962500
-e6 0.954063
-e7 0.955000
-e8 0.940000
+e1  0.972500
+e2  0.968750
+e3  0.972187
+e4  0.974375
+e5  0.971875
+e6  0.987500
+e7  0.985313
+e8  0.993750 <- BEST
+e9  0.986250
+e10 0.983125
+e11 0.977500
+e12 0.976250
 ```
 
 Result:
-- best epoch: **4**
-- best Fixed Val AUC: **0.975000**
-- SS05 reference: 0.883125
-- delta vs SS05: **+0.091875**
-- runtime: **35.5895 min**
+- best epoch: **8**
+- best Fixed Val AUC: **0.993750**
+- SS05 reference: 0.958125
+- delta vs SS05: **+0.035625**
+- runtime: **87.2795 min**
 - Gate: **PASS**
-- checkpoint: `ss07b_f_bakers_broad_top75_best.bin`
-- checkpoint SHA256: `853ee3e042d26f388756b65b6b090ef311a47fd1aadf4f01e60acd92e268bf97`
-- history SHA256: `221138b68b32dcf3cc9848d28a0382728b62d81e299645220cd3dd63d55df9f4`
-- val prediction SHA256: `098a31d64b8a0f2e59e9f206217f9b194dacc0a0472c03723d463d37393dc645`
+- checkpoint: `ss07b_g_medial_meniscus_broad_top75_best.bin`
+- checkpoint SHA256: `e67161eec0a206d9bc15c813e7034ab6069cf92a1e67916871901d8177b96d45`
+- history SHA256: `9144a3754a5e3b2819d322334667a1d1a1b409ae07d907a67ebda6ad1a154f5d`
+- val prediction SHA256: `355f5041a2ac8bbcb601c8984e5a1b8c230180b2bdc59c44447874279f7ea913`
+
+Metadata correction:
+- notebook summary의 `selector.k=24`, Cache A 설명은 template 잔재
+- 실제 실행은 **K48 / Cache C**
+- 실제 input file과 SHA가 K48 Cache C를 검증했으므로 성능 결과에는 영향 없음
 
 ---
 
-### SS07B-H — Synovitis / Broad Class-wise Top-75% — PASS
+### Existing PASS
 
-Fixed Val:
-- 50 = 25P / 25N
-- pair step = 0.0016
+- Synovitis 0.981600
+- Baker's 0.975000
+- ACL 0.9609375
+- MCL 0.904375
 
-Pseudo after filtering:
-- total 3,225
-- hard positive 385
-- hard negative 2,840
-- Gold 58
+### Freeze
 
-Epoch:
-```text
-e1  0.9152
-e2  0.9536
-e3  0.9512
-e4  0.9792
-e5  0.9728
-e6  0.9816 <- BEST
-e7  0.9792
-e8  0.9552
-e9  0.9664
-e10 0.9440
-```
-
-Result:
-- best epoch: **6**
-- best Fixed Val AUC: **0.981600**
-- SS05 reference: 0.982400
-- delta vs SS05: **-0.000800**
-- runtime: **41.7625 min**
-- Gate: **PASS**
-- checkpoint: `ss07b_h_synovitis_broad_top75_best.bin`
-- checkpoint SHA256: `d4820ee535f1d54e72e1775d47b996e1a6aee4a64c9e115f7f766e8615a64aae`
-- history SHA256: `78882c3cd749d5f9b81c7ee3c1f1120c2968cfca76e91b900c6b447777174448`
-- val prediction SHA256: `ffa9b600fed3dfbf358682b35bbe14d208d057dbef873b132c9b95b612190d03`
-
-Interpretation:
-- independent Gate는 명확히 PASS.
-- SS05보다 0.0008 낮지만 Fixed Val이 25P/25N이라 차이를 과대해석하지 않는다.
-- 첫 LB 확인 후 **below-SS05 improvement candidate**로 기록한다.
-
----
-
-### Freeze state
-
-**Lateral Meniscus**
-- best 0.8940625
-- X2 no improvement
-
-**Fracture**
-- Strict-only best 0.8788889
-- sqrt balance 0.8744444
-- no improvement
-
----
+- Lateral Meniscus 0.8940625
+- Fracture 0.8788889
 
 ### Post-LB revisit policy
 
-첫 Specialist submission을 먼저 완성한 후 개선 실험을 재개한다.
-
-우선순위:
 1. Fixed Val < 0.90
-2. Gate PASS이지만 independent Specialist < SS05
+2. independent Specialist < SS05
 3. LB 결과상 약한 target
 
 현재 후보:
@@ -141,7 +103,7 @@ Interpretation:
 ### 다음
 
 - Lane A: **Contusion K48 Broad Top-75**
-- Lane B: **Medial Meniscus K48 Broad Top-75**
+- Lane B: 다음 target 준비
 
 <!-- SPECIALIST_2026_10_02_CURRENT_END -->
 
