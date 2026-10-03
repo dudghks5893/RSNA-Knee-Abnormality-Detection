@@ -12,96 +12,125 @@
 
 <!-- SPECIALIST_2026_10_02_CURRENT_START -->
 
-# 2026-10-03 Current Specialist Roadmap
+## 2026-10-03 — Current Specialist Roadmap
 
-> **현재 병렬 단계**
-> - Lane A: Fracture Broad Top-75 0.8138889 -> **V4 Strict-only**
-> - Lane B: LM X1 0.8940625 -> **X2 ultra-low-LR continuation**
-> - 최종 내부 목표: 12 target 각각 Fixed Val AUC >= 0.90
+### 목표
 
-## 현재 채택 파이프라인
+12개 target마다 independent Specialist를 하나씩 완성하고,
+각 target의 **Fixed Val ROC-AUC >= 0.90**을 내부 Gate로 사용한다.
+
+현재:
+- PASS: **ACL, MCL = 2 / 12**
+- freeze / NOT YET: **Lateral Meniscus, Fracture**
+
+### 완료된 핵심 결과
 
 ```text
-SS03 adapted DINOv2-Base
--> SS04 full single-slice feature cache
--> SS05 shared target-aware MIL
--> SS06B frozen target-specific Top-K
--> raw selected MRI cache
--> DINOv2-Small full fine-tuning
--> metadata-aware 1-layer Slice Transformer
--> target binary probability
+ACL                0.9609375  PASS
+MCL                0.9043750  PASS
+Lateral Meniscus   0.8940625  freeze
+Fracture           0.8788889  freeze
 ```
 
-## LM
+### first-baseline transfer policy
 
-Filtering sweep:
-- Top-60: 0.831875
-- Top-70: 0.7646875
-- Top-75: **0.881250**
-- Top-80: 0.823125
+새 target 첫 실험은 현재 성공 사례가 있는 아래 구조를 우선 사용한다.
 
-결론:
-Top-75를 current pseudo-filtering sweet spot으로 유지한다.
+```text
+SS06B target-specific Top-K raw MRI
+-> DINOv2-Small full fine-tuning
+-> metadata ON
+-> 1-layer set-like Slice Transformer
+-> binary head
 
-X1 low-LR continuation:
-- start: 0.881250
-- best: **0.8940625**
-- best continuation epoch: 2
-- Gate NOT YET
-- checkpoint: `12c4044de1e04e83168f17eb4dea0e5ca4df98ac99ebda6e62dfb3614bfe846a`
+V4 Broad
+-> class-wise confidence Top-75%
+-> original soft target
+-> pseudo weight = 0.70 x confidence
+-> Gold58
+```
 
-다음 — X2:
-- X1 best checkpoint에서 시작
-- Broad Top-75 supervision 그대로
-- optimizer 새로 시작
-- X1보다 더 낮은 ultra-low LR
-- no warm-up
-- 짧은 cosine continuation
-- 최대 3 epochs
-- 0.90 도달 시 즉시 종료
-- 0.90 미달 시 X1 best를 LM 보존 checkpoint로 유지하고 LM 반복 탐색 종료
+MCL과 ACL에서 Gate PASS가 확인되었으므로,
+새 target의 first baseline으로 사용할 근거가 생겼다.
 
-## MCL
+단, target별 pseudo 품질과 class imbalance가 다르므로
+실패 target에 동일한 micro-tuning을 무한 반복하지 않는다.
 
-SS07B-A Top-75:
-- best epoch 6
-- AUC **0.904375**
-- Gate **PASS**
-- checkpoint `891f124dc4ee7cb50b506e88308a0a2040a60647f9f7fb2fd08aeef6d1e3ea5c`
+### 현재 병렬 순서
 
-## Fracture
+#### Lane A
 
-Broad Top-75:
-- K32
-- best epoch 2
-- AUC **0.8138889**
-- SS05 0.774444 대비 +0.039445
-- Gate NOT YET
+현재 Kaggle input:
+`/kaggle/input/rsna-knee-ss07a-cache-b-syn-baker-fracture-v1/rsna-knee-ss07a-cache-b-syn-baker-fracture-v1`
 
-다음 — Strict-only:
-- 동일 K32
-- 동일 DINOv2-Small / Metadata / Transformer
-- 동일 seed / batch / LR / scheduler
-- Fixed Val 60 유지
-- supervision source만 V4 Strict-only로 변경
-- 추가 Top-% filtering 없음
-- Strict best가 0.8138889를 넘는지 우선 비교
+따라서 Cache B를 먼저 소진한다.
 
-## Cache
+```text
+Fracture  -> freeze 0.8788889
+Baker's   -> Broad Top-75 first baseline
+Synovitis -> Baker's 후 동일 Cache B로 진행
+```
 
-완료:
-- A: LM/ACL/MCL
-- B: Synovitis/Baker's/Fracture
-- C: Medial Meniscus K48
-- D: Contusion K48
-- E: Medial OA K64
-- F: PF OA K96 HDF5 recovery PASS
-- G: Lateral OA K96 HDF5 recovery PASS
+Input을 바꾸지 않아도 된다는 운영상 이점이 있다.
 
-남음:
-- H: Effusion K96 HDF5 — notebook prepared / execution result pending
+#### Lane B
 
-K96 uniform target은 padding sentinel -1을 갖는 study가 있으므로 raw cache metadata의 valid_mask를 final Specialist Transformer padding mask로 사용한다.
+ACL 완료 후 다음:
+
+```text
+Medial Meniscus
+SS06B attention K48
+Broad class-wise Top-75%
+Fixed Val 80 = 40P / 40N
+Gate 0.90
+SS05 reference 0.958125
+```
+
+Medial Meniscus cache:
+- Dataset: `rsna-knee-ss07a-cache-c-medial-meniscus-k48-v1`
+- image: `medial_meniscus_k48_images_uint8.npy`
+- metadata: `medial_meniscus_metadata.npz`
+- cache SHA256: `e9cbc477827331fe4ca599e0471aec23dfb6369f9c3798459d4fe8e1ba99ab74`
+- metadata SHA256: `66f326b900cc0089804fbb7703e776c059add4a74829d3c552775a34c67d2b47`
+
+### target 처리 우선순위
+
+현재는 한 target을 0.90에 억지로 맞추는 것보다
+**12개 independent Specialist의 coverage를 먼저 넓히는 것**을 우선한다.
+
+Gate를 넘으면 target 완료 처리하고 다음 target으로 이동한다.
+
+Gate 미달 시:
+1. best checkpoint 보존
+2. 학습 곡선 / pseudo 분포 / selector 특성 확인
+3. 가장 근거가 강한 controlled experiment 1회
+4. 반복 micro-tuning보다 다음 target coverage를 우선
+
+### validation overfitting 방지
+
+LM에서는 Top-% filtering sweep과 X1/X2 continuation까지 수행했다.
+X2 ultra-low-LR에서도 start 0.8940625를 넘지 못했다.
+
+Fracture에서는 Strict-only 0.8788889가 best였고
+sqrt class-balance가 0.874444로 개선되지 않았다.
+
+따라서:
+- 동일 Fixed Val을 반복해서 보는 hyperparameter micro-search를 제한한다.
+- freeze target은 다른 target이 충분히 진행된 뒤 error analysis와 함께 재방문한다.
+
+### cache
+
+Persistent target cache **12 / 12 완료**.
+이제 cache-generation phase는 종료하고 GPU Specialist training에 집중한다.
+
+### Kaggle notebook 공통 규칙
+
+- Import -> Run All
+- Accelerator / Internet / Save Version 명시
+- Fixed Val / Public LB 용어 분리
+- artifact hash / contract 검증
+- 이미 경로가 확인된 input은 전체 `/kaggle/input` rglob 금지
+- known Dataset root + exact filename을 직접 확인
 
 <!-- SPECIALIST_2026_10_02_CURRENT_END -->
 
