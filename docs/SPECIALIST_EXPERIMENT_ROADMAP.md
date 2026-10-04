@@ -12,95 +12,103 @@
 
 <!-- SPECIALIST_2026_10_02_CURRENT_START -->
 
-## 2026-10-04 — Current Specialist Roadmap
+## 2026-10-04 — Specialist Roadmap / First-pass 12 of 12 Complete
 
-### 목표
+### 현재 단계
 
-12개 target마다 independent Specialist first-pass를 완료하고
-**Fixed Val ROC-AUC >= 0.90**을 내부 Gate로 사용한다.
+Independent Specialist first-pass coverage가 **12 / 12 완료**됐다.
 
-현재:
-- PASS = **7 / 12**
-- NOT YET = **3 / 12**
-- untrained = **2 / 12**
+- PASS: **8 / 12**
+- freeze / NOT YET: **4 / 12**
+- untrained: **0 / 12**
 
-### 현재 결과
+Target-best Fixed Val macro:
+- **0.93410324**
+- 100점 환산: **93.41**
+- SS05 macro 0.88124745 대비 **+5.29 points**
 
-```text
-Medial Meniscus   0.9937500  PASS
-Synovitis         0.9816000  PASS
-Baker's           0.9750000  PASS
-ACL               0.9609375  PASS
-Contusion         0.9540625  PASS
-Medial OA         0.9200000  PASS
-MCL               0.9043750  PASS
+### 현재 best
 
-Lateral Meniscus  0.8940625  NOT YET
-PF OA             0.8925000  NOT YET
-Fracture          0.8788889  NOT YET
+| Target | AUC | Status |
+|---|---:|---|
+| Medial Meniscus | 0.9937500 | PASS |
+| Synovitis | 0.9816000 | PASS |
+| Baker's | 0.9750000 | PASS |
+| ACL | 0.9609375 | PASS |
+| Effusion | 0.9593750 | PASS |
+| Contusion | 0.9540625 | PASS |
+| Medial OA | 0.9200000 | PASS |
+| MCL | 0.9043750 | PASS |
+| Lateral OA | 0.8946875 | NOT YET |
+| Lateral Meniscus | 0.8940625 | NOT YET |
+| PF OA | 0.8925000 | NOT YET |
+| Fracture | 0.8788889 | NOT YET |
 
-Lateral OA        untrained
-Effusion          untrained
-```
+### First-pass 최종 결론
 
-### 마지막 first-pass targets
+K24 / K32 / K48 / K64 attention target과 K96 uniform target 모두 training 및 inference input contract가 검증됐다.
 
-- **Lane A → Lateral OA / Uniform K96 / HDF5**
-- **Lane B → Effusion / Uniform K96 / HDF5**
-
-두 target 모두:
-```text
-raw MRI K96
-→ HDF5 lossless gzip
-→ DINOv2-Small full fine-tuning
-→ metadata ON
-→ valid_mask padding mask
-→ 1-layer set-like Slice Transformer
-→ Broad class-wise Top-75%
-→ Gold58
-```
-
-### K96 운영 원칙
-
-PF OA 첫 K96 training으로 아래 pipeline이 검증됨:
-- worker-local HDF5 read
-- valid_mask -> src_key_padding_mask
-- 120 padded studies / 763 padded slots
+K96 공통:
+- lossless HDF5
+- worker-local read
+- valid_mask -> Transformer src_key_padding_mask
+- 120 padded studies / 763 padded entries
 - T4 x2 / physical batch 4
-- no OOM
 
-따라서 Lateral OA / Effusion도 동일 training recipe를 유지한다.
+마지막 두 target:
+- Lateral OA: **0.8946875 / NOT YET**
+- Effusion: **0.959375 / PASS**
 
-### Contusion rerun insight
+### 즉시 다음 단계 — SS08 Public LB
 
-- patience 6 rerun best = **0.9540625**
-- previous 0.9371875 대비 **+0.016875**
-- 하지만 두 run 모두 epoch 1 best
-- e5 이후 지속 회복 가설은 재현되지 않음
-- 더 이상의 Contusion micro-tuning은 중단
+SS08 final notebook으로 첫 12-Specialist submission을 실행한다.
 
-### PF OA insight
+Final inference:
+1. Hidden Test MRI
+2. SS03 adapted DINOv2-Base feature extraction
+3. SS05 Shared MIL attention selector 또는 SS06B uniform selector
+4. target-specific selected raw MRI slices
+5. 12 independent DINOv2-Small Specialists
+6. 12 Specialist sigmoid probabilities
+7. submission.csv
 
-- best = **0.892500**, Gate NOT YET
-- e6 이후 train-validation divergence
-- Broad Top-75 negative min confidence = 0.175325
-- supervision quality는 post-LB 점검 후보
-- 현재는 freeze
+이번 first Specialist LB는 구조를 단순하게 유지한다.
 
-### Post-LB 성능 개선 우선순위
+- shared MIL direct prediction branch 없음
+- Exp57 70:30 blend 없음
+- target-level blend 없음
+- specialist ensemble 없음
+- 각 target 현재 best single checkpoint 1개
 
-1. Fixed Val < 0.90
-   - Lateral Meniscus
-   - PF OA
-   - Fracture
-2. PASS지만 independent Specialist < SS05
-   - Medial OA
-   - Synovitis
-3. LB target-level error analysis
+SS05 MIL은 prediction model이 아니라 attention selector로만 사용한다.
+Lateral OA / PF OA / Effusion은 uniform K96이므로 SS05 target attention으로 slice를 고르지 않는다.
 
-### cache
+### SS08 이후 개선 순서
 
-Persistent target cache **12 / 12 완료**.
+1. **Fixed Val < 0.90**
+   - Fracture 0.8788889
+   - PF OA 0.8925000
+   - Lateral Meniscus 0.8940625
+   - Lateral OA 0.8946875
+2. **PASS지만 SS05보다 낮음**
+   - Medial OA 0.9200000 vs 0.921250
+   - Synovitis 0.9816000 vs 0.982400
+3. **SS08 Public LB / target-level error signal**
+4. 필요할 때만 target-specific 3-Fold 또는 blend 검토
+
+현재 단계에서는 Fixed Val 반복 최적화보다 **SS08 Public LB를 먼저 확보**한다.
+
+### 운영 원칙
+
+- 전체 /kaggle/input recursive search 금지
+- exact dataset/model roots 사용
+- best checkpoint / SHA 보존
+- Fixed Val 반복 탐색에 따른 selection bias 주의
+- Public LB를 확인한 뒤에만 next optimization branch 확정
+
+Persistent target cache: **12 / 12 완료**.
+Independent Specialist first-pass: **12 / 12 완료**.
+SS08 final notebook: **prepared / run pending**.
 
 <!-- SPECIALIST_2026_10_02_CURRENT_END -->
 
