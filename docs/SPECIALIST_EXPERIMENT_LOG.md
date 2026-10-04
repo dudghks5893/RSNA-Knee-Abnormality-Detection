@@ -10,128 +10,200 @@
 
 <!-- SPECIALIST_2026_10_02_CURRENT_START -->
 
-## 2026-10-04 — Specialist Experiment Update
+## 2026-10-04 — Specialist First-pass Final Log
 
-### 현재 현황
+### 현재 최종 현황
 
-```text
-Medial Meniscus   0.9937500  PASS
-Synovitis         0.9816000  PASS
-Baker's           0.9750000  PASS
-ACL               0.9609375  PASS
-Contusion         0.9540625  PASS
-Medial OA         0.9200000  PASS
-MCL               0.9043750  PASS
+| Target | Best Fixed Val AUC | Status | Best run |
+|---|---:|---|---|
+| Medial Meniscus | **0.9937500** | **PASS** | SS07B-G |
+| Synovitis | **0.9816000** | **PASS** | SS07B-H |
+| Baker's | **0.9750000** | **PASS** | SS07B-F |
+| ACL | **0.9609375** | **PASS** | SS07B-E |
+| Effusion | **0.9593750** | **PASS** | SS07B-M |
+| Contusion | **0.9540625** | **PASS** | SS07B-I2 |
+| Medial OA | **0.9200000** | **PASS** | SS07B-J |
+| MCL | **0.9043750** | **PASS** | SS07B-A |
+| Lateral OA | **0.8946875** | freeze / NOT YET | SS07B-L |
+| Lateral Meniscus | **0.8940625** | freeze / NOT YET | SS07A-X1 |
+| PF OA | **0.8925000** | freeze / NOT YET | SS07B-K |
+| Fracture | **0.8788889** | freeze / NOT YET | SS07B-C |
 
-Lateral Meniscus  0.8940625  freeze / NOT YET
-PF OA             0.8925000  freeze / NOT YET
-Fracture          0.8788889  freeze / NOT YET
+Independent Gate PASS = **8 / 12**.
+First-pass coverage = **12 / 12**.
 
-Lateral OA        untrained
-Effusion          untrained
-```
-
-Independent Gate PASS = **7 / 12**.
+Target-best Fixed Val macro = **0.93410324 (93.41 / 100)**.
+SS05 target macro 0.88124745 대비 **+0.05285579**.
 
 ---
 
-### SS07B-I2 — Contusion / Patience-6 Rerun — PASS
+### SS07B-I2 — Contusion patience-6 rerun — PASS
 
-Controlled variable:
-- patience 4 → 6 only
-- seed / data / K48 / batch 4 / LR / scheduler unchanged
-
-Epoch:
-```text
-e1  0.954063 <- BEST
-e2  0.906875
-e3  0.868125
-e4  0.905625
-e5  0.868750
-e6  0.813125
-e7  0.903125
-```
-
-Result:
-- best AUC: **0.9540625**
-- previous: 0.9371875
-- delta vs previous: **+0.016875**
-- delta vs SS05: **+0.0784375**
+- K48 attention
+- Broad class-wise Top-75%
+- patience only: 4 -> 6
 - best epoch: **1**
-- runtime: 53.59 min
-- checkpoint SHA256: `6854595836eff585dde5acd8cb20e92817d83fc68c442c77392363d8763c6805`
+- best AUC: **0.9540625**
+- previous SS07B-I: 0.9371875
+- delta vs previous: **+0.016875**
+- SS05: 0.875625
+- delta vs SS05: **+0.0784375**
+- runtime: **53.59 min**
+- checkpoint: ss07b_i2_contusion_patience6_best.bin
+- checkpoint SHA256: 6854595836eff585dde5acd8cb20e92817d83fc68c442c77392363d8763c6805
 
 Insight:
-- e5 이후 지속 상승 가설은 재현되지 않음.
-- 두 run 모두 epoch 1이 best.
-- run 간 best 차이가 커 training stochasticity / Fixed Val selection sensitivity를 주의.
-- 새 checkpoint 채택, Contusion tuning 종료.
+- 두 run 모두 epoch 1 best.
+- 이전 run의 e5 recovery가 이후 지속된다는 가설은 재현되지 않았다.
+- run 간 Fixed Val 차이가 커 stochasticity / selection sensitivity를 기록한다.
+- 추가 Contusion micro-tuning은 중단한다.
 
 ---
 
 ### SS07B-J — Medial OA — PASS
 
 - K64 attention
-- Broad Top-75
-- Fixed Val 80 / 40P / 40N
-- best epoch 6
-- best AUC **0.920000**
-- SS05 0.921250
-- delta **-0.001250**
-- checkpoint SHA256: `f90fdf5e1ba886c05de8075c83828d57ec70cc13b6937dc56ae1a694e4e13c19`
+- Broad class-wise Top-75%
+- Fixed Val: 80 = 40P / 40N
+- best epoch: **6**
+- best AUC: **0.920000**
+- SS05: 0.921250
+- delta: **-0.001250**
+- checkpoint: ss07b_j_medial_oa_broad_top75_best.bin
+- checkpoint SHA256: f90fdf5e1ba886c05de8075c83828d57ec70cc13b6937dc56ae1a694e4e13c19
 
 ---
 
 ### SS07B-K — PF OA K96 HDF5 — NOT YET
 
 - Uniform K96
-- lossless HDF5
-- valid_mask applied as Transformer padding mask
+- HDF5 lossless gzip
+- valid_mask -> Transformer padding mask
 - padding: 120 studies / 763 entries
 - Broad class-wise Top-75%
-- pseudo 3,203 = hard positive 1,452 / hard negative 1,751
-- Fixed Val 80 / 40P / 40N
+- Fixed Val: 80 = 40P / 40N
+- best epoch: **6**
+- best AUC: **0.892500**
+- SS05: 0.898125
+- delta: **-0.005625**
+- Gate: **NOT YET**
+- runtime: **164.35 min**
+- checkpoint: ss07b_k_pf_oa_k96_h5_broad_top75_best.bin
+- checkpoint SHA256: b83b16ab42d43d8b741969136d7c1681a1ba5a84b549aff269b572c9b5677719
 
-Epoch:
-```text
-e1  0.813437
-e2  0.879375
-e3  0.861875
-e4  0.867500
-e5  0.875625
-e6  0.892500 <- BEST
-e7  0.883750
-e8  0.852812
-e9  0.873438
-e10 0.866875
-```
-
-Result:
-- best AUC **0.892500**
-- SS05 0.898125
-- delta **-0.005625**
-- Gate **NOT YET**
-- checkpoint SHA256: `b83b16ab42d43d8b741969136d7c1681a1ba5a84b549aff269b572c9b5677719`
-
-Filter observation:
-- negative min kept confidence **0.175325**
-- positive min kept confidence **0.533502**
-- supervision quality 점검 후보로만 기록, 원인 확정하지 않음.
-
-Pipeline:
-- HDF5 read PASS
-- valid_mask PASS
-- batch 4 PASS
-- padding 763 PASS
+Insight:
+- K96 HDF5 / worker-local read / valid_mask contract PASS.
+- e6 이후 train loss가 감소해도 validation AUC가 회복하지 못했다.
+- first-pass best를 freeze한다.
 
 ---
 
-### 다음
+### SS07B-L — Lateral OA K96 HDF5 — NOT YET
 
-- Lane A: **Lateral OA K96 HDF5**
-- Lane B: **Effusion K96 HDF5**
+- Lane A
+- selector: SS06B uniform K96
+- HDF5 lossless gzip
+- valid_mask -> Transformer padding mask
+- padding: 120 studies / 763 entries
+- Broad class-wise Top-75%
+- pseudo: 3,202 = hard positive 841 / hard negative 2,361
+- Fixed Val: 80 = 40P / 40N
 
-이 두 target이 마지막 untrained targets이다.
+Validation:
+- e1 0.833125
+- e2 0.870625
+- e3 0.876562
+- e4 **0.8946875 BEST**
+- e5 0.845938
+- e6 0.825000
+- e7 0.869375
+- e8 0.815000
+- early stop
+
+Result:
+- best epoch: **4**
+- best AUC: **0.8946875**
+- SS05: 0.861250
+- delta vs SS05: **+0.0334375**
+- Gate: **NOT YET**
+- runtime: **118.54 min**
+- checkpoint: ss07b_l_lateral_oa_k96_h5_broad_top75_best.bin
+- checkpoint SHA256: ac7e1b690463ddd1a2106773d7d058d6e19f13da147e3dd761db0dbe96786621
+- history SHA256: 2c1590039e34bc4c067f0fdd8f2651fbde0cdf6c5b33bf130441934e3bcac126
+- val prediction SHA256: 6cf9079a45390c49efc6ed89be215338ca1059de7a9809bc7b59d73841c14dcd
+
+Insight:
+- shared SS05 reference보다 +0.0334 상승했으나 Gate에는 0.0053125 부족.
+- e4 이후 train loss는 계속 감소하면서 Val AUC가 크게 흔들렸다.
+- 추가 tuning 없이 현재 best를 final first-pass checkpoint로 보존한다.
+
+---
+
+### SS07B-M — Effusion K96 HDF5 — PASS
+
+- Lane B
+- selector: SS06B uniform K96
+- HDF5 lossless gzip
+- valid_mask -> Transformer padding mask
+- padding: 120 studies / 763 entries
+- Broad class-wise Top-75%
+- pseudo: 3,202 = hard positive 1,932 / hard negative 1,270
+- Fixed Val: 80 = 40P / 40N
+
+Validation:
+- e1 0.939375
+- e2 0.948750
+- e3 0.957500
+- e4 0.958125
+- e5 **0.959375 BEST**
+- e6 0.949688
+- e7 0.950000
+- e8 0.926250
+- e9 0.926563
+- early stop
+
+Result:
+- best epoch: **5**
+- best AUC: **0.959375**
+- SS05: 0.952500
+- delta vs SS05: **+0.006875**
+- Gate: **PASS**
+- runtime: **140.55 min**
+- checkpoint: ss07b_m_effusion_k96_h5_broad_top75_best.bin
+- checkpoint SHA256: 47cc7ccc6d66f480f06fd260cb25307e0857fd72c67c615e058178d9b033e002
+- history SHA256: 68735ee41efbef7c5df55b8826ccb3c026995e977568f03ceac25993654cc6b0
+- val prediction SHA256: a402ec203242602f325699aec9d04536deb962e16a85901694570443d045db7b
+
+Insight:
+- SS05보다 소폭 개선.
+- Uniform K96 HDF5 pipeline의 third target까지 정상 완료.
+- independent Gate PASS.
+
+---
+
+### SS08 — Final 12-Specialist Notebook Submission — PREPARED
+
+Status:
+- 12 target first-pass coverage 완료
+- 12 best checkpoint를 하나의 Kaggle Dataset에 정리
+- final notebook 생성 완료
+- Kaggle Run All / Public LB는 아직 대기
+
+Inference contract:
+- SS03 adapted DINOv2-Base는 selector feature extraction 용도
+- SS05 Shared Hierarchical MIL은 attention target의 slice ranking 용도
+- Uniform K96 target은 deterministic series-balanced uniform selection
+- selected raw MRI slice를 각 target DINOv2-Small Specialist에 입력
+- final submission.csv의 12 probability는 각 Specialist sigmoid output만 사용
+
+중요:
+- **SS05 MIL direct prediction은 사용하지 않는다.**
+- **Exp57의 70:30 hybrid를 사용하지 않는다.**
+- **최종 probability blend / ensemble 없음.**
+- SS05 MIL은 selector이며 prediction branch가 아니다.
+
+Output contract:
+- /kaggle/working/submission.csv
 
 <!-- SPECIALIST_2026_10_02_CURRENT_END -->
 
