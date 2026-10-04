@@ -22,65 +22,69 @@
 
 <!-- SPECIALIST_2026_10_02_CURRENT_START -->
 
-## 2026-10-04 — Specialist 현재 상태
+## 2026-10-04 — Specialist first-pass 완료 / SS08 제출 준비
 
 현재 최고 Public LB는 **0.918 (Exp57)** 으로 유지한다.
+새 Specialist 제출은 아직 실행/채점 전이므로 Public LB 최고값은 갱신하지 않는다.
 
-최종 LB 제출 전 내부 목표는 **12개 target 각각 independent Specialist Fixed Val ROC-AUC >= 0.90**이다.
-Fixed Val은 pseudo 기반 development proxy이며 Public LB와 동일한 지표로 해석하지 않는다.
+12개 target independent Specialist의 first-pass가 **12 / 12 완료**되었다.
+내부 Gate는 target별 Fixed Val ROC-AUC >= 0.90이며, Fixed Val은 pseudo 기반 development proxy이지 Public LB가 아니다.
 
-### Independent Specialist 현황
+### 현재 target별 best Fixed Val
 
-- **Medial Meniscus: 0.993750 — PASS**
-- **Synovitis: 0.981600 — PASS**
-- **Baker's: 0.975000 — PASS**
-- **ACL: 0.9609375 — PASS**
-- **Contusion: 0.9540625 — PASS**
-  - SS07B-I2 patience-6 rerun
-  - 이전 SS07B-I 0.9371875 대비 **+0.016875**
-  - SS05 0.875625 대비 **+0.0784375**
-- **Medial OA: 0.920000 — PASS**
-  - SS05 0.921250 대비 **-0.001250**
-- **MCL: 0.904375 — PASS**
-- **Lateral Meniscus: 0.8940625 — freeze / NOT YET**
-- **PF OA: 0.892500 — freeze / NOT YET**
-- **Fracture: 0.8788889 — freeze / NOT YET**
-- **Lateral OA: untrained**
-- **Effusion: untrained**
+| Target | Best AUC | SS05 ref | Status |
+|---|---:|---:|---|
+| Medial Meniscus | **0.9937500** | 0.958125 | **PASS** |
+| Synovitis | **0.9816000** | 0.982400 | **PASS** |
+| Baker's | **0.9750000** | 0.883125 | **PASS** |
+| ACL | **0.9609375** | 0.940000 | **PASS** |
+| Effusion | **0.9593750** | 0.952500 | **PASS** |
+| Contusion | **0.9540625** | 0.875625 | **PASS** |
+| Medial OA | **0.9200000** | 0.921250 | **PASS** |
+| MCL | **0.9043750** | 0.767500 | **PASS** |
+| Lateral OA | **0.8946875** | 0.861250 | freeze / NOT YET |
+| Lateral Meniscus | **0.8940625** | 0.760625 | freeze / NOT YET |
+| PF OA | **0.8925000** | 0.898125 | freeze / NOT YET |
+| Fracture | **0.8788889** | 0.774444 | freeze / NOT YET |
 
-현재 independent Gate PASS = **7 / 12**.
+Independent Gate PASS = **8 / 12**.
+First-pass coverage = **12 / 12**.
 
-### 현재 인사이트
+12개 target best AUC의 단순 평균은 **0.93410324 = 93.41 / 100**이다.
+SS05 target macro 0.88124745 대비 내부 평균 기준 **+0.05285579 (+5.29 points)**.
+이 값은 Public LB 예상치가 아니라 Fixed Val target-best macro다.
 
-- Contusion은 patience 4→6 controlled rerun에서 **0.9540625**로 개선되었지만 다시 best epoch는 1이었다.
-  - 즉 이전 e3→e5 회복이 이후 지속된다는 가설은 재현되지 않았다.
-  - 동일 nominal seed/recipe에서도 run 간 결과 차이가 커서 이 target은 training stochasticity와 Fixed Val selection sensitivity를 기록해 둔다.
-  - 추가 micro-tuning은 중단하고 새 checkpoint를 채택한다.
-- PF OA K96 HDF5 pipeline은 정상 동작했다.
-  - HDF5 worker-local read, valid_mask, 120 studies / 763 padding entries, batch 4 모두 PASS.
-  - best는 epoch 6의 **0.892500**으로 Gate 미달, SS05보다 -0.005625.
-  - epoch 6 이후 train loss는 계속 하락하지만 Val AUC는 회복하지 못해 train-validation divergence가 보인다.
-  - Broad Top-75 negative 최소 confidence가 **0.175325**까지 내려간 점은 추후 supervision quality 점검 후보이며 원인으로 단정하지 않는다.
+### 마지막 first-pass 결과
 
-### Post-LB 개선 우선순위
+- **SS07B-L — Lateral OA / Uniform K96 HDF5**
+  - best epoch 4
+  - best AUC **0.8946875**
+  - SS05 대비 **+0.0334375**
+  - Gate NOT YET
+  - checkpoint SHA256: ac7e1b690463ddd1a2106773d7d058d6e19f13da147e3dd761db0dbe96786621
+- **SS07B-M — Effusion / Uniform K96 HDF5**
+  - best epoch 5
+  - best AUC **0.959375**
+  - SS05 대비 **+0.006875**
+  - Gate PASS
+  - checkpoint SHA256: 47cc7ccc6d66f480f06fd260cb25307e0857fd72c67c615e058178d9b033e002
 
-1. Fixed Val < 0.90
-2. Gate PASS지만 independent Specialist < SS05
-3. LB 결과상 약한 target
+### SS08 최종 제출 구조
 
-현재 재방문 후보:
-- Lateral Meniscus
-- PF OA
-- Fracture
-- Medial OA
-- Synovitis
+SS08 final notebook은 **12 Specialist 단독 최종 확률**을 submission.csv에 기록한다.
 
-### 남은 first-pass target
+- SS03 adapted DINOv2-Base + SS05 Shared MIL: hidden-test slice selection용
+- SS05 MIL의 disease prediction logits: 최종 제출에 사용하지 않음
+- Exp57처럼 70:30 direct/MIL blend: 사용하지 않음
+- 최종 각 target probability: 해당 target Specialist의 sigmoid probability
+- Uniform K96 targets(Lateral OA / PF OA / Effusion)은 SS06B deterministic uniform selector 사용
+- Attention targets는 SS05 attention을 selector로 사용
+- output: /kaggle/working/submission.csv
 
-- **Lane A: Lateral OA K96 HDF5**
-- **Lane B: Effusion K96 HDF5**
+즉 **MIL은 selector로만 참여하고, 최종 예측값은 12개 Specialist만 사용**한다.
 
 Persistent target cache는 **12 / 12 완료**.
+SS08 Notebook 제출 후 Public LB를 확인하고 post-LB 개선 우선순위를 결정한다.
 
 <!-- SPECIALIST_2026_10_02_CURRENT_END -->
 
