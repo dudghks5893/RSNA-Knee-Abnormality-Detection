@@ -12,144 +12,171 @@
 
 <!-- SPECIALIST_2026_10_02_CURRENT_START -->
 
-## 2026-10-04 — Current Specialist State
+## 2026-10-04 — Current Specialist State / First-pass Complete
 
 ### 1. 목표 / 평가 규칙
 
 - Public LB best: **0.918 — Exp57**
-- Specialist 내부 목표: **12 target 각각 independent Fixed Val ROC-AUC >= 0.900000**
+- independent Specialist first-pass: **12 / 12 완료**
+- 내부 Gate: target별 **Fixed Val ROC-AUC >= 0.900000**
 - Fixed Val은 pseudo 기반 development proxy이며 Public LB가 아니다.
 - shared SS05 결과가 0.90을 넘더라도 independent Specialist Gate PASS로 세지 않는다.
 
-### 2. 현재 independent Specialist 결과
+### 2. 현재 independent Specialist best
 
-| Target | Best Fixed Val AUC | SS05 ref | Status | Best experiment |
-|---|---:|---:|---|---|
-| Medial Meniscus | **0.993750** | 0.958125 | **PASS** | SS07B-G |
-| Synovitis | **0.981600** | 0.982400 | **PASS** | SS07B-H |
-| Baker's | **0.975000** | 0.883125 | **PASS** | SS07B-F |
-| ACL | **0.9609375** | 0.940000 | **PASS** | SS07B-E |
-| Contusion | **0.9540625** | 0.875625 | **PASS** | SS07B-I2 patience-6 rerun |
-| Medial OA | **0.920000** | 0.921250 | **PASS** | SS07B-J |
-| MCL | **0.904375** | 0.767500 | **PASS** | SS07B-A |
-| Lateral Meniscus | **0.8940625** | 0.760625 | freeze / NOT YET | SS07A-X1 |
-| PF OA | **0.892500** | 0.898125 | freeze / NOT YET | SS07B-K |
-| Fracture | **0.8788889** | 0.774444 | freeze / NOT YET | SS07B-C |
-| Lateral OA | — | 0.861250 | untrained | — |
-| Effusion | — | 0.952500 | untrained | — |
+| Target | Best Fixed Val AUC | SS05 ref | Delta vs SS05 | Status | Best experiment |
+|---|---:|---:|---:|---|---|
+| Medial Meniscus | **0.9937500** | 0.958125 | +0.0356250 | **PASS** | SS07B-G |
+| Synovitis | **0.9816000** | 0.982400 | -0.0008000 | **PASS** | SS07B-H |
+| Baker's | **0.9750000** | 0.883125 | +0.0918750 | **PASS** | SS07B-F |
+| ACL | **0.9609375** | 0.940000 | +0.0209375 | **PASS** | SS07B-E |
+| Effusion | **0.9593750** | 0.952500 | +0.0068750 | **PASS** | SS07B-M |
+| Contusion | **0.9540625** | 0.875625 | +0.0784375 | **PASS** | SS07B-I2 |
+| Medial OA | **0.9200000** | 0.921250 | -0.0012500 | **PASS** | SS07B-J |
+| MCL | **0.9043750** | 0.767500 | +0.1368750 | **PASS** | SS07B-A |
+| Lateral OA | **0.8946875** | 0.861250 | +0.0334375 | freeze / NOT YET | SS07B-L |
+| Lateral Meniscus | **0.8940625** | 0.760625 | +0.1334375 | freeze / NOT YET | SS07A-X1 |
+| PF OA | **0.8925000** | 0.898125 | -0.0056250 | freeze / NOT YET | SS07B-K |
+| Fracture | **0.8788889** | 0.774444 | +0.1044449 | freeze / NOT YET | SS07B-C |
 
-현재 independent Gate PASS = **7 / 12**.
+Independent Gate PASS = **8 / 12**.
+NOT YET = **4 / 12**.
+Untrained = **0 / 12**.
 
-### 3. SS07B-I2 — Contusion patience-6 rerun
+### 3. Current target-best macro
 
-Controlled change:
-- 이전 SS07B-I와 동일 seed / data / batch 4 / grad accumulation 1 / LR / scheduler
-- patience만 **4 → 6**
-- K48 attention / Broad class-wise Top-75%
+12개 best Fixed Val AUC 단순 평균:
 
-Epoch:
-```text
-e1  0.954063 <- BEST
-e2  0.906875
-e3  0.868125
-e4  0.905625
-e5  0.868750
-e6  0.813125
-e7  0.903125
-```
+- **0.93410324**
+- 100점 환산: **93.41 / 100**
+- SS05 target macro: **0.88124745**
+- delta vs SS05 macro: **+0.05285579 = +5.29 points**
 
-Result:
-- best epoch: **1**
-- best Fixed Val AUC: **0.9540625**
-- previous SS07B-I: 0.9371875
-- delta vs previous: **+0.016875**
-- delta vs SS05: **+0.0784375**
-- runtime: **53.59 min**
-- checkpoint SHA256: `6854595836eff585dde5acd8cb20e92817d83fc68c442c77392363d8763c6805`
+주의:
+- target마다 별도 Specialist와 best checkpoint를 선택한 결과의 macro다.
+- 반복 model selection이 포함된 development score이므로 Public LB 예상치로 해석하지 않는다.
 
-Insight:
-- 이전 run의 e3→e5 회복이 e6 이후 계속된다는 가설은 이번 rerun에서 재현되지 않았다.
-- 두 run 모두 best epoch가 1이므로 Contusion은 빠른 early peak 특성을 보인다.
-- 동일 nominal seed/recipe에서도 best AUC가 0.9372 → 0.9541로 달라졌다. 원인을 특정하지 않고 training stochasticity / Fixed Val selection sensitivity로 기록한다.
-- 새 checkpoint를 채택하고 추가 micro-tuning은 중단한다.
+### 4. 마지막 first-pass — SS07B-L Lateral OA
 
-### 4. SS07B-J — Medial OA
-
-- selector: SS06B attention K64
-- Broad class-wise Top-75%
-- Fixed Val 80 = 40P / 40N
-- best epoch: **6**
-- best AUC: **0.920000**
-- SS05: 0.921250
-- delta: **-0.001250**
-- Gate: **PASS**
-- checkpoint SHA256: `f90fdf5e1ba886c05de8075c83828d57ec70cc13b6937dc56ae1a694e4e13c19`
-
-### 5. SS07B-K — PF OA K96 HDF5
-
-Execution contract:
-- selector: **SS06B uniform K96**
-- HDF5 lossless gzip cache
+- selector: SS06B uniform K96
+- cache: lossless HDF5
 - valid_mask -> Transformer src_key_padding_mask
-- padding studies: **120**
-- padding entries: **763**
-- batch 4 / grad accumulation 1
-- Fixed Val 80 = 40P / 40N
-
-Epoch:
-```text
-e1  0.813437
-e2  0.879375
-e3  0.861875
-e4  0.867500
-e5  0.875625
-e6  0.892500 <- BEST
-e7  0.883750
-e8  0.852812
-e9  0.873438
-e10 0.866875
-```
-
-Result:
-- best epoch: **6**
-- best AUC: **0.892500**
-- SS05: 0.898125
-- delta: **-0.005625**
+- padding: 120 studies / 763 entries
+- Broad class-wise Top-75%
+- Fixed Val: 80 = 40P / 40N
+- best epoch: **4**
+- best AUC: **0.8946875**
+- SS05: 0.861250
+- delta: **+0.0334375**
 - Gate: **NOT YET**
-- runtime: **164.35 min**
-- checkpoint SHA256: `b83b16ab42d43d8b741969136d7c1681a1ba5a84b549aff269b572c9b5677719`
+- runtime: **118.54 min**
+- checkpoint: ss07b_l_lateral_oa_k96_h5_broad_top75_best.bin
+- checkpoint SHA256: ac7e1b690463ddd1a2106773d7d058d6e19f13da147e3dd761db0dbe96786621
 
-Insight:
-- K96 HDF5 + worker-local read + valid_mask pipeline은 정상 동작했다.
-- e6 이후 train loss는 계속 감소했지만 validation AUC는 best를 회복하지 못했다.
-- Broad Top-75 negative minimum confidence = **0.175325**, positive = **0.533502**.
-- negative supervision quality는 추후 점검 후보이나 현재 원인으로 단정하지 않는다.
-- 현재 checkpoint를 보존하고 첫-pass coverage를 우선한다.
+Validation trajectory:
+- e1 0.833125
+- e2 0.870625
+- e3 0.876562
+- e4 0.894688 BEST
+- e5 0.845938
+- e6 0.825000
+- e7 0.869375
+- e8 0.815000
 
-### 6. Freeze / revisit
+Interpretation:
+- SS05보다 의미 있게 상승했지만 0.90 Gate에는 0.0053125 부족했다.
+- e4 이후 train loss는 계속 하락하면서 validation AUC가 크게 흔들려 train-validation divergence가 보인다.
+- first-pass checkpoint를 보존하고 post-LB 개선 대상으로 이동한다.
 
-1순위 — Fixed Val < 0.90:
-- Lateral Meniscus 0.8940625
-- PF OA 0.892500
-- Fracture 0.8788889
+### 5. 마지막 first-pass — SS07B-M Effusion
 
-2순위 — PASS지만 SS05보다 낮음:
-- Medial OA 0.920000 vs 0.921250
-- Synovitis 0.981600 vs 0.982400
+- selector: SS06B uniform K96
+- cache: lossless HDF5
+- valid_mask -> Transformer src_key_padding_mask
+- padding: 120 studies / 763 entries
+- Broad class-wise Top-75%
+- Fixed Val: 80 = 40P / 40N
+- best epoch: **5**
+- best AUC: **0.959375**
+- SS05: 0.952500
+- delta: **+0.006875**
+- Gate: **PASS**
+- runtime: **140.55 min**
+- checkpoint: ss07b_m_effusion_k96_h5_broad_top75_best.bin
+- checkpoint SHA256: 47cc7ccc6d66f480f06fd260cb25307e0857fd72c67c615e058178d9b033e002
 
-### 7. 마지막 first-pass A/B
+Validation trajectory:
+- e1 0.939375
+- e2 0.948750
+- e3 0.957500
+- e4 0.958125
+- e5 0.959375 BEST
+- e6 0.949688
+- e7 0.950000
+- e8 0.926250
+- e9 0.926563
 
-- Lane A: **Lateral OA K96 HDF5**
-- Lane B: **Effusion K96 HDF5**
+Interpretation:
+- SS05보다 소폭 개선했고 independent Specialist Gate를 통과했다.
+- K96 HDF5 / padding-mask pipeline이 세 uniform target에서 모두 안정적으로 실행됐다.
 
-두 target 완료 후 12/12 independent Specialist first-pass coverage가 완료된다.
+### 6. Final selected Specialist checkpoints
 
-### 8. 운영 원칙
+| Target | Checkpoint SHA256 |
+|---|---|
+| ACL | d9765e83c2048910a1ba688677014cea4545089c5246ac11af6e85f2c96dda4d |
+| MCL | 891f124dc4ee7cb50b506e88308a0a2040a60647f9f7fb2fd08aeef6d1e3ea5c |
+| Medial Meniscus | e67161eec0a206d9bc15c813e7034ab6069cf92a1e67916871901d8177b96d45 |
+| Lateral Meniscus | 12c4044de1e04e83168f17eb4dea0e5ca4df98ac99ebda6e62dfb3614bfe846a |
+| Medial OA | f90fdf5e1ba886c05de8075c83828d57ec70cc13b6937dc56ae1a694e4e13c19 |
+| Lateral OA | ac7e1b690463ddd1a2106773d7d058d6e19f13da147e3dd761db0dbe96786621 |
+| PF OA | b83b16ab42d43d8b741969136d7c1681a1ba5a84b549aff269b572c9b5677719 |
+| Effusion | 47cc7ccc6d66f480f06fd260cb25307e0857fd72c67c615e058178d9b033e002 |
+| Synovitis | d4820ee535f1d54e72e1775d47b996e1a6aee4a64c9e115f7f766e8615a64aae |
+| Baker's | 853ee3e042d26f388756b65b6b090ef311a47fd1aadf4f01e60acd92e268bf97 |
+| Contusion | 6854595836eff585dde5acd8cb20e92817d83fc68c442c77392363d8763c6805 |
+| Fracture | c52285d2e2bc536b4ee667bdbb45663c62f630ab75c4abf81a32a038351392d6 |
 
-- exact input root 우선, 전체 `/kaggle/input` rglob 금지
-- K96은 valid_mask를 Transformer padding mask로 반드시 사용
-- Gate PASS checkpoint 보존
+### 7. SS08 final submission contract
+
+SS08 final notebook status: **prepared / Kaggle Run All & LB pending**.
+
+Hidden Test inference:
+
+1. DICOM physical ordering / SS04-equivalent single-slice preprocessing
+2. SS03 adapted DINOv2-Base -> single-slice feature
+3. SS05 Shared Hierarchical MIL -> attention selector for attention-policy targets
+4. SS06B frozen target policy -> target-specific K selection
+5. selected raw MRI slices -> target-specific DINOv2-Small Specialist
+6. each Specialist sigmoid probability -> submission.csv
+
+Critical distinction:
+- **SS05 MIL prediction logits are NOT used in final submission.**
+- SS05 MIL is used only to obtain target-aware attention for selector targets.
+- Lateral OA / PF OA / Effusion use deterministic uniform K96 selection.
+- **No Exp57-style 70:30 blend.**
+- **No shared-MIL direct prediction branch.**
+- Final 12 columns are **12 independent Specialist probabilities only**.
+
+### 8. Post-LB revisit priority
+
+1. Fixed Val < 0.90
+   - Fracture 0.8788889
+   - PF OA 0.8925000
+   - Lateral Meniscus 0.8940625
+   - Lateral OA 0.8946875
+2. PASS but below SS05
+   - Medial OA 0.9200000 vs 0.921250
+   - Synovitis 0.9816000 vs 0.982400
+3. Public LB / target-level error analysis after SS08 submission
+
+### 9. Operating rules
+
+- exact input root 우선, 전체 /kaggle/input recursive search 금지
+- K96 valid_mask를 Transformer padding mask로 반드시 사용
+- first-pass best checkpoint 보존
 - 같은 Fixed Val에 대한 반복 micro-search 제한
+- Public LB 확인 전 현재 0.918을 최고 LB로 유지
 
 <!-- SPECIALIST_2026_10_02_CURRENT_END -->
 
