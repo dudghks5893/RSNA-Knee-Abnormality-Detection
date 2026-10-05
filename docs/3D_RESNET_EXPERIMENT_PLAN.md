@@ -463,7 +463,7 @@ R3D-04/05 결과를 보고 결정한다.
 - [x] pretrained 3D ResNet source 결정 — MedicalNet original common lineage
 - [x] Transformer 세부 baseline 결정 — 2L / d512 / 8 heads / FFN2048
 - [x] Gold58 3-Fold manifest 생성 — R3D-00A seed 20261059 / 20·19·19 / class coverage PASS
-- [~] 3-Fold leakage-safe pseudo 방식 재현 검증 중 — R3D-00A REVIEW → R3D-00A2 Common57 exact audit
+- [~] 3-Fold leakage-safe pseudo 방식 재현 검증 중 — R3D-00A2도 REVIEW → R3D-00A3 V4 Formula Forensic Audit
 - [ ] R3D-01 실행
 - [ ] R3D-02 실행
 - [ ] R3D-03A/B/C 실행
@@ -704,9 +704,9 @@ Gold Val 약 19~20
 Notebook:
 - `R3D-00A_Gold58_3Fold_V4_Repro_Audit.ipynb`
 
-#### R3D-00B — nnU-Net RSNA Compatibility Audit
+#### R3D-00B / B2 — nnU-Net RSNA Compatibility Audit
 
-상태: **READY TO RUN**
+상태: **B environment failure → B2 READY TO RUN**
 
 - Runtime: T4 x1
 - Internet: On
@@ -718,8 +718,20 @@ Notebook:
   - RSNA representative Sagittal / Coronal / Axial series inference
   - mask structure presence / foreground ratio / connected-component sanity audit
 
+R3D-00B first run:
+- Kaggle base environment에 nnU-Net dependency를 직접 설치하면서 NumPy가 2.5.3으로 변경
+- 기존 SciPy binary와 ABI 충돌
+- `scipy.ndimage` import에서 중단
+- segmentation model 자체 실패가 아니라 environment failure로 판정
+
+R3D-00B2 수정:
+- isolated virtualenv
+- Kaggle base NumPy/SciPy/Pandas version 고정
+- `scipy.ndimage` 제거
+- Connected Component는 SimpleITK 사용
+
 Notebook:
-- `R3D-00B_nnUNet_RSNA_Compatibility_Audit.ipynb`
+- `R3D-00B2_nnUNet_RSNA_Compatibility_Audit.ipynb`
 
 두 실험은 독립이므로 **동시에 실행**한다.
 
@@ -738,17 +750,30 @@ Notebook:
 R3D-00A는 GPT를 58건 전체로, V2를 57건으로 각각 계산했다.
 따라서 GPT AUC와 reader weight가 기존 V4와 달라졌다.
 
-다음 CPU audit:
-**R3D-00A2 — Common57 V4 Exact Reproduction + Formula Oracle Audit**
+R3D-00A2 결과:
 
-- 같은 Gold57에서 GPT / V2를 함께 평가
-- reader skill / squared weight / simple / availability-aware route AUC 재현
-- 기존 routed-broad 4,349건을 oracle로 soft-label 계산식 직접 대조
-- confidence 공식도 기존 artifact에 대해 candidate formula audit
-- confidence까지 exact reproduction되기 전에는 새 3-Fold pseudo 생성 금지
+- manifest exact match: PASS
+- Common Gold57: PASS
+- V2 AUC: 12 target exact
+- GPT AUC / skill / weight: FAIL
+- broad label oracle max error: 0.58
+- confidence formula exact reproduction: FAIL
+- overall: REVIEW
+
+해석:
+Common57 자체가 핵심 원인이 아니며, 기존 V4는 GPT raw target 대신 confidence 기반 변환 signal을 routing에 사용했다.
+
+다음 CPU audit:
+**R3D-00A3 — V4 Formula Forensic Audit**
+
+- master의 route-independent internal reader signals로 raw→reader transform 복구
+- 기존 V4 fold0~4 + fold policy 60개 조합을 dynamic-route oracle로 사용
+- Gold57 routing AUC / skill / squared weight exact reproduction 재검증
+- fold pseudo label / confidence formula exact reproduction
+- full-data route / top-level pseudo label은 새 R3D training input으로 직접 재사용 금지
 
 Notebook:
-- `R3D-00A2_Common57_V4_Exact_Audit.ipynb`
+- `R3D-00A3_V4_Formula_Forensic_Audit.ipynb`
 
 다음 dependency:
 
