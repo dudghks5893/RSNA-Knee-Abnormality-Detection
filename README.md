@@ -1,5 +1,20 @@
 # RSNA Knee Abnormality Detection — Experiment Log
 
+
+## 2026-10-05 — 3D ResNet 신규 실험 계보
+
+다음 작업은 아래 3개 기준 문서부터 확인한다.
+
+- [완료 실험 기록](docs/EXPERIMENT_HISTORY.md)
+- [3D ResNet 현재 계획 / 진척 상태](docs/3D_RESNET_EXPERIMENT_PLAN.md)
+- [AI Agent Kaggle Notebook 작성 규칙](docs/AI_AGENT_KAGGLE_NOTEBOOK_RULES.md)
+
+현재 신규 계보 상태: **설계 완료 / R3D-00 시작 전**  
+다음 단계: **R3D-00 — Data / Segmentation Source Audit**
+
+---
+
+
 >
 
 
