@@ -181,13 +181,15 @@ Insight:
 
 ---
 
-### SS08 — Final 12-Specialist Notebook Submission — PREPARED
+### SS08 — First 12-Specialist Notebook Submission — LB 0.876
 
 Status:
 - 12 target first-pass coverage 완료
 - 12 best checkpoint를 하나의 Kaggle Dataset에 정리
 - final notebook 생성 완료
-- Kaggle Run All / Public LB는 아직 대기
+- Kaggle Run All 완료
+- Public LB: **0.876**
+- Exp57 0.918 대비 **-0.042**
 
 Inference contract:
 - SS03 adapted DINOv2-Base는 selector feature extraction 용도
@@ -204,6 +206,16 @@ Inference contract:
 
 Output contract:
 - /kaggle/working/submission.csv
+
+Public LB result:
+- **0.876**
+- previous best Exp57: **0.918**
+- delta: **-0.042**
+
+Insight:
+- 내부 Fixed Val macro 0.9341이 hidden-test 성능으로 재현되지 않았다.
+- SS08은 12개 target별 best single Specialist만 사용했고, Exp57의 3-Fold averaging과 full-MRI direct branch를 제거했다.
+- 따라서 이번 하락을 "Specialist architecture가 무조건 실패"라고 단정하지 않고, branch/ensemble 제거와 Fixed Val selection bias를 함께 분리 검증한다.
 
 <!-- SPECIALIST_2026_10_02_CURRENT_END -->
 
