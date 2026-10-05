@@ -462,8 +462,8 @@ R3D-04/05 결과를 보고 결정한다.
 - [x] MRI + mask exact fusion 결정 — feature-conditioning / anatomy-token
 - [x] pretrained 3D ResNet source 결정 — MedicalNet original common lineage
 - [x] Transformer 세부 baseline 결정 — 2L / d512 / 8 heads / FFN2048
-- [ ] Gold58 3-Fold manifest 생성
-- [~] 3-Fold leakage-safe pseudo 방식 확정 / artifact 생성 전
+- [x] Gold58 3-Fold manifest 생성 — R3D-00A seed 20261059 / 20·19·19 / class coverage PASS
+- [~] 3-Fold leakage-safe pseudo 방식 재현 검증 중 — R3D-00A REVIEW → R3D-00A2 Common57 exact audit
 - [ ] R3D-01 실행
 - [ ] R3D-02 실행
 - [ ] R3D-03A/B/C 실행
@@ -691,7 +691,7 @@ Gold Val 약 19~20
 
 #### R3D-00A — Gold58 3-Fold + V4 Routing Reproduction Audit
 
-상태: **READY TO RUN**
+상태: **COMPLETED — REVIEW**
 
 - Runtime: CPU
 - Internet: Off
@@ -722,6 +722,33 @@ Notebook:
 - `R3D-00B_nnUNet_RSNA_Compatibility_Audit.ipynb`
 
 두 실험은 독립이므로 **동시에 실행**한다.
+
+### R3D-00A 실행 결과 — 2026-10-05
+
+- Gold58 exactly-once: PASS
+- deterministic split seed: `20261059`
+- Fold sizes: `20 / 19 / 19`
+- 모든 12 target에서 모든 Fold Positive/Negative coverage: PASS
+- manifest SHA256: `246f252a1ce4faaafa1b7d30e2c75cde6d79951cb780b0b33bf4f4dd12ad7e4b`
+- V2 AUC reproduction: exact
+- GPT / reader weight / blend reproduction: REVIEW
+
+원인:
+기존 V4 method는 두 reader 공통 Gold overlap `57`건을 calibration에 사용했는데,
+R3D-00A는 GPT를 58건 전체로, V2를 57건으로 각각 계산했다.
+따라서 GPT AUC와 reader weight가 기존 V4와 달라졌다.
+
+다음 CPU audit:
+**R3D-00A2 — Common57 V4 Exact Reproduction + Formula Oracle Audit**
+
+- 같은 Gold57에서 GPT / V2를 함께 평가
+- reader skill / squared weight / simple / availability-aware route AUC 재현
+- 기존 routed-broad 4,349건을 oracle로 soft-label 계산식 직접 대조
+- confidence 공식도 기존 artifact에 대해 candidate formula audit
+- confidence까지 exact reproduction되기 전에는 새 3-Fold pseudo 생성 금지
+
+Notebook:
+- `R3D-00A2_Common57_V4_Exact_Audit.ipynb`
 
 다음 dependency:
 
