@@ -139,7 +139,7 @@ Interpretation:
 
 ### 7. SS08 final submission contract
 
-SS08 final notebook status: **prepared / Kaggle Run All & LB pending**.
+SS08 final notebook status: **RUN COMPLETE / Public LB 0.876**.
 
 Hidden Test inference:
 
@@ -168,7 +168,7 @@ Critical distinction:
 2. PASS but below SS05
    - Medial OA 0.9200000 vs 0.921250
    - Synovitis 0.9816000 vs 0.982400
-3. Public LB / target-level error analysis after SS08 submission
+3. SS08 Public LB 0.876 원인 분리: Exp57 대비 single-model / no-direct-branch / Specialist 효과 분리
 
 ### 9. Operating rules
 
@@ -176,7 +176,7 @@ Critical distinction:
 - K96 valid_mask를 Transformer padding mask로 반드시 사용
 - first-pass best checkpoint 보존
 - 같은 Fixed Val에 대한 반복 micro-search 제한
-- Public LB 확인 전 현재 0.918을 최고 LB로 유지
+- SS08 Public LB = 0.876; project best는 Exp57 = 0.918 유지
 
 <!-- SPECIALIST_2026_10_02_CURRENT_END -->
 
