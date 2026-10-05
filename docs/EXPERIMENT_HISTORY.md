@@ -198,9 +198,44 @@ R3D-00A2는 GPT와 V2가 모두 존재하는 동일한 Common Gold57에서
 기존 reader skill / squared weight / simple / availability-aware routing을 재현하고,
 기존 routed-broad 4,349건을 oracle로 label/confidence 공식을 직접 대조한다.
 
+
 ---
 
-## 7. 기록 원칙
+## 7. R3D-00A2 — Common57 V4 Exact Reproduction + Formula Oracle Audit
+
+### 결과
+
+- R3D-00A manifest SHA256 exact match: **PASS**
+- Common Gold overlap: **57**
+- V2 AUC: **12 target 모두 exact**
+- GPT AUC / skill / squared reader weight: **FAIL**
+- routing math max error: **0.0997151**
+- broad label oracle max error: **0.58**
+- confidence formula exact reproduction: **FAIL**
+- overall status: **REVIEW**
+
+### 해석
+
+Common57로 calibration population을 맞춰도 GPT reference AUC가 재현되지 않았다.
+따라서 기존 V4는 report_labels_gpt56sol.csv target 값을 그대로 routing score로 사용한 것이 아니다.
+반면 V2 AUC는 계속 exact이므로 Gold / V2 source / AUROC 계산식은 정상이다.
+
+기존 V4 method의 GPT confidence softening 원칙과 master 내부 reader signal을 기준으로
+reader preprocessing → route score → final pseudo label/confidence 수학을 추가 복구해야 한다.
+
+### 판정
+
+- Gold58 3-Fold manifest: **최종 채택**
+- R3D-00A2 routing / final pseudo formula: **미채택**
+- 새 3-Fold pseudo 생성: **계속 보류**
+- 후속: **R3D-00A3 — V4 Formula Forensic Audit**
+
+R3D-00A3는 master의 route-independent reader 내부 신호와 기존 V4 fold0~4 / fold policies를
+dynamic-route oracle로 사용해 reader preprocessing, route score, label, confidence 수학을 복구한다.
+
+---
+
+## 8. 기록 원칙
 
 이 문서에는 **실행이 끝난 실험만 추가**한다.
 
