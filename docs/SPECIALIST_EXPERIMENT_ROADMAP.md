@@ -59,29 +59,23 @@ K96 공통:
 - Lateral OA: **0.8946875 / NOT YET**
 - Effusion: **0.959375 / PASS**
 
-### 즉시 다음 단계 — SS08 Public LB
+### SS08 Public LB 결과
 
-SS08 final notebook으로 첫 12-Specialist submission을 실행한다.
+첫 12-Specialist submission:
+- Public LB: **0.876**
+- Exp57 best: **0.918**
+- delta: **-0.042**
 
-Final inference:
-1. Hidden Test MRI
-2. SS03 adapted DINOv2-Base feature extraction
-3. SS05 Shared MIL attention selector 또는 SS06B uniform selector
-4. target-specific selected raw MRI slices
-5. 12 independent DINOv2-Small Specialists
-6. 12 Specialist sigmoid probabilities
-7. submission.csv
-
-이번 first Specialist LB는 구조를 단순하게 유지한다.
-
-- shared MIL direct prediction branch 없음
+SS08은:
+- shared MIL direct prediction 없음
 - Exp57 70:30 blend 없음
-- target-level blend 없음
-- specialist ensemble 없음
-- 각 target 현재 best single checkpoint 1개
+- Fold ensemble 없음
+- target별 single Specialist probability만 사용
 
-SS05 MIL은 prediction model이 아니라 attention selector로만 사용한다.
-Lateral OA / PF OA / Effusion은 uniform K96이므로 SS05 target attention으로 slice를 고르지 않는다.
+결론:
+- pure Specialist-only 구조는 현재 hidden test에서 Exp57보다 명확히 약했다.
+- 다만 SS08과 Exp57은 Specialist 여부 외에도 Fold ensemble / direct branch 유무가 다르므로, 한 요소만 원인으로 확정하지 않는다.
+- 다음 단계는 Exp57을 강한 anchor로 두고 Specialist branch를 소량 섞는 controlled blend 또는 target-level replacement로 보완 효과를 확인한다.
 
 ### SS08 이후 개선 순서
 
@@ -108,7 +102,7 @@ Lateral OA / PF OA / Effusion은 uniform K96이므로 SS05 target attention으�
 
 Persistent target cache: **12 / 12 완료**.
 Independent Specialist first-pass: **12 / 12 완료**.
-SS08 final notebook: **prepared / run pending**.
+SS08 final notebook: **RUN COMPLETE / Public LB 0.876**.
 
 <!-- SPECIALIST_2026_10_02_CURRENT_END -->
 
