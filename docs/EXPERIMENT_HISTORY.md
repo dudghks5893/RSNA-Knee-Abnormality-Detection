@@ -128,9 +128,79 @@ Public LB 예상치로 사용하지 않는다.
 DINOv2는 현재 신규 계보에서 비교 대상에서 제외한다.
 기존에 충분히 실험했으며, 3D ResNet 최종 제출이 기대 이하일 경우에만 다시 비교 후보로 복귀한다.
 
+
 ---
 
-## 6. 기록 원칙
+## 6. R3D-00A — Gold58 3-Fold + V4 Routing Reproduction Audit
+
+### 목적
+
+- Official Gold58 deterministic multilabel-stratified 3-Fold manifest 생성
+- Fold별 12 target Positive / Negative coverage 확인
+- 기존 V4 Target-Routed Consensus reader skill / weight / route 공식 재현 감사
+
+### 결과
+
+Gold / split:
+
+- Gold studies: **58**
+- Report-only studies: **4,349**
+- selected split seed: **20261059**
+- Fold sizes:
+  - Fold 0: **20**
+  - Fold 1: **19**
+  - Fold 2: **19**
+- 12 target 모두 모든 Fold에서 Positive / Negative 존재: **PASS**
+- manifest SHA256:
+  - `246f252a1ce4faaafa1b7d30e2c75cde6d79951cb780b0b33bf4f4dd12ad7e4b`
+
+V4 reproduction:
+
+- V2 AUC reproduction: **exact**
+- GPT AUC reproduction: **FAIL**
+- reader skill / squared weight reproduction: **FAIL**
+- route AUC reproduction: **FAIL**
+- overall contract: **REVIEW**
+
+주요 max absolute error:
+
+- GPT AUC: **0.0440263**
+- V2 AUC: **0.0**
+- GPT skill: **0.0880526**
+- V2 skill: **0.0**
+- GPT/V2 reader weight: **0.0797840**
+- simple blend AUC: **0.0286765**
+
+### 원인 분석
+
+기존 V4 method artifact의 `n_gold_used`는 target별 **57**이었다.
+
+현재 source 구조:
+
+- `report_labels_gpt56sol.csv`: Gold 58건 존재
+- `report_labels_v2.csv`: Gold overlap 57건
+
+R3D-00A는 GPT를 Gold58 전체에서 평가하고 V2를 57건에서 평가했다.
+따라서 두 reader를 같은 calibration population에서 비교하지 못했고,
+GPT AUC → reader skill → squared reader weight → blend AUC까지 연쇄적으로 달라졌다.
+
+반면 V2는 기존 V4와 정확히 일치했기 때문에
+Gold label / V2 source / AUC code 자체의 문제는 아니다.
+
+### 판정
+
+- **Gold58 3-Fold manifest는 채택**
+- **V4 routing reproduction은 미채택**
+- 새 3-Fold pseudo 생성은 보류
+- 후속: **R3D-00A2 — Common57 V4 Exact Reproduction + Formula Oracle Audit**
+
+R3D-00A2는 GPT와 V2가 모두 존재하는 동일한 Common Gold57에서
+기존 reader skill / squared weight / simple / availability-aware routing을 재현하고,
+기존 routed-broad 4,349건을 oracle로 label/confidence 공식을 직접 대조한다.
+
+---
+
+## 7. 기록 원칙
 
 이 문서에는 **실행이 끝난 실험만 추가**한다.
 
