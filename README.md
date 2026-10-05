@@ -84,7 +84,23 @@ SS08 final notebook은 **12 Specialist 단독 최종 확률**을 submission.csv�
 즉 **MIL은 selector로만 참여하고, 최종 예측값은 12개 Specialist만 사용**한다.
 
 Persistent target cache는 **12 / 12 완료**.
-SS08 Notebook 제출 후 Public LB를 확인하고 post-LB 개선 우선순위를 결정한다.
+### SS08 Public LB 결과
+
+- Submission: **First 12-Specialist Submission**
+- Structure: 12 Specialist probabilities only
+- Public LB: **0.876**
+- Previous best Exp57: **0.918**
+- Delta vs Exp57: **-0.042**
+- Project best remains **0.918**
+
+핵심 해석:
+- Fixed Val target-best macro **0.9341**과 hidden-test Public LB **0.876** 사이에 큰 generalization gap이 확인됐다.
+- 이번 한 번의 제출만으로 원인을 하나로 특정할 수는 없다.
+- SS08은 Exp57과 달리 3-Fold averaging과 full-MRI direct prediction branch를 제거했기 때문에, Specialist 자체의 문제와 ensemble/direct-branch 제거 효과가 섞여 있다.
+- pseudo 기반 Fixed Val에서 반복 target별 checkpoint selection을 수행했기 때문에 selection bias 가능성도 우선 점검한다.
+- 다음 단계는 모든 Specialist를 즉시 재학습하는 것이 아니라, Exp57 강한 branch를 기준점으로 유지하며 Specialist prediction의 보완 효과를 controlled blend로 확인하는 것이다.
+
+Persistent target cache는 **12 / 12 완료**.
 
 <!-- SPECIALIST_2026_10_02_CURRENT_END -->
 
