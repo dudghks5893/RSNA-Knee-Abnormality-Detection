@@ -9,8 +9,8 @@
 - [3D ResNet 현재 계획 / 진척 상태](docs/3D_RESNET_EXPERIMENT_PLAN.md)
 - [AI Agent Kaggle Notebook 작성 규칙](docs/AI_AGENT_KAGGLE_NOTEBOOK_RULES.md)
 
-현재 신규 계보 상태: **설계 완료 / R3D-00 시작 전**  
-다음 단계: **R3D-00 — Data / Segmentation Source Audit**
+현재 신규 계보 상태: **R3D-00 진행 중**  
+다음 단계: **R3D-00 — Data / Segmentation Source Audit (진행 중)**
 
 ---
 
