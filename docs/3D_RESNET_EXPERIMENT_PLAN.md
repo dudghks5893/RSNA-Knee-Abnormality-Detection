@@ -674,3 +674,59 @@ Gold Val 약 19~20
 - Fold별 target class coverage 확인
 - 새 3-Fold pseudo route policy 실제 생성
 - R3D-01 / R3D-02 artifact contract 확정
+
+
+## 13.8 Two-Account Parallel Execution Policy
+
+사용자 + 팀원 1명으로 Kaggle 실행을 최대 2개까지 병렬 수행할 수 있다.
+
+기본 원칙:
+
+- 서로 결과 의존성이 없는 실험은 A/B 두 계정에서 동시에 실행한다.
+- 같은 artifact를 동시에 생성/수정하는 실험은 병렬화하지 않는다.
+- 후속 실험이 선행 결과를 필요로 하면 해당 dependency만 기다린다.
+- backbone 3-Fold / model-size 비교 단계에서도 가능한 경우 2-run 병렬 실행을 기본으로 한다.
+
+### Current parallel wave — R3D-00
+
+#### R3D-00A — Gold58 3-Fold + V4 Routing Reproduction Audit
+
+상태: **READY TO RUN**
+
+- Runtime: CPU
+- Internet: Off
+- 목적:
+  - Gold58 deterministic multilabel 3-Fold manifest 생성
+  - fold target class coverage 확인
+  - 기존 V4 reader skill / reader weight / route AUC 공식 reproduction audit
+- pseudo 생성은 exact reproduction contract 확인 전까지 수행하지 않는다.
+
+Notebook:
+- `R3D-00A_Gold58_3Fold_V4_Repro_Audit.ipynb`
+
+#### R3D-00B — nnU-Net RSNA Compatibility Audit
+
+상태: **READY TO RUN**
+
+- Runtime: T4 x1
+- Internet: On
+- segmentation candidate:
+  - `aagatti/nnunet_knee`
+  - self-contained `3d_fullres` checkpoint 우선 compatibility test
+- 목적:
+  - 공개 test image / GT Dice-IoU validation
+  - RSNA representative Sagittal / Coronal / Axial series inference
+  - mask structure presence / foreground ratio / connected-component sanity audit
+
+Notebook:
+- `R3D-00B_nnUNet_RSNA_Compatibility_Audit.ipynb`
+
+두 실험은 독립이므로 **동시에 실행**한다.
+
+다음 dependency:
+
+- 00A reproduction PASS
+  → 새 3-Fold leakage-safe pseudo generator 작성 / 실행 가능
+- 00B compatibility PASS
+  → segmentation candidate A를 R3D-01 baseline으로 승격 가능
+- 둘 중 하나가 REVIEW여도 다른 쪽 후속 작업은 독립적으로 계속 진행한다.
