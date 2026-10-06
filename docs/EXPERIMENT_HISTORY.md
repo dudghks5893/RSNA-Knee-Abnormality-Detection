@@ -599,7 +599,55 @@ Result ZIP:
 
 ---
 
-## 13. R3D-06B — Series Policy Audit
+## 13. R3D-06A — All-Series Neutral D24×96 Search Cache
+
+### 목적
+
+기존 Full Manifest v2 inventory를 재생성하지 않고 전체 4,407 studies / 24,371 MRI series를
+series selection 없이 기존 R3D preprocessing으로 D24×96×96 float16 search cache로 변환했다.
+
+### 결과
+
+- studies: 4,407 exact
+- series: 24,371 exact
+- slice manifest rows: 819,078 exact
+- pixel decode failures: **0**
+- shards: **48**
+- cache bytes: **10,780,956,672**
+- cache size: **10.04055 GiB**
+- build runtime: **2.553 h**
+- SeriesInstanceUID unique: PASS
+- shard row sum 24,371 exact
+- all shard SHA256 present: PASS
+
+### Existing R3D cache parity
+
+- old cache studies: 1,446
+- old cache series compared: 4,338
+- missing series: 0
+- volume mismatch: 0
+- metadata mismatch: 0
+- **float16 volume exact parity: PASS**
+- **plane / Fluid / Fat metadata exact parity: PASS**
+
+따라서 R3D-03~05 계보의 canonical input과 새 all-series cache는 동일 preprocessing 계보로 직접 연결할 수 있다.
+
+### Frozen artifact
+
+- recommended Dataset: `rsna-knee-r3d-all-series-d24-96-v1`
+- metadata bundle: `r3d06a_metadata_bundle.zip`
+- metadata bundle SHA256: `0aacfaa0e0e19f4ddd541a99b82a00ad547e31e037ee441f9f5599be487d5586`
+- series_index.csv SHA256: `6d2ec1d6b8d92455d5a1cfa814fd5aea716c2e24e228738fb84c6e2b073dc8c2`
+- shard_manifest.csv SHA256: `940015dc76d55bdbec776630bde640f488ab7538dc41400f635e993821b9ace2`
+
+### 판정
+
+- **R3D-06A PASS**
+- Series Composition GPU screen 실행 gate 충족
+- 다음 paired screen: **C3 vs P2**
+
+---
+## 14. R3D-06B — Series Policy Audit
 
 ### 목적
 
