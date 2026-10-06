@@ -506,7 +506,77 @@ Result ZIP:
 
 ---
 
-## 12. 기록 원칙
+## 12. R3D-05C — R34 Mask ON vs OFF Paired Fold0 Ablation
+
+### 목적
+
+MedicalNet R34 + GLOB + backbone LR 1e-5를 고정하고,
+현재 nnU-Net anatomy mask-weighted anatomy token이 classification에 실제로 기여하는지 paired comparison으로 확인했다.
+
+### Paired contract
+
+- MASK_ON / MASK_OFF initial model SHA256 identical: PASS
+- sample UID trace SHA256 identical: PASS
+- same Fold0 validation UID order: PASS
+- pure FP32 forward/backward: PASS
+- same optimizer / scheduler / data / augmentation RNG
+- contract: PASS
+
+### Mask coverage
+
+- search cache: 1,446 studies
+- masks: 154 studies = 10.65%
+- Fold0 Gold Train: 38 studies / masked 36
+- Fold0 Gold Val: 20 studies / masked 20
+- Fold0 Pseudo1000: 1,000 studies / masked 97
+
+Mask availability가 Gold와 pseudo 사이에서 매우 비대칭적이다.
+따라서 anatomy token을 사용하면 anatomy content뿐 아니라 mask availability / sample-source 차이도 함께 모델에 들어갈 수 있다.
+
+### 결과
+
+| Variant | Best epoch | Macro AUROC | Macro AUPRC | Runtime |
+|---|---:|---:|---:|---:|
+| MASK_ON | 9 | 0.601827 | 0.499933 | 8.47 min |
+| **MASK_OFF** | **5** | **0.609698** | **0.521793** | 8.47 min |
+
+MASK_ON - MASK_OFF:
+- Macro AUROC: **-0.007871**
+- Macro AUPRC: **-0.021860**
+
+Target AUROC delta (ON - OFF):
+- MCL +0.0784
+- Baker's +0.0625
+- PF OA +0.0440
+- Medial Meniscus +0.0313
+- Lateral OA +0.0313
+- ACL 0.0000
+- Contusion 0.0000
+- Lateral Meniscus -0.0104
+- Effusion -0.0300
+- Medial OA -0.0667
+- Synovitis -0.0800
+- Fracture -0.1548
+
+### 해석 / 판정
+
+- Primary AUROC와 secondary AUPRC가 모두 MASK_OFF에서 더 높았다.
+- 따라서 **현재 154-mask coverage + 현재 mask-weighted anatomy-token fusion은 채택하지 않는다.**
+- MASK_ON이 이기지 않았으므로 shuffled-mask / availability-only control은 현재 우선순위에서 제외한다.
+- segmentation model 자체의 품질이 나쁘다고 결론 내리는 것은 아니다.
+  이번 결론은 현재 coverage와 현재 fusion 방식이 classification에 순이득을 주지 못했다는 뜻이다.
+- 후속 R3D 기본 classifier는 **MASK_OFF**로 진행한다.
+
+MASK_ON 결과 0.6018266874 / 0.4999329622는 R3D-05A GLOB 및 R3D-05B LR10과 정확히 재현됐다.
+동일 seed/data pipeline의 재현성도 다시 확인됐다.
+
+Result ZIP:
+- r3d05c_results.zip
+- SHA256 `9ebc077f05572c1b647eff35125db4ae651d17068e512794f95393b0b90620d2`
+
+---
+
+## 13. 기록 원칙
 
 이 문서에는 **실행이 끝난 실험만 추가**한다.
 
