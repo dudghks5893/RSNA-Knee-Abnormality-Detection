@@ -10,67 +10,55 @@
 실험 기록 제목은 가능한 한 **누가 봐도 무엇을 바꿨는지 바로 이해할 수 있는 설명형 이름**을 사용한다.
 
 
-## 2026-10-06 — Current R3D State / R3D-05A Complete
+## 2026-10-06 — Current R3D State / R3D-05B Complete
 
 이 섹션이 아래의 오래된 R3D 계획/상태보다 우선한다.
 
 ### 현재 확정
 
-- selected backbone: **MedicalNet ResNet34**
-- selected representation: **GLOB — global MRI token 1개/series**
-- pure FP32 training / validation 유지
-- R3D-05A architecture screen: **COMPLETED / contract PASS**
-
-R3D-05A Fold0:
-- GLOB: AUROC **0.601827**, AUPRC 0.499933, 7.14 min
-- SPT27: AUROC 0.595809, AUPRC 0.520108, 10.08 min
-- SPT48: AUROC 0.590426, AUPRC **0.524856**, 11.55 min
-
-Primary AUROC 기준 GLOB가 우승했다.
-SPT27/SPT48은 AUPRC를 높였지만 AUROC를 각각 -0.0060 / -0.0114 낮췄고 runtime도 증가했다.
-따라서 coarse spatial token을 모든 target에 공통 주입하는 방식은 현재 채택하지 않는다.
-
-### 보존할 관찰
-
-SPT27/SPT48 모두에서 Medial OA / Synovitis / Baker's AUROC는 개선됐고,
-MCL / Lateral OA / Contusion / PF OA는 악화됐다.
-Fold0 20 studies의 작은 표본이므로 확정 결론은 아니지만,
-향후 label-specific local/global routing을 검토할 때 참고 신호로 보존한다.
-
-### 현재 numerical / optimization policy
-
-- full-model FP16 AMP 사용하지 않음
+- Backbone: **MedicalNet ResNet34**
+- Representation: **GLOB — global MRI token 1개/series**
+- Backbone LR: **1e-5**
+- New-layer LR: **5e-5**
+- Weight Decay: **1e-4**
+- precision: **pure FP32**
 - BatchNorm running stats frozen
-- GLOB pure FP32 10 epoch runtime 약 7.1분
-- 기존 R34 LR 탐색에서 가장 낮은 backbone LR 1e-5가 우승했으므로 lower-LR boundary를 추가 확인한다.
+
+### R3D-05B 결과
+
+- LR10 1e-5: AUROC **0.601827** / AUPRC 0.499933
+- LR5 5e-6: AUROC 0.591677 / AUPRC 0.492868
+- LR3 3e-6: AUROC 0.582062 / AUPRC 0.484103
+- FRZ: AUROC 0.579953 / AUPRC **0.505985**
+
+Primary Macro AUROC 기준 **LR10 = 1e-5 유지**.
+더 낮은 backbone LR 또는 freeze는 개선이 없었으므로 lower-LR 탐색은 종료한다.
+
+### 현재 주의점
+
+Fold0 20 studies를 architecture/LR screening에 반복 사용했으므로 이 값들은 clean OOF가 아니다.
+향후 같은 Fold0에서 미세한 차이를 계속 최적화하지 않는다.
 
 ### 다음 실험
 
-**R3D-05B — R34 Backbone LR Fine-tune Strength Fold0 Screen**
+**R3D-05C — R34 Mask ON vs OFF Paired Fold0 Ablation**
 
-representation / new-layer LR / WD를 고정하고 pretrained backbone을 얼마나 움직일지만 비교한다.
-
-- FRZ: backbone frozen / new LR 5e-5 / WD 1e-4
-- LR3: backbone LR 3e-6 / new LR 5e-5 / WD 1e-4
-- LR5: backbone LR 5e-6 / new LR 5e-5 / WD 1e-4
-- LR10: backbone LR 1e-5 / new LR 5e-5 / WD 1e-4
-
-공통:
-- GLOB representation
-- Fold0
-- same Pseudo1000 / Gold Train / Gold Val
+두 branch는 동일하게:
+- R34 + GLOB
+- backbone LR 1e-5
+- new-layer LR 5e-5
+- WD 1e-4
+- Fold0 / same Pseudo1000 / same Gold
 - pure FP32
-- 192 samples/epoch × 10 epochs
-- no early stopping
-- primary Macro AUROC / tie Macro AUPRC
+- 10 epochs
+- 동일 model initialization / sample order / augmentation RNG
 
-R3D-05B에서 lower LR 또는 frozen이 이기면 그 설정을 다음 architecture/segmentation 실험의 기준으로 사용한다.
-1e-5 baseline이 계속 이기면 backbone LR은 1e-5로 고정하고 segmentation contribution ablation으로 이동한다.
+차이는 단 하나:
+- MASK_ON: 현재 nnU-Net mask-weighted anatomy token 사용
+- MASK_OFF: anatomy token 완전 비활성화
 
-### Segmentation 의사결정
-
-아직 보류한다.
-R34 + GLOB + backbone fine-tune strength를 먼저 고정한 뒤 mask OFF vs nnU-Net anatomy mask ON을 비교한다.
+이 실험으로 현재 154-mask coverage + 현재 anatomy-token fusion의 classification 기여도를 측정한다.
+효과가 크면 segmentation 전략을 계속 진행하고, 작거나 음수면 segmentation을 제거/재설계 후보로 둔다.
 
 <!-- SPECIALIST_2026_10_02_CURRENT_START -->
 
