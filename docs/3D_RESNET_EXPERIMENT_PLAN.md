@@ -2,7 +2,7 @@
 
 최종 업데이트: **2026-10-06**
 
-상태: **R3D-04 완료 / R3D-05A Spatial Token Screen 준비**
+상태: **R3D-05A 완료 / R3D-05B Backbone LR Screen 준비**
 
 이 문서는 신규 3D ResNet 계보의 **현재 결정 사항, 미결정 사항, 진행 순서, 현재 진척 상태**를 기록한다.
 
@@ -418,34 +418,54 @@ Threshold-dependent metric은 checkpoint primary criterion으로 사용하지 �
 
 상태: **IN PROGRESS**
 
-R3D-04에서 R34가 명확히 우세했으므로 backbone depth HPO는 중단한다.
-현재 우선순위는 global-average-only representation bottleneck 검증이다.
-
 ### R3D-05A — Global Token vs Spatial Token Fold0 Screen
 
-후보:
+상태: **Completed — GLOB selected**
 
-- GLOB: 기존 global MRI token 1개 / series
-- SPT27: global + adaptive pooled 3×3×3 spatial tokens
-- SPT48: global + adaptive pooled 3×4×4 spatial tokens
+| Variant | Macro AUROC | Macro AUPRC |
+|---|---:|---:|
+| **GLOB** | **0.601827** | 0.499933 |
+| SPT27 | 0.595809 | 0.520108 |
+| SPT48 | 0.590426 | **0.524856** |
+
+판정:
+- primary Macro AUROC 기준 GLOB 유지
+- spatial tokens는 AUPRC를 올렸지만 AUROC를 낮췄다
+- 3-Fold spatial confirmation은 진행하지 않는다
+- target별로 spatial 효과 방향이 달라 향후 label-specific routing 참고 신호로만 보존한다
+
+### R3D-05B — Backbone LR Fine-tune Strength Fold0 Screen
+
+상태: **READY TO RUN**
+
+목적:
+기존 R34 LR 탐색에서 최저 경계 1e-5가 우승했으므로 pretrained backbone adaptation 강도를 더 낮은 구간에서 확인한다.
+
+후보:
+- FRZ: backbone frozen
+- LR3: backbone LR 3e-6
+- LR5: backbone LR 5e-6
+- LR10: backbone LR 1e-5 baseline
 
 공통:
-
+- representation: GLOB
+- new-layer LR: 5e-5
+- WD: 1e-4
 - MedicalNet R34
-- Fold0
-- S1: backbone LR 1e-5 / new LR 5e-5 / WD 1e-4
+- Fold0 / same Gold train-val / same Fold0 Pseudo1000
 - pure FP32
-- same Gold train/val
-- same Fold0 Pseudo1000
-- same augmentation / loss / anatomy token policy
+- 192 samples/epoch
 - 10 epochs fixed
 - no early stopping
+- primary Macro AUROC, tie Macro AUPRC
 
-Spatial token에는 plane / fluid / fat metadata와 3D spatial position embedding을 추가한다.
-Global token과 기존 mask-weighted anatomy token은 유지한다.
+이 실험에서는 new-layer LR과 WD를 바꾸지 않는다.
+backbone fine-tuning strength 한 축만 분리해서 본다.
 
-R3D-05A에서 의미 있는 개선이 있으면 우승 spatial policy를 3-Fold로 확인한다.
-개선이 없으면 global baseline을 유지하고 segmentation contribution ablation으로 이동한다.
+판정:
+- FRZ / LR3 / LR5가 이기면 lower-LR 영역을 채택하고 필요 시 인접 범위를 한 번 더 좁힌다.
+- LR10이 계속 이기면 backbone LR 1e-5를 고정한다.
+- 그 다음 segmentation contribution ablation으로 이동한다.
 
 ## R3D-06 — Full-data Final Training
 
@@ -876,3 +896,24 @@ R34 final feature map에서 local spatial evidence가 Transformer까지 전달�
 4. 그 뒤 full-train DICOM cache
 5. 필요한 경우 segmentation teacher/student artifact 확장
 6. final HPO / training
+
+---
+
+# 15. R3D-05A Execution Update — 2026-10-06
+
+- contract: PASS
+- GPU T4 x2
+- pure FP32 preflight: PASS
+- pretrained fraction: 1.0
+- cache: 1,446 studies / masks 154
+- same Fold0 validation UID order across all variants: PASS
+
+Result:
+- GLOB: AUROC 0.601827 / AUPRC 0.499933 / best epoch 9
+- SPT27: AUROC 0.595809 / AUPRC 0.520108 / best epoch 8
+- SPT48: AUROC 0.590426 / AUPRC 0.524856 / best epoch 8
+
+Conclusion:
+coarse spatial token을 shared Transformer에 일괄 추가하는 방식은 primary AUROC 개선이 없었다.
+R34 representation은 GLOB를 유지한다.
+다음은 lower backbone LR / frozen 비교다.
