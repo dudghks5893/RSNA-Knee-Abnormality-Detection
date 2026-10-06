@@ -1,8 +1,8 @@
 # RSNA Knee — 3D ResNet Experiment Plan
 
-최종 업데이트: **2026-10-05**
+최종 업데이트: **2026-10-06**
 
-상태: **R3D-00 진행 중**
+상태: **R3D-04 완료 / R3D-05A Spatial Token Screen 준비**
 
 이 문서는 신규 3D ResNet 계보의 **현재 결정 사항, 미결정 사항, 진행 순서, 현재 진척 상태**를 기록한다.
 
@@ -391,19 +391,19 @@ Threshold-dependent metric은 checkpoint primary criterion으로 사용하지 �
 
 ## R3D-03A — 3D ResNet34 + Transformer 3-Fold
 
-상태: Planned
+상태: **Completed — pooled Macro AUROC 0.567267 / selected S1**
 
 ## R3D-03B — 3D ResNet50 + Transformer 3-Fold
 
-상태: Planned
+상태: **Completed — pooled Macro AUROC 0.533494 / selected S2**
 
 ## R3D-03C — 3D ResNet101 + Transformer 3-Fold
 
-상태: Planned
+상태: **Completed — pooled Macro AUROC 0.510364 / selected S2**
 
 ## R3D-04 — Gold58 OOF Backbone Selection
 
-상태: Planned
+상태: **Completed — MedicalNet R34 selected**
 
 비교:
 
@@ -414,12 +414,38 @@ Threshold-dependent metric은 checkpoint primary criterion으로 사용하지 �
 
 여기서 R34 / R50 / R101 중 하나를 선택한다.
 
-## R3D-05 — Selected Backbone HPO / Confirmation
+## R3D-05 — Selected R34 Representation / Architecture Confirmation
 
-상태: Planned
+상태: **IN PROGRESS**
 
-필요할 때만 수행한다.
-R3D-04에서 차이가 명확하면 과도한 추가 tuning을 하지 않는다.
+R3D-04에서 R34가 명확히 우세했으므로 backbone depth HPO는 중단한다.
+현재 우선순위는 global-average-only representation bottleneck 검증이다.
+
+### R3D-05A — Global Token vs Spatial Token Fold0 Screen
+
+후보:
+
+- GLOB: 기존 global MRI token 1개 / series
+- SPT27: global + adaptive pooled 3×3×3 spatial tokens
+- SPT48: global + adaptive pooled 3×4×4 spatial tokens
+
+공통:
+
+- MedicalNet R34
+- Fold0
+- S1: backbone LR 1e-5 / new LR 5e-5 / WD 1e-4
+- pure FP32
+- same Gold train/val
+- same Fold0 Pseudo1000
+- same augmentation / loss / anatomy token policy
+- 10 epochs fixed
+- no early stopping
+
+Spatial token에는 plane / fluid / fat metadata와 3D spatial position embedding을 추가한다.
+Global token과 기존 mask-weighted anatomy token은 유지한다.
+
+R3D-05A에서 의미 있는 개선이 있으면 우승 spatial policy를 3-Fold로 확인한다.
+개선이 없으면 global baseline을 유지하고 segmentation contribution ablation으로 이동한다.
 
 ## R3D-06 — Full-data Final Training
 
@@ -782,3 +808,71 @@ Notebook:
 - 00B compatibility PASS
   → segmentation candidate A를 R3D-01 baseline으로 승격 가능
 - 둘 중 하나가 REVIEW여도 다른 쪽 후속 작업은 독립적으로 계속 진행한다.
+
+---
+
+# 14. R3D-03 / R3D-04 Execution Update — 2026-10-06
+
+## 14.1 Frozen assets used
+
+- Gold58 manifest SHA256: 246f252a1ce4faaafa1b7d30e2c75cde6d79951cb780b0b33bf4f4dd12ad7e4b
+- canonical search cache: **1,446 studies**
+- nnU-Net anatomy masks: **154 studies**
+- MedicalNet offline pretrained:
+  - R34 SHA 977a1be79298602fa35980de9c03789229ad36087fb1f4d9bde468aec653c658
+  - R50 SHA 5b6189cafbee2f5604a7279b62bc163365aa6a86a377e1dc260a14275cacbd84
+  - R101 SHA a26bbcf9b2ad35f048b0fa317234c003f171a4d719760e5c4aff9f793654ebcf
+
+## 14.2 Search result
+
+| Backbone | Screen winner | Pooled Macro AUROC | Pooled Macro AUPRC |
+|---|---|---:|---:|
+| **R34** | **S1** | **0.567267** | **0.430502** |
+| R50 | S2 | 0.533494 | 0.418787 |
+| R101 | S2 | 0.510364 | 0.385794 |
+
+R34 is selected.
+
+## 14.3 Precision decision
+
+후속 MedicalNet R34 실험은 pure FP32로 고정한다.
+
+- R34/R50 training에서 AMP forward가 반복적으로 non-finite → FP32 fallback
+- R101은 screen의 모든 forward가 FP32 fallback
+- FP32 validation은 finite
+- AMP retry는 계산을 줄이지 못하고 오히려 중복 forward를 만든다
+
+## 14.4 Architecture issue to test next
+
+현재 baseline:
+
+~~~text
+final 3D feature map
+→ spatial global average
+→ 1 MRI token / series
+→ Transformer
+~~~
+
+다음:
+
+~~~text
+final 3D feature map
+→ global token 유지
++ coarse 3D spatial tokens
++ mask-weighted anatomy tokens when available
+→ Transformer
+~~~
+
+R34 final feature map에서 local spatial evidence가 Transformer까지 전달되는지 R3D-05A에서 먼저 Fold0로 검증한다.
+
+## 14.5 Full-train cache policy
+
+4,349 report-only 전체 DICOM / segmentation cache는 아직 만들지 않는다.
+
+순서:
+1. R34 representation 확정
+2. segmentation contribution 확인
+3. 최종 series 구성 확정
+4. 그 뒤 full-train DICOM cache
+5. 필요한 경우 segmentation teacher/student artifact 확장
+6. final HPO / training
