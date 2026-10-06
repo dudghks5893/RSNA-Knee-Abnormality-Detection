@@ -10,72 +10,67 @@
 실험 기록 제목은 가능한 한 **누가 봐도 무엇을 바꿨는지 바로 이해할 수 있는 설명형 이름**을 사용한다.
 
 
-## 2026-10-06 — Current R3D State / Backbone Search Complete
+## 2026-10-06 — Current R3D State / R3D-05A Complete
 
 이 섹션이 아래의 오래된 R3D 계획/상태보다 우선한다.
 
 ### 현재 확정
 
-- R3D-03A/B/C backbone search: **COMPLETED**
-- R3D-04 backbone selection: **COMPLETED**
 - selected backbone: **MedicalNet ResNet34**
-- selected R34 optimizer config: **S1**
-  - backbone LR 1e-5
-  - new-layer LR 5e-5
-  - weight decay 1e-4
-- R34 pooled Gold58 screened OOF:
-  - Macro AUROC **0.5672668245**
-  - Macro AUPRC **0.4305019214**
-- R50 pooled Macro AUROC: **0.5334943117**
-- R101 pooled Macro AUROC: **0.5103637069**
-- R34 fold AUROC: 0.596915 / 0.598180 / 0.582570
+- selected representation: **GLOB — global MRI token 1개/series**
+- pure FP32 training / validation 유지
+- R3D-05A architecture screen: **COMPLETED / contract PASS**
 
-주의: Fold0 LR/WD screening을 같은 Gold58에 사용했으므로 **screened OOF / model-selection estimate**이며 clean/unbiased OOF가 아니다.
+R3D-05A Fold0:
+- GLOB: AUROC **0.601827**, AUPRC 0.499933, 7.14 min
+- SPT27: AUROC 0.595809, AUPRC 0.520108, 10.08 min
+- SPT48: AUROC 0.590426, AUPRC **0.524856**, 11.55 min
 
-### Current numerical policy
+Primary AUROC 기준 GLOB가 우승했다.
+SPT27/SPT48은 AUPRC를 높였지만 AUROC를 각각 -0.0060 / -0.0114 낮췄고 runtime도 증가했다.
+따라서 coarse spatial token을 모든 target에 공통 주입하는 방식은 현재 채택하지 않는다.
 
-MedicalNet full-model FP16 AMP는 후속 기본값에서 제외한다.
+### 보존할 관찰
 
-- R34 / R50에서 대부분의 training forward가 FP32 fallback
-- R101 screening은 사실상 모든 forward가 FP32 fallback
-- FP32 validation은 finite PASS
+SPT27/SPT48 모두에서 Medial OA / Synovitis / Baker's AUROC는 개선됐고,
+MCL / Lateral OA / Contusion / PF OA는 악화됐다.
+Fold0 20 studies의 작은 표본이므로 확정 결론은 아니지만,
+향후 label-specific local/global routing을 검토할 때 참고 신호로 보존한다.
 
-따라서 현재 R34 후속 실험은 **pure FP32**를 기준으로 한다.
+### 현재 numerical / optimization policy
 
-### Current bottleneck hypothesis
-
-현재 R3D baseline은 final 3D ResNet feature map을 바로 spatial mean하여 series당 global MRI token 1개로 줄인다.
-
-mask가 없는 대부분의 study에서 Transformer 입력은 사실상 Sagittal / Coronal / Axial global token 최대 3개에 크게 의존한다.
-국소 tear / fracture / contusion / ligament abnormality가 global average pooling에서 약해질 가능성이 있으므로,
-현재 우선순위는 segmentation 확대보다 **spatial tokenization 검증**이다.
+- full-model FP16 AMP 사용하지 않음
+- BatchNorm running stats frozen
+- GLOB pure FP32 10 epoch runtime 약 7.1분
+- 기존 R34 LR 탐색에서 가장 낮은 backbone LR 1e-5가 우승했으므로 lower-LR boundary를 추가 확인한다.
 
 ### 다음 실험
 
-**R3D-05A — R34 Global Token vs Spatial Token Fold0 Screen**
+**R3D-05B — R34 Backbone LR Fine-tune Strength Fold0 Screen**
 
-동일 Fold0 / 동일 Pseudo1000 / 동일 S1 optimizer / pure FP32에서:
-- GLOB: global token baseline
-- SPT27: global + 27 spatial tokens / series
-- SPT48: global + 48 spatial tokens / series
+representation / new-layer LR / WD를 고정하고 pretrained backbone을 얼마나 움직일지만 비교한다.
 
-anatomy mask가 있는 경우 기존 mask-weighted anatomy token은 그대로 유지한다.
+- FRZ: backbone frozen / new LR 5e-5 / WD 1e-4
+- LR3: backbone LR 3e-6 / new LR 5e-5 / WD 1e-4
+- LR5: backbone LR 5e-6 / new LR 5e-5 / WD 1e-4
+- LR10: backbone LR 1e-5 / new LR 5e-5 / WD 1e-4
 
-판정:
-- primary: best Fold0 Macro AUROC
-- secondary: Macro AUPRC
-- 10 epoch fixed
+공통:
+- GLOB representation
+- Fold0
+- same Pseudo1000 / Gold Train / Gold Val
+- pure FP32
+- 192 samples/epoch × 10 epochs
 - no early stopping
-- 후보별 train/val curve와 runtime 기록
+- primary Macro AUROC / tie Macro AUPRC
 
-Spatial token이 의미 있게 개선되면 3-Fold confirmation으로 확장한다.
-개선이 없으면 global baseline을 유지하고 segmentation ablation으로 이동한다.
+R3D-05B에서 lower LR 또는 frozen이 이기면 그 설정을 다음 architecture/segmentation 실험의 기준으로 사용한다.
+1e-5 baseline이 계속 이기면 backbone LR은 1e-5로 고정하고 segmentation contribution ablation으로 이동한다.
 
-### Segmentation 의사결정은 아직 보류
+### Segmentation 의사결정
 
-현재 nnU-Net은 병변 segmentation이 아니라 bone / cartilage / medial-lateral meniscus 등 9개 anatomy segmentation이다.
-backbone/representation 구조를 먼저 안정화한 뒤 mask OFF vs nnU-Net anatomy mask ON을 비교하고,
-그 다음 필요 시 lightweight student / integrated anatomy head를 검토한다.
+아직 보류한다.
+R34 + GLOB + backbone fine-tune strength를 먼저 고정한 뒤 mask OFF vs nnU-Net anatomy mask ON을 비교한다.
 
 <!-- SPECIALIST_2026_10_02_CURRENT_START -->
 
