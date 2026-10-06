@@ -494,17 +494,23 @@ Notebook:
 
 ### R3D-06B — Series Policy Audit
 
-상태: **READY TO RUN — R3D-06A와 병렬 가능**
+상태: **COMPLETED — PASS**
 
 Full Manifest v2 metadata만 사용해 실제 Series 분포와 후보 정책 입력량을 계산한다.
 Pixel decode / GPU training은 하지 않는다.
 
-현재 audit manifest 후보:
-- C3: 현재 canonical max3
-- P2: plane별 top2, 최대6
-- ALL: 모든 valid series
+실제 결과:
+- C3: 13,221 series / 54.25% / max3
+- P2: 21,886 series / 89.80% / max6
+- ALL: 24,371 series / 100% / max14
+- Study당 series mean 5.53 / median5 / p90 7 / max14
+- 4,406 / 4,407 studies가 3 series 초과
+- Fluid/Fat 조합은 (0,0), (1,1) 두 종류만 존재
 
-Fluid/Fat 조합 분포도 함께 출력하며, 결과를 본 뒤 실제 GPU Series Composition Screen 후보 수를 최소화한다.
+결정:
+- 첫 GPU screen은 C3 vs P2
+- ALL은 P2가 이길 때만 후속 saturation test
+- R3D-06A parity PASS를 실행 gate로 사용
 
 Notebook:
 - `R3D-06B_Series_Policy_Audit.ipynb`
@@ -513,7 +519,13 @@ Notebook:
 
 ### R3D-06C — Series Composition GPU Screen
 
-상태: Planned
+상태: **WAITING FOR R3D-06A**
+
+첫 paired screen:
+- C3 vs P2
+
+ALL:
+- P2가 C3보다 개선될 때만 추가
 
 R3D-06A cache + R3D-06B 정책 audit 결과를 사용한다.
 MedicalNet R34 + GLOB + MASK_OFF + 기존 optimizer/FP32를 고정하고 Series 구성만 비교한다.
