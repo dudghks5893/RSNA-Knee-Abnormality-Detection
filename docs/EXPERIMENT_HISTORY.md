@@ -1,6 +1,6 @@
 # RSNA Knee — Experiment History
 
-최종 업데이트: **2026-10-05**
+최종 업데이트: **2026-10-06**
 
 이 문서는 **완료된 실험과 그 결과만 기록하는 기준 문서**다.
 진행 예정 작업과 현재 계획은 [3D_RESNET_EXPERIMENT_PLAN.md](3D_RESNET_EXPERIMENT_PLAN.md)를 따른다.
@@ -235,7 +235,133 @@ dynamic-route oracle로 사용해 reader preprocessing, route score, label, conf
 
 ---
 
-## 8. 기록 원칙
+## 8. R3D-03A/B/C — MedicalNet R34/R50/R101 + Transformer Backbone Search
+
+### 실행 조건
+
+- Gold58 deterministic 3-Fold: 20 / 19 / 19
+- Fold별 leakage-safe Pseudo1000
+- canonical MRI cache: **1,446 studies**
+- anatomy mask cache: **154 studies**
+- input: study당 최대 3 series — Sagittal / Coronal / Axial 각 1개
+- tensor: D24 × 96 × 96
+- Transformer: d_model=512, 2 layers, 8 heads, FFN 2048, dropout 0.10, Pre-LN, CLS
+- Full fine-tuning
+- segmentation fusion: global MRI token + mask-weighted anatomy token
+- Fold0 LR/WD screening: S1/S2/S3 × 10 epoch
+- selected setting full 3-Fold: max20 / min8 / early stopping patience5
+- checkpoint: Macro AUROC primary, Macro AUPRC tie-break
+- dual-T4 job parallel execution
+- validation: FP32
+- estimate type: **screened OOF / model-selection estimate**
+  - Fold0에서 LR/WD를 선택한 뒤 같은 Gold58의 3-Fold를 평가했으므로 clean/unbiased OOF로 해석하지 않는다.
+
+### Backbone 결과
+
+| Backbone | Selected | Fold0 | Fold1 | Fold2 | Pooled Macro AUROC | Pooled Macro AUPRC |
+|---|---|---:|---:|---:|---:|---:|
+| **MedicalNet R34** | **S1** | 0.596915 | 0.598180 | 0.582570 | **0.567267** | **0.430502** |
+| MedicalNet R50 | S2 | 0.593977 | 0.515280 | 0.510895 | 0.533494 | 0.418787 |
+| MedicalNet R101 | S2 | 0.533543 | 0.490685 | 0.583687 | 0.510364 | 0.385794 |
+
+R34 selected config:
+- backbone LR: 1e-5
+- new-layer LR: 5e-5
+- weight decay: 1e-4
+
+R50 / R101 selected config:
+- backbone LR: 3e-5
+- new-layer LR: 1.5e-4
+- weight decay: 1e-4
+
+### R34 target-level pooled OOF
+
+| Target | AUROC | AUPRC |
+|---|---:|---:|
+| ACL | 0.651961 | 0.653357 |
+| MCL | 0.478458 | 0.159523 |
+| Medial Meniscus | 0.562500 | 0.561090 |
+| Lateral Meniscus | 0.680745 | 0.582810 |
+| Medial OA | 0.451163 | 0.272705 |
+| Lateral OA | 0.535783 | 0.226810 |
+| PF OA | 0.563707 | 0.413502 |
+| Effusion | 0.710559 | 0.807573 |
+| Synovitis | 0.480287 | 0.464323 |
+| Baker's | 0.565217 | 0.244326 |
+| Contusion | 0.651822 | 0.423598 |
+| Fracture | 0.475000 | 0.356408 |
+
+### Numerical stability finding
+
+MedicalNet full-model FP16 AMP는 안정적이지 않았다.
+
+- R34 screening S1: FP32 forward fallback 1860 / 1920, scaler skip 1, 최종 FP32
+- R50 screening S2: FP32 forward fallback 1916 / 1920, scaler skip 1, 최종 FP32
+- R101 screening S1/S2/S3: 각 1920 / 1920 forward가 FP32 fallback
+- FP32 validation prediction은 finite contract PASS
+
+따라서 후속 R34 실험은 **pure FP32 training / validation**을 기본으로 사용한다.
+불필요한 AMP 실패-forward를 반복하지 않는다.
+
+### R34 checkpoints
+
+| Fold | Best epoch | Macro AUROC | SHA256 |
+|---|---:|---:|---|
+| 0 | 3 | 0.596915 | 90ee978c4110f495327d4077f80b6b56f31228796d920de0cdbe86c3095177fc |
+| 1 | 12 | 0.598180 | 205c627d747cefbb18862e6fa189bbb0aaac231329caa3984733f5662526905c |
+| 2 | 8 | 0.582570 | 1980717f08cf03c1ca5fbfa3f4f45a7e42af6b8907c9636b6853ae73fa0b215b |
+
+Result ZIP:
+- A/R34+R50: r3d03A34B50_dualgpu_results.zip — SHA256 544b30605b3e5e9fbec8da9d0160ee67e4feab30e2bd3a5c38f6f8c3f73b0ac7
+- B/R101: r3d03C101_dualgpu_results.zip — SHA256 223ec8ab4201bdaf21a1a9c4f89343e88599448b5402c45af1b02b8ab22acfcd
+
+### 판정
+
+- **Backbone = MedicalNet R34 채택**
+- R50 / R101 추가 depth 비교는 중단
+- 단, R34 pooled OOF 0.5673은 절대 성능으로는 낮다.
+- 현재 architecture에서 final 3D feature map을 즉시 global average pooling하여 series당 MRI token을 1개만 만드는 것이 spatial information bottleneck일 가능성이 높다.
+- 대부분의 training studies는 anatomy mask가 없으므로 실제 입력이 최대 3개의 global series token에 크게 의존했다.
+
+---
+
+## 9. R3D-04 — Backbone Selection Decision
+
+### 결론
+
+**MedicalNet R34를 후속 R3D backbone으로 고정한다.**
+
+선택 이유:
+1. pooled Macro AUROC 0.567267로 세 후보 중 최고
+2. pooled Macro AUPRC 0.430502로 세 후보 중 최고
+3. Fold AUROC가 0.5969 / 0.5982 / 0.5826으로 가장 안정적
+4. R50 / R101은 depth 증가에도 성능 개선이 없었고 fold 변동이 더 컸다
+5. 더 큰 backbone을 유지할 계산비용 근거가 없다
+
+다음 실험은 backbone size가 아니라 **representation 구조**를 바꾼다.
+
+후속: **R3D-05A — R34 Global Token vs Spatial Token Fold0 Screen**
+
+초기 후보:
+- GLOB: 기존 global token baseline
+- SPT27: global + 3×3×3 = 27 spatial tokens / series
+- SPT48: global + 3×4×4 = 48 spatial tokens / series
+
+고정:
+- MedicalNet R34
+- S1 optimizer setting
+- Fold0
+- same Pseudo1000 / Gold Train / Gold Val
+- pure FP32
+- anatomy token policy 유지
+- 10 epochs fixed / no early stopping
+- primary: best Fold0 Macro AUROC
+- tie-break: Macro AUPRC
+
+
+---
+
+## 10. 기록 원칙
 
 이 문서에는 **실행이 끝난 실험만 추가**한다.
 
