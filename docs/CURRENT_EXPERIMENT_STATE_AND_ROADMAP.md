@@ -10,7 +10,7 @@
 실험 기록 제목은 가능한 한 **누가 봐도 무엇을 바꿨는지 바로 이해할 수 있는 설명형 이름**을 사용한다.
 
 
-## 2026-10-06 — Current R3D State / R3D-05C Complete
+## 2026-10-06 — Current R3D State / R3D-06A·06B Complete
 
 이 섹션이 아래의 오래된 R3D 계획/상태보다 우선한다.
 
@@ -18,54 +18,55 @@
 
 - Backbone: **MedicalNet ResNet34**
 - Representation: **GLOB — global MRI token 1개/series**
-- Anatomy token: **OFF**
+- Anatomy token / segmentation fusion: **OFF**
 - Backbone LR: **1e-5**
 - New-layer LR: **5e-5**
 - Weight Decay: **1e-4**
 - Precision: **pure FP32**
 - BatchNorm running stats frozen
+- Current search resolution: **D24×96×96**
 
-### R3D-05C 결과
+### R3D-06A — All-Series Neutral Cache
 
-- MASK_ON: AUROC 0.601827 / AUPRC 0.499933
-- MASK_OFF: AUROC **0.609698** / AUPRC **0.521793**
-- ON-OFF: AUROC -0.007871 / AUPRC -0.021860
+- 4,407 studies / 24,371 series / 819,078 slices exact
+- decode failure 0
+- 48 shards / 10.04055 GiB
+- build 2.553 h
+- old R3D cache 1,446 studies / 4,338 series compared
+- missing 0 / volume mismatch 0 / metadata mismatch 0
+- **volume exact parity PASS**
+- **metadata exact parity PASS**
+- metadata bundle SHA256: `0aacfaa0e0e19f4ddd541a99b82a00ad547e31e037ee441f9f5599be487d5586`
 
-Paired contract:
-- initial model state identical
-- training sample UID trace identical
-- validation UID order identical
-- FP32 preflight PASS
-- overall contract PASS
+### R3D-06B — Series Policy Audit
 
-Mask coverage:
-- 전체 cache 1,446 중 154 masked
-- Fold0 Gold Train 38 중 36 masked
-- Fold0 Gold Val 20 중 20 masked
-- Fold0 Pseudo1000 중 97 masked
+- Series/study mean 5.53 / median5 / p90 7 / max14
+- C3: 13,221 series = 54.25%, max3
+- P2: 21,886 series = 89.80%, max6
+- ALL: 24,371 series = 100%, max14
+- 첫 GPU screen은 **C3 vs P2**
+- ALL은 P2가 C3보다 개선될 때만 saturation test
 
-따라서 current mask availability는 Gold와 pseudo 사이에서 매우 비대칭적이다.
-현재 coverage + anatomy-token fusion은 classification에 순이득을 주지 못했으므로 후속 기본 모델에서 제거한다.
+### 다음 실행 — R3D-06C
 
-### 다음 우선순위
+**C3 vs P2 paired Fold0 Series Composition Screen**
 
-이제 Fold0에서 mask/LR/spatial token micro-tuning을 더 반복하지 않는다.
-다음 핵심 미확정 변수는 **Series 구성**과 **Input resolution/depth**다.
+고정:
+- MedicalNet R34 / GLOB / MASK_OFF
+- backbone LR 1e-5 / new LR 5e-5 / WD 1e-4
+- pure FP32
+- same Gold Fold0 / Pseudo1000 / model seed / study sampling
+- D24×96×96
 
-1. **R3D-06A — Full All-Series Inventory + Neutral Search Cache**
-   - 전체 4,407 studies / 24,371 MRI series inventory 생성
-   - series selection rule을 넣지 않고 모든 usable series를 D24×96×96 float16으로 search-cache
-   - metadata: Study UID / Series UID / plane / fluid / fat-suppression / slice count / spacing / original shape
-2. **R3D-06B — Series Composition Screen**
-   - 현재 canonical max3 vs 더 많은 series 정책 비교
-3. **R3D-07 — Resolution / Depth Screen**
-   - series policy 고정 후 96→128, 필요 시 D24→D32 순으로 분리 비교
-4. **R3D-08 — Final small HPO + 3-Fold confirmation**
-5. **R3D-09 — Final full-data training**
-6. **R3D-10 — Hidden inference / Kaggle submission**
+Pairing:
+- C3 canonical overlap series의 augmentation을 P2에서도 exact하게 정렬
+- C3 selection은 기존 1,446-study search cache와 exact UID/order parity를 fail-fast 검증
+- C3 initial model / sample trace는 R3D-05C MASK_OFF reference와 재현 계약
 
-Segmentation은 현재 우선순위에서 제외한다.
-추후 series/resolution 개선 후 별도의 더 좋은 fusion 설계가 필요할 때만 다시 연다.
+R3D-06C 이후:
+- P2 승리 → ALL saturation test 조건부
+- C3 유지/승리 → series 확대 종료
+- series policy 확정 후 R3D-07 Resolution / Depth Screen
 
 <!-- SPECIALIST_2026_10_02_CURRENT_START -->
 
