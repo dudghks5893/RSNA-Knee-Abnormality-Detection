@@ -2,7 +2,7 @@
 
 최종 업데이트: **2026-10-06**
 
-상태: **R3D-05C 완료 / R3D-06A·06B 병렬 실행 준비**
+상태: **R3D-06A·06B 완료 / R3D-06C C3 vs P2 실행 준비**
 
 이 문서는 신규 3D ResNet 계보의 **현재 결정 사항, 미결정 사항, 진행 순서, 현재 진척 상태**를 기록한다.
 
@@ -473,14 +473,16 @@ Threshold-dependent metric은 checkpoint primary criterion으로 사용하지 �
 
 ### R3D-06A — All-Series Neutral D24×96 Search Cache
 
-상태: **READY TO RUN**
+상태: **COMPLETED — PASS**
 
-목적:
-- 기존 Full Manifest v2를 재사용하며 inventory를 다시 만들지 않음
-- 전체 4,407 studies / 24,371 MRI series를 selection 없이 neutral cache
-- search resolution은 D24×96×96 float16 유지
-- 기존 1,446-study R3D search cache와 volume/metadata exact parity audit
-- metadata manifest 저장
+결과:
+- 4,407 studies / 24,371 series / 819,078 slice rows exact
+- pixel decode failure 0
+- 48 shards / 10.04055 GiB
+- build 2.553 h
+- old cache 1,446 studies / 4,338 series와 volume exact parity PASS
+- metadata exact parity PASS
+- metadata bundle SHA256: `0aacfaa0e0e19f4ddd541a99b82a00ad547e31e037ee441f9f5599be487d5586`
 
 Notebook:
 - `R3D-06A_All-Series_D24x96_Search_Cache.ipynb`
@@ -519,16 +521,38 @@ Notebook:
 
 ### R3D-06C — Series Composition GPU Screen
 
-상태: **WAITING FOR R3D-06A**
+상태: **READY TO RUN**
 
 첫 paired screen:
-- C3 vs P2
+- C3: current canonical 3
+- P2: plane별 Top-2 / max6
+
+공통:
+- MedicalNet R34
+- GLOB
+- MASK_OFF
+- backbone LR 1e-5
+- new-layer LR 5e-5
+- WD 1e-4
+- pure FP32
+- Fold0 / same Pseudo1000 / same Gold
+- D24×96×96
+- 192 samples/epoch × 10 epochs
+
+Fairness contract:
+- C3 selected Series UID/order exact parity with old 1,446-study cache
+- C3/P2 same initial model state
+- same training Study UID trace
+- canonical overlap Series augmentation exact
+- C3 initial model SHA / sample trace는 R3D-05C MASK_OFF reference와 대조
 
 ALL:
-- P2가 C3보다 개선될 때만 추가
+- P2가 C3보다 개선될 때만 saturation 확인용으로 추가
 
-R3D-06A cache + R3D-06B 정책 audit 결과를 사용한다.
-MedicalNet R34 + GLOB + MASK_OFF + 기존 optimizer/FP32를 고정하고 Series 구성만 비교한다.
+Notebook:
+- `R3D-06C_C3_vs_P2_Series_Composition_Fold0_DualT4.ipynb`
+- GPU T4 x2 / Internet Off / Save & Run All
+- 추천 Save Version: `R3D-06C C3 vs P2 Fold0`
 
 ## R3D-07 — Resolution / Depth Screen
 
