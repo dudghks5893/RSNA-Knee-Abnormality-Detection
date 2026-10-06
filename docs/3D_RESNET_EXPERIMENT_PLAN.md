@@ -2,7 +2,7 @@
 
 최종 업데이트: **2026-10-07**
 
-상태: **R3D-06C 완료 / R3D-06D P2 vs ALL saturation 다음**
+상태: **R3D-06C 완료 / R3D-06D Target-Aware Series+Depth Audit 다음**
 
 이 문서는 신규 3D ResNet 계보의 **현재 결정 사항, 미결정 사항, 진행 순서, 현재 진척 상태**를 기록한다.
 
@@ -544,33 +544,43 @@ Target-level:
 - 사전 정의 primary metric 기준 P2 winner
 - 단, P2를 final policy로 확정하지 않고 saturation 확인 진행
 
-### R3D-06D — P2 vs ALL Saturation Screen
+### R3D-06D — Target-Aware Series + Depth Relevance Audit
 
-상태: **NEXT**
+상태: **READY TO RUN**
 
-비교:
-- P2: plane별 Top-2 / max6 / 21,886 series
-- ALL: 모든 usable series / max14 / 24,371 series
+원칙:
+- 재현이 이미 확인된 C3/P2 shared-CLS baseline은 다시 학습하지 않는다.
+- baseline은 Frozen Reference로만 사용한다.
+- preprocessing / fold / pseudo / architecture contract 자체가 달라질 때만 baseline 재실행을 고려한다.
 
-목적:
-- P2가 이미 전체 series의 89.8%를 포함한 상태에서 남은 10.2% 추가가 classification에 이득인지 확인
-- series 수 증가가 성능 향상인지 noise 증가인지 확인
+새 구조:
+- P2 input 유지
+- MedicalNet R34 series token
+- shared Series Transformer
+- 12 target queries
+- target별 attention pooling
+- 12 independent sigmoid heads
 
-고정:
-- MedicalNet R34
-- GLOB
-- MASK_OFF
-- backbone LR 1e-5
-- new-layer LR 5e-5
-- WD 1e-4
-- pure FP32
-- Fold0 / same Pseudo1000 / same Gold
-- D24×96×96
-- same model initialization / study sampling / augmentation contract
+병렬 실행:
+- GPU0 → Fold0
+- GPU1 → Fold1
+
+분석:
+- held-out Gold leave-one-Series-out occlusion
+- target별 Sag1/Sag2/Cor1/Cor2/Ax1/Ax2 relevance
+- attention weight는 secondary diagnostic
+- D24를 6개 depth bin으로 나눠 target×Series×depth occlusion
+- Fold0/1 sign consistency / signed-logit contribution / attention 일치 여부 기록
 
 판정:
-- ALL > P2 명확한 개선: ALL 또는 cap-N 후속 검토
-- ALL <= P2: P2를 series-policy candidate로 유지하고 R3D-07로 이동
+- 반복되는 relevance가 충분함 → Fold2 confirmation + target-specific input policy
+- 불안정 → hard routing 보류
+- slice/depth가 안정적이면 raw DICOM slice/window index로 역매핑
+
+Notebook:
+- `R3D-06D_TargetAware_Series_Depth_Relevance_Fold01_DualT4.ipynb`
+- T4 x2 / Internet Off / Save & Run All
+- 추천 Save Version: `R3D-06D Target Series Depth F01`
 
 
 ## R3D-07 — Resolution / Depth Screen
