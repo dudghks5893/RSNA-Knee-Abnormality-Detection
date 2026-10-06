@@ -2,7 +2,7 @@
 
 최종 업데이트: **2026-10-06**
 
-상태: **R3D-05B 완료 / R3D-05C Mask ON-OFF 준비**
+상태: **R3D-05C 완료 / R3D-06A All-Series Cache 준비**
 
 이 문서는 신규 3D ResNet 계보의 **현재 결정 사항, 미결정 사항, 진행 순서, 현재 진척 상태**를 기록한다.
 
@@ -453,43 +453,73 @@ Threshold-dependent metric은 checkpoint primary criterion으로 사용하지 �
 
 ### R3D-05C — Mask ON vs OFF Paired Fold0 Ablation
 
-상태: **READY TO RUN**
+상태: **Completed — MASK_OFF selected**
+
+| Variant | Macro AUROC | Macro AUPRC |
+|---|---:|---:|
+| MASK_ON | 0.601827 | 0.499933 |
+| **MASK_OFF** | **0.609698** | **0.521793** |
+
+판정:
+- current anatomy-token pipeline 제거
+- current nnU-Net mask coverage/fusion은 classification net gain 없음
+- 후속 기본 classifier는 MASK_OFF
+- shuffled-mask / availability-only control은 현재 생략
+- segmentation 자체를 영구 폐기한 것은 아니며, 새로운 fusion 설계가 필요할 때만 재검토
+
+## R3D-06 — Series Coverage / Composition
+
+상태: **IN PROGRESS**
+
+### R3D-06A — Full All-Series Inventory + Neutral Search Cache
+
+상태: **NEXT**
 
 목적:
-현재 nnU-Net anatomy mask / anatomy-token pipeline이 실제 classification 성능에 기여하는지 paired comparison으로 확인한다.
+- 전체 4,407 studies / 24,371 MRI series를 inventory화
+- series selection 정책을 넣기 전에 모든 usable series를 neutral하게 cache
+- search resolution은 D24×96×96 float16 유지
+- metadata manifest 저장
 
-비교:
-- MASK_ON: 현재 mask-weighted anatomy tokens 사용
-- MASK_OFF: global MRI tokens만 사용, anatomy tokens 비활성화
+중요:
+- 이 cache는 final-training cache가 아니다.
+- series composition / architecture search용이다.
+- final resolution과 final series policy가 결정되면 최종 cache를 별도로 만든다.
 
-공통:
-- MedicalNet R34
-- GLOB
-- backbone LR 1e-5
-- new-layer LR 5e-5
-- WD 1e-4
-- Fold0 / same Pseudo1000 / same Gold
-- pure FP32
-- 192 samples/epoch × 10 epochs
-- identical initialization / sampling / augmentation RNG
-
-해석 주의:
-- 현재 mask coverage는 154 / 1,446 cached studies
-- 이 실험은 mask content뿐 아니라 현재 mask availability policy와 anatomy-token fusion을 합친 기여도다
-- 효과가 크면 후속에서 shuffled-mask / availability-only control을 추가할 수 있다
-- Fold0 screening이므로 clean OOF가 아니다
-
-## R3D-06 — Full-data Final Training
+### R3D-06B — Series Composition Screen
 
 상태: Planned
 
-선택된 architecture / preprocessing / segmentation을 고정한 뒤
-전체 사용 가능한 training supervision으로 최종 학습한다.
+비교 후보는 R3D-06A inventory 실제 분포를 보고 확정한다.
+현재 canonical max3를 baseline으로 두고 plane당 복수 series / fluid-sensitive / fat-suppression / all-valid capped 정책을 단계적으로 비교한다.
 
-Final training에서 Gold를 다시 포함하는 정확한 방식과 Fold ensemble 여부는
-R3D-04/05 결과를 보고 결정한다.
+## R3D-07 — Resolution / Depth Screen
 
-## R3D-07 — Kaggle Submission
+상태: Planned
+
+Series policy를 먼저 고정한 뒤:
+- D24×96×96 baseline
+- D24×128×128
+- 필요 시 D32×128×128
+
+처럼 in-plane resolution과 depth를 한 번에 바꾸지 않고 분리해서 비교한다.
+
+## R3D-08 — Final Small HPO + 3-Fold Confirmation
+
+상태: Planned
+
+- 구조/series/resolution 고정 후 new-layer LR / WD 등 최소 범위만 조정
+- 반복 Fold0 micro-search 제한
+- 최종 후보를 Fold0/1/2에서 확인
+- pooled Gold58와 fold stability 기록
+
+## R3D-09 — Full-data Final Training
+
+상태: Planned
+
+선택된 architecture / series / resolution / mask policy를 고정한 뒤 전체 supervision으로 final model을 학습한다.
+
+## R3D-10 — Kaggle Submission
 
 상태: Planned
 
@@ -950,3 +980,30 @@ Result:
 Conclusion:
 lower LR 또는 backbone freeze는 primary AUROC를 개선하지 않았다.
 R34 backbone LR은 1e-5로 고정하고 다음 Mask ON/OFF ablation으로 이동한다.
+
+---
+
+# 17. R3D-05C Execution Update — 2026-10-06
+
+- contract: PASS
+- initial model state identical: PASS
+- sample UID trace identical: PASS
+- same Fold0 validation UIDs: PASS
+- pure FP32 preflight: PASS
+- result ZIP SHA256: 9ebc077f05572c1b647eff35125db4ae651d17068e512794f95393b0b90620d2
+
+Mask coverage:
+- 154 / 1,446 cached studies
+- Gold Train: 36 / 38 masked
+- Gold Val: 20 / 20 masked
+- Pseudo1000: 97 / 1,000 masked
+
+Result:
+- MASK_ON: AUROC 0.601827 / AUPRC 0.499933 / best epoch 9
+- MASK_OFF: AUROC 0.609698 / AUPRC 0.521793 / best epoch 5
+- ON-OFF: AUROC -0.007871 / AUPRC -0.021860
+
+Conclusion:
+현재 154-mask coverage + anatomy-token fusion은 classification 성능을 개선하지 않았다.
+후속 R3D 기본 classifier는 MASK_OFF로 진행한다.
+다음은 all-series neutral cache와 series composition 실험이다.
