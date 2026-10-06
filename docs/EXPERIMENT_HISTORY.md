@@ -361,7 +361,97 @@ Result ZIP:
 
 ---
 
-## 10. 기록 원칙
+## 10. R3D-05A — R34 Global Token vs Spatial Token Fold0 Screen
+
+### 목적
+
+MedicalNet R34를 고정하고 final 3D feature map의 spatial information을 Transformer에 직접 전달하면
+기존 global-average-only representation보다 성능이 좋아지는지 Fold0에서 비교했다.
+
+### 고정 조건
+
+- Backbone: MedicalNet R34
+- Fold: Gold Fold0
+- Fold0 pseudo: 동일 1,000 studies
+- input: D24×96×96, 최대 3 canonical series
+- Transformer: d_model512 / 2L / 8H / FFN2048 / dropout0.10
+- optimizer: S1 — backbone LR 1e-5 / new-layer LR 5e-5 / WD 1e-4
+- pure FP32 training / validation
+- 192 samples/epoch × 10 epochs
+- no early stopping
+- same study sampling / augmentation seed
+- anatomy token policy 유지
+
+### 비교
+
+| Variant | Representation | Best epoch | Macro AUROC | Macro AUPRC | Runtime |
+|---|---|---:|---:|---:|---:|
+| **GLOB** | global token 1개/series | **9** | **0.601827** | 0.499933 | 7.14 min |
+| SPT27 | global + 3×3×3 spatial tokens | 8 | 0.595809 | 0.520108 | 10.08 min |
+| SPT48 | global + 3×4×4 spatial tokens | 8 | 0.590426 | **0.524856** | 11.55 min |
+
+Spatial vs GLOB:
+- SPT27: AUROC -0.006017 / AUPRC +0.020175
+- SPT48: AUROC -0.011401 / AUPRC +0.024923
+
+### Target-level 관찰
+
+두 spatial variant에서 공통적으로 AUROC가 좋아진 target:
+- Medial OA
+- Synovitis
+- Baker's
+
+두 spatial variant에서 공통적으로 AUROC가 크게 나빠진 target:
+- MCL
+- Lateral OA
+- Contusion
+- PF OA
+
+대표 delta:
+- SPT27 Medial OA +0.1200 / Synovitis +0.0900 / Baker's +0.1719
+- SPT27 MCL -0.1373 / Lateral OA -0.1250 / Contusion -0.0833
+- SPT48 Medial OA +0.1067 / Synovitis +0.0800 / Baker's +0.1094
+- SPT48 Lateral OA -0.1563 / Contusion -0.1354 / MCL -0.1176
+
+Gold Fold0가 20 studies뿐이므로 target별 delta는 확정 결론으로 사용하지 않는다.
+다만 두 spatial granularity에서 같은 방향이 반복된 target은 후속 label-specific routing 후보로 보존한다.
+
+### 판정
+
+- Primary metric 기준 winner: **GLOB**
+- coarse spatial tokens를 모든 label에 공통으로 추가하는 방식은 채택하지 않는다.
+- token 수가 늘수록 runtime 증가: SPT27 약 +41%, SPT48 약 +62% vs GLOB
+- AUPRC는 spatial에서 상승했지만 primary Macro AUROC가 하락했으므로 3-Fold spatial confirmation은 진행하지 않는다.
+- 현재 R34 representation은 GLOB로 유지한다.
+
+### Pure FP32 확인
+
+이전 R34 S1 Fold0 screen reference AUROC는 0.605866이었고, 이번 pure FP32 GLOB는 0.601827이었다.
+차이는 -0.004039로 작았으며, pure FP32에서는 AMP 실패-forward 재시도가 없어 Fold0 10 epoch가 약 7.1분에 완료됐다.
+후속 R34 screen은 pure FP32를 유지한다.
+
+### 다음 실험
+
+**R3D-05B — R34 Backbone LR Fine-tune Strength Fold0 Screen**
+
+S1이 기존 LR 탐색의 가장 낮은 backbone LR 경계에서 우승했으므로,
+representation을 GLOB로 고정한 뒤 backbone fine-tuning 강도를 더 낮은 구간에서 확인한다.
+
+후보:
+- FRZ: backbone frozen / new LR 5e-5
+- LR3: backbone LR 3e-6 / new LR 5e-5
+- LR5: backbone LR 5e-6 / new LR 5e-5
+- LR10: backbone LR 1e-5 / new LR 5e-5 baseline
+
+WD는 모두 1e-4로 고정한다.
+
+Result ZIP:
+- r3d05a_results.zip
+- SHA256 8fbe5d483082999fa68da7e4f8daaf4335e22959f98dfcc22453269d1e7745d7
+
+---
+
+## 11. 기록 원칙
 
 이 문서에는 **실행이 끝난 실험만 추가**한다.
 
