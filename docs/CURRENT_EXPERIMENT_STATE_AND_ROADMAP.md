@@ -10,55 +10,62 @@
 실험 기록 제목은 가능한 한 **누가 봐도 무엇을 바꿨는지 바로 이해할 수 있는 설명형 이름**을 사용한다.
 
 
-## 2026-10-06 — Current R3D State / R3D-05B Complete
+## 2026-10-06 — Current R3D State / R3D-05C Complete
 
 이 섹션이 아래의 오래된 R3D 계획/상태보다 우선한다.
 
-### 현재 확정
+### 현재 확정 classifier
 
 - Backbone: **MedicalNet ResNet34**
 - Representation: **GLOB — global MRI token 1개/series**
+- Anatomy token: **OFF**
 - Backbone LR: **1e-5**
 - New-layer LR: **5e-5**
 - Weight Decay: **1e-4**
-- precision: **pure FP32**
+- Precision: **pure FP32**
 - BatchNorm running stats frozen
 
-### R3D-05B 결과
+### R3D-05C 결과
 
-- LR10 1e-5: AUROC **0.601827** / AUPRC 0.499933
-- LR5 5e-6: AUROC 0.591677 / AUPRC 0.492868
-- LR3 3e-6: AUROC 0.582062 / AUPRC 0.484103
-- FRZ: AUROC 0.579953 / AUPRC **0.505985**
+- MASK_ON: AUROC 0.601827 / AUPRC 0.499933
+- MASK_OFF: AUROC **0.609698** / AUPRC **0.521793**
+- ON-OFF: AUROC -0.007871 / AUPRC -0.021860
 
-Primary Macro AUROC 기준 **LR10 = 1e-5 유지**.
-더 낮은 backbone LR 또는 freeze는 개선이 없었으므로 lower-LR 탐색은 종료한다.
+Paired contract:
+- initial model state identical
+- training sample UID trace identical
+- validation UID order identical
+- FP32 preflight PASS
+- overall contract PASS
 
-### 현재 주의점
+Mask coverage:
+- 전체 cache 1,446 중 154 masked
+- Fold0 Gold Train 38 중 36 masked
+- Fold0 Gold Val 20 중 20 masked
+- Fold0 Pseudo1000 중 97 masked
 
-Fold0 20 studies를 architecture/LR screening에 반복 사용했으므로 이 값들은 clean OOF가 아니다.
-향후 같은 Fold0에서 미세한 차이를 계속 최적화하지 않는다.
+따라서 current mask availability는 Gold와 pseudo 사이에서 매우 비대칭적이다.
+현재 coverage + anatomy-token fusion은 classification에 순이득을 주지 못했으므로 후속 기본 모델에서 제거한다.
 
-### 다음 실험
+### 다음 우선순위
 
-**R3D-05C — R34 Mask ON vs OFF Paired Fold0 Ablation**
+이제 Fold0에서 mask/LR/spatial token micro-tuning을 더 반복하지 않는다.
+다음 핵심 미확정 변수는 **Series 구성**과 **Input resolution/depth**다.
 
-두 branch는 동일하게:
-- R34 + GLOB
-- backbone LR 1e-5
-- new-layer LR 5e-5
-- WD 1e-4
-- Fold0 / same Pseudo1000 / same Gold
-- pure FP32
-- 10 epochs
-- 동일 model initialization / sample order / augmentation RNG
+1. **R3D-06A — Full All-Series Inventory + Neutral Search Cache**
+   - 전체 4,407 studies / 24,371 MRI series inventory 생성
+   - series selection rule을 넣지 않고 모든 usable series를 D24×96×96 float16으로 search-cache
+   - metadata: Study UID / Series UID / plane / fluid / fat-suppression / slice count / spacing / original shape
+2. **R3D-06B — Series Composition Screen**
+   - 현재 canonical max3 vs 더 많은 series 정책 비교
+3. **R3D-07 — Resolution / Depth Screen**
+   - series policy 고정 후 96→128, 필요 시 D24→D32 순으로 분리 비교
+4. **R3D-08 — Final small HPO + 3-Fold confirmation**
+5. **R3D-09 — Final full-data training**
+6. **R3D-10 — Hidden inference / Kaggle submission**
 
-차이는 단 하나:
-- MASK_ON: 현재 nnU-Net mask-weighted anatomy token 사용
-- MASK_OFF: anatomy token 완전 비활성화
-
-이 실험으로 현재 154-mask coverage + 현재 anatomy-token fusion의 classification 기여도를 측정한다.
-효과가 크면 segmentation 전략을 계속 진행하고, 작거나 음수면 segmentation을 제거/재설계 후보로 둔다.
+Segmentation은 현재 우선순위에서 제외한다.
+추후 series/resolution 개선 후 별도의 더 좋은 fusion 설계가 필요할 때만 다시 연다.
 
 <!-- SPECIALIST_2026_10_02_CURRENT_START -->
 
