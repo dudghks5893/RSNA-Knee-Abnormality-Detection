@@ -707,3 +707,77 @@ P2 → ALL:
   추가분 대부분이 F0/FS0이므로 첫 screen에서는 보류한다.
 - P2가 C3보다 명확히 개선될 때만 ALL을 saturation 확인 후보로 연다.
 - R3D-06A all-series cache의 volume/metadata parity PASS 전에는 GPU screen을 실행하지 않는다.
+
+---
+
+## 15. R3D-06C — C3 vs P2 Series Composition Paired Fold0 Screen
+
+### 목적
+
+MedicalNet R34 + GLOB + MASK_OFF classifier를 고정하고,
+Study당 canonical 3 series(C3)와 plane별 Top-2 최대6 series(P2)를 paired Fold0 screen으로 비교했다.
+
+### Fairness / contract
+
+- GPU T4 x2
+- Gold manifest SHA exact: PASS
+- Fold0 Pseudo1000 UID SHA exact: PASS
+- R34 pretrained SHA exact: PASS
+- R3D-06A series index / shard manifest SHA exact: PASS
+- R3D-06A volume / metadata parity: PASS
+- old cache C3 selected-Series set/order parity: PASS
+- C3 / P2 initial model SHA identical: PASS
+- initial model SHA = R3D-05C MASK_OFF reference: PASS
+- same training Study UID trace: PASS
+- canonical C3-overlap augmentation exact: PASS
+- same Fold0 20 validation UID order: PASS
+- variants complete: PASS
+- overall contract: **PASS**
+
+Result ZIP:
+- r3d06c_results.zip
+- SHA256 `811dac72ee528eef3a27843c090538641b38b972884708787987b48db7321628`
+
+### 결과
+
+| Policy | Best epoch | Macro AUROC | Macro AUPRC | Runtime | Mean Series/Study | Max |
+|---|---:|---:|---:|---:|---:|---:|
+| C3 | 5 | 0.609698 | 0.521793 | 7.67 min | 3.000 | 3 |
+| **P2** | **1** | **0.613282** | **0.534338** | **11.00 min** | **4.996** | **6** |
+
+P2 - C3:
+- Macro AUROC **+0.003584**
+- Macro AUPRC **+0.012546**
+- runtime 약 **+43.3%**
+
+C3는 R3D-05C MASK_OFF reference 0.6096981725 / 0.5217925010을 **exact 재현**했다.
+따라서 새 all-series cache와 기존 R3D classification pipeline 연결은 재현성 관점에서도 확인됐다.
+
+### Target-level delta — P2 minus C3
+
+| Target | Δ AUROC | Δ AUPRC |
+|---|---:|---:|
+| ACL | -0.375000 | -0.255368 |
+| MCL | +0.215686 | +0.281551 |
+| Medial Meniscus | -0.052083 | -0.086405 |
+| Lateral Meniscus | -0.187500 | -0.079914 |
+| Medial OA | -0.133333 | -0.193687 |
+| Lateral OA | +0.359375 | +0.387605 |
+| PF OA | +0.043956 | +0.034792 |
+| Effusion | -0.270000 | -0.155784 |
+| Synovitis | +0.180000 | +0.151377 |
+| Baker's | +0.375000 | +0.168998 |
+| Contusion | +0.041667 | -0.008188 |
+| Fracture | -0.154762 | -0.094428 |
+
+AUROC는 6 target 상승 / 6 target 하락, AUPRC는 5 상승 / 7 하락이었다.
+즉 macro는 소폭 개선됐지만 label별 반응은 매우 이질적이다.
+
+### 해석 / 판정
+
+- 사전 정의 primary metric 기준 winner는 **P2**다.
+- 그러나 Fold0 validation이 20 studies뿐이고 P2 best가 epoch1이라, P2를 최종 series policy로 바로 확정하지 않는다.
+- target별로 큰 양/음 delta가 동시에 발생했으므로 label-specific series routing을 이 결과 하나로 도입하지 않는다.
+- R3D-05A spatial, R3D-05C mask, R3D-06C series에서 반복되는 target-level 반응은 참고 신호로 누적하되 3-Fold 확인 전까지 routing 근거로 사용하지 않는다.
+- 사전 계획대로 다음은 **R3D-06D — P2 vs ALL saturation screen**.
+- ALL이 P2를 개선하지 못하면 P2를 series-policy candidate로 유지하고 R3D-07 Resolution/Depth로 이동한다.
