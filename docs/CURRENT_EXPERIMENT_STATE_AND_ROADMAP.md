@@ -74,23 +74,33 @@ Target-level:
 
 ### 다음 실행 — R3D-06D
 
-**P2 vs ALL saturation Fold0 screen**
+**Target-Aware Series + Depth Relevance Audit**
+
+실행 정책:
+- 기존 C3/P2 baseline은 다시 학습하지 않음
+- Frozen Reference:
+  - C3 Fold0 AUROC 0.609698 / AUPRC 0.521793
+  - P2 Fold0 AUROC 0.613282 / AUPRC 0.534338
+- 비교 계약 자체가 바뀌는 경우에만 baseline 재실행
+
+새 실험:
+- GPU0: TargetQuery-P2 Fold0
+- GPU1: TargetQuery-P2 Fold1
+- MedicalNet R34 / D24×96×96 / MASK_OFF / FP32
+- backbone LR 1e-5 / new LR 5e-5 / WD 1e-4
+- fold별 leakage-safe Pseudo1000 사용
 
 목적:
-- P2(max6, 전체 series 89.8%)보다 ALL(max14)이 추가 이득을 주는지 확인
-- series를 더 늘릴수록 macro가 계속 개선되는지 또는 noise가 증가하는지 확인
+- target별 Sag1/Sag2/Cor1/Cor2/Ax1/Ax2 relevance 분석
+- attention은 secondary diagnostic
+- primary relevance는 held-out Gold leave-one-Series-out occlusion
+- D24를 6개 depth bin으로 나눠 target×Series×depth occlusion 수행
+- Fold0/1에서 같은 방향의 relevance가 반복되는지 확인
 
-고정:
-- MedicalNet R34 / GLOB / MASK_OFF
-- backbone LR 1e-5 / new LR 5e-5 / WD 1e-4
-- pure FP32
-- same Fold0 / Pseudo1000 / model seed / study sampling
-- D24×96×96
-
-판정:
-- ALL이 P2를 명확히 개선 → ALL 또는 cap-N 추가 검토
-- ALL이 유지/하락 → P2를 series-policy candidate로 유지
-- 이후 R3D-07 Resolution / Depth Screen
+다음 gate:
+- 안정적인 Series/Depth relevance 반복 → Fold2 confirmation + target-specific input policy
+- 불안정 → hard routing 보류
+- baseline repeated training은 하지 않음
 
 <!-- SPECIALIST_2026_10_02_CURRENT_START -->
 
