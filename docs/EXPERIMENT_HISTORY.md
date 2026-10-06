@@ -596,3 +596,66 @@ Result ZIP:
 - 다음 실험에 영향을 주는 해석
 
 계획과 미실행 가정은 이 문서가 아니라 3D_RESNET_EXPERIMENT_PLAN.md에 기록한다.
+
+---
+
+## 13. R3D-06B — Series Policy Audit
+
+### 목적
+
+Full Manifest v2의 Series-level metadata만 사용해 실제 MRI Series 분포와
+Series Composition GPU screen 후보의 입력량을 정량화했다.
+
+### Contract
+
+- studies: 4,407 exact
+- series: 24,371 exact
+- slice rows: 819,078 exact
+- header errors: 0
+- SeriesInstanceUID unique: PASS
+- C3 / P2 / ALL study coverage: 4,407 / 4,407
+- duplicate Study/Series pairs: 0
+- overall: **PASS**
+
+Result ZIP:
+- r3d06b_results.zip
+- SHA256 `799d6946460a8f08bd7b29ea582f03b741d8f713837df83400e104f3a4dacce5`
+
+### 전체 Series 분포
+
+- Series/study: min 3 / mean 5.5301 / median 5 / p90 7 / p95 9 / max 14
+- 3 series 초과 study: 4,406 / 4,407
+- 6 series 초과 study: 734
+- 8 series 초과 study: 279
+- Sagittal / Coronal / Axial missing study: 각각 0
+
+Full Manifest v2의 Fluid_Sensitive / Fat_Suppression 조합은 실제로
+`(0,0)` 또는 `(1,1)` 두 종류만 존재했다.
+
+### 정책 규모
+
+| Policy | Selected Series | All 대비 | Mean / Study | Max / Study |
+|---|---:|---:|---:|---:|
+| C3 | 13,221 | 54.25% | 3.000 | 3 |
+| P2 | 21,886 | 89.80% | 4.966 | 6 |
+| ALL | 24,371 | 100% | 5.530 | 14 |
+
+C3 → P2:
+- +8,665 series
+- 추가 series 중 F1/FS1 비율 13.46%
+- 즉 86.54%는 F0/FS0
+
+P2 → ALL:
+- +2,485 series
+- 추가 series 중 F1/FS1 비율 1.57%
+- 즉 98.43%는 F0/FS0
+
+### 판정
+
+- 다음 GPU screen의 첫 paired comparison은 **C3 vs P2**로 한다.
+- P2는 최대 6 series로 제한하면서 전체 series의 89.8%를 커버해,
+  series coverage 증가 효과를 비교하기에 계산량/coverage 균형이 가장 좋다.
+- ALL은 P2보다 series 수가 약 11.35%만 더 많지만 max sequence length가 14까지 늘고,
+  추가분 대부분이 F0/FS0이므로 첫 screen에서는 보류한다.
+- P2가 C3보다 명확히 개선될 때만 ALL을 saturation 확인 후보로 연다.
+- R3D-06A all-series cache의 volume/metadata parity PASS 전에는 GPU screen을 실행하지 않는다.
