@@ -2,7 +2,7 @@
 
 최종 업데이트: **2026-10-06**
 
-상태: **R3D-05C 완료 / R3D-06A All-Series Cache 준비**
+상태: **R3D-05C 완료 / R3D-06A·06B 병렬 실행 준비**
 
 이 문서는 신규 3D ResNet 계보의 **현재 결정 사항, 미결정 사항, 진행 순서, 현재 진척 상태**를 기록한다.
 
@@ -471,27 +471,52 @@ Threshold-dependent metric은 checkpoint primary criterion으로 사용하지 �
 
 상태: **IN PROGRESS**
 
-### R3D-06A — Full All-Series Inventory + Neutral Search Cache
+### R3D-06A — All-Series Neutral D24×96 Search Cache
 
-상태: **NEXT**
+상태: **READY TO RUN**
 
 목적:
-- 전체 4,407 studies / 24,371 MRI series를 inventory화
-- series selection 정책을 넣기 전에 모든 usable series를 neutral하게 cache
+- 기존 Full Manifest v2를 재사용하며 inventory를 다시 만들지 않음
+- 전체 4,407 studies / 24,371 MRI series를 selection 없이 neutral cache
 - search resolution은 D24×96×96 float16 유지
+- 기존 1,446-study R3D search cache와 volume/metadata exact parity audit
 - metadata manifest 저장
+
+Notebook:
+- `R3D-06A_All-Series_D24x96_Search_Cache.ipynb`
+- CPU / Internet Off / Save & Run All
+- 추천 Save Version: `R3D-06A All-Series D24x96 Cache`
 
 중요:
 - 이 cache는 final-training cache가 아니다.
 - series composition / architecture search용이다.
 - final resolution과 final series policy가 결정되면 최종 cache를 별도로 만든다.
 
-### R3D-06B — Series Composition Screen
+### R3D-06B — Series Policy Audit
+
+상태: **READY TO RUN — R3D-06A와 병렬 가능**
+
+Full Manifest v2 metadata만 사용해 실제 Series 분포와 후보 정책 입력량을 계산한다.
+Pixel decode / GPU training은 하지 않는다.
+
+현재 audit manifest 후보:
+- C3: 현재 canonical max3
+- P2: plane별 top2, 최대6
+- ALL: 모든 valid series
+
+Fluid/Fat 조합 분포도 함께 출력하며, 결과를 본 뒤 실제 GPU Series Composition Screen 후보 수를 최소화한다.
+
+Notebook:
+- `R3D-06B_Series_Policy_Audit.ipynb`
+- CPU / Internet Off / Save & Run All
+- 추천 Save Version: `R3D-06B Series Policy Audit`
+
+### R3D-06C — Series Composition GPU Screen
 
 상태: Planned
 
-비교 후보는 R3D-06A inventory 실제 분포를 보고 확정한다.
-현재 canonical max3를 baseline으로 두고 plane당 복수 series / fluid-sensitive / fat-suppression / all-valid capped 정책을 단계적으로 비교한다.
+R3D-06A cache + R3D-06B 정책 audit 결과를 사용한다.
+MedicalNet R34 + GLOB + MASK_OFF + 기존 optimizer/FP32를 고정하고 Series 구성만 비교한다.
 
 ## R3D-07 — Resolution / Depth Screen
 
