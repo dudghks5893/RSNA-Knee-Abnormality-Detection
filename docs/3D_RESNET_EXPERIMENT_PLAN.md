@@ -2,7 +2,7 @@
 
 최종 업데이트: **2026-10-06**
 
-상태: **R3D-05A 완료 / R3D-05B Backbone LR Screen 준비**
+상태: **R3D-05B 완료 / R3D-05C Mask ON-OFF 준비**
 
 이 문서는 신규 3D ResNet 계보의 **현재 결정 사항, 미결정 사항, 진행 순서, 현재 진척 상태**를 기록한다.
 
@@ -436,36 +436,48 @@ Threshold-dependent metric은 checkpoint primary criterion으로 사용하지 �
 
 ### R3D-05B — Backbone LR Fine-tune Strength Fold0 Screen
 
+상태: **Completed — LR10 / backbone LR 1e-5 selected**
+
+| Variant | Macro AUROC | Macro AUPRC |
+|---|---:|---:|
+| **LR10 (1e-5)** | **0.601827** | 0.499933 |
+| LR5 (5e-6) | 0.591677 | 0.492868 |
+| LR3 (3e-6) | 0.582062 | 0.484103 |
+| FRZ | 0.579953 | **0.505985** |
+
+판정:
+- lower-LR 방향 개선 없음
+- backbone LR **1e-5 고정**
+- new-layer LR 5e-5 / WD 1e-4 유지
+- lower-LR 추가 탐색 종료
+
+### R3D-05C — Mask ON vs OFF Paired Fold0 Ablation
+
 상태: **READY TO RUN**
 
 목적:
-기존 R34 LR 탐색에서 최저 경계 1e-5가 우승했으므로 pretrained backbone adaptation 강도를 더 낮은 구간에서 확인한다.
+현재 nnU-Net anatomy mask / anatomy-token pipeline이 실제 classification 성능에 기여하는지 paired comparison으로 확인한다.
 
-후보:
-- FRZ: backbone frozen
-- LR3: backbone LR 3e-6
-- LR5: backbone LR 5e-6
-- LR10: backbone LR 1e-5 baseline
+비교:
+- MASK_ON: 현재 mask-weighted anatomy tokens 사용
+- MASK_OFF: global MRI tokens만 사용, anatomy tokens 비활성화
 
 공통:
-- representation: GLOB
-- new-layer LR: 5e-5
-- WD: 1e-4
 - MedicalNet R34
-- Fold0 / same Gold train-val / same Fold0 Pseudo1000
+- GLOB
+- backbone LR 1e-5
+- new-layer LR 5e-5
+- WD 1e-4
+- Fold0 / same Pseudo1000 / same Gold
 - pure FP32
-- 192 samples/epoch
-- 10 epochs fixed
-- no early stopping
-- primary Macro AUROC, tie Macro AUPRC
+- 192 samples/epoch × 10 epochs
+- identical initialization / sampling / augmentation RNG
 
-이 실험에서는 new-layer LR과 WD를 바꾸지 않는다.
-backbone fine-tuning strength 한 축만 분리해서 본다.
-
-판정:
-- FRZ / LR3 / LR5가 이기면 lower-LR 영역을 채택하고 필요 시 인접 범위를 한 번 더 좁힌다.
-- LR10이 계속 이기면 backbone LR 1e-5를 고정한다.
-- 그 다음 segmentation contribution ablation으로 이동한다.
+해석 주의:
+- 현재 mask coverage는 154 / 1,446 cached studies
+- 이 실험은 mask content뿐 아니라 현재 mask availability policy와 anatomy-token fusion을 합친 기여도다
+- 효과가 크면 후속에서 shuffled-mask / availability-only control을 추가할 수 있다
+- Fold0 screening이므로 clean OOF가 아니다
 
 ## R3D-06 — Full-data Final Training
 
@@ -917,3 +929,24 @@ Conclusion:
 coarse spatial token을 shared Transformer에 일괄 추가하는 방식은 primary AUROC 개선이 없었다.
 R34 representation은 GLOB를 유지한다.
 다음은 lower backbone LR / frozen 비교다.
+
+---
+
+# 16. R3D-05B Execution Update — 2026-10-06
+
+- contract: PASS
+- R34 pretrained fraction: 1.0
+- FP32 forward/backward: PASS
+- backbone freeze contract: PASS
+- same Fold0 validation UIDs: PASS
+- result ZIP SHA256: 12dd6e311d5ff33b78caab17fd2732cd41033a0276423e84a2caadc8ec0f5026
+
+Result:
+- LR10: AUROC 0.601827 / AUPRC 0.499933 / best epoch 9
+- LR5: AUROC 0.591677 / AUPRC 0.492868 / best epoch 8
+- LR3: AUROC 0.582062 / AUPRC 0.484103 / best epoch 8
+- FRZ: AUROC 0.579953 / AUPRC 0.505985 / best epoch 9
+
+Conclusion:
+lower LR 또는 backbone freeze는 primary AUROC를 개선하지 않았다.
+R34 backbone LR은 1e-5로 고정하고 다음 Mask ON/OFF ablation으로 이동한다.
