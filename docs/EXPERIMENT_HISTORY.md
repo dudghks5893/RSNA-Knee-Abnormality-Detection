@@ -779,5 +779,7 @@ AUROC는 6 target 상승 / 6 target 하락, AUPRC는 5 상승 / 7 하락이었�
 - 그러나 Fold0 validation이 20 studies뿐이고 P2 best가 epoch1이라, P2를 최종 series policy로 바로 확정하지 않는다.
 - target별로 큰 양/음 delta가 동시에 발생했으므로 label-specific series routing을 이 결과 하나로 도입하지 않는다.
 - R3D-05A spatial, R3D-05C mask, R3D-06C series에서 반복되는 target-level 반응은 참고 신호로 누적하되 3-Fold 확인 전까지 routing 근거로 사용하지 않는다.
-- 사전 계획대로 다음은 **R3D-06D — P2 vs ALL saturation screen**.
-- ALL이 P2를 개선하지 못하면 P2를 series-policy candidate로 유지하고 R3D-07 Resolution/Depth로 이동한다.
+- 반복 baseline 재학습은 중단한다. C3/P2 계보의 reproducibility가 충분히 확인됐으므로 이후에는 Frozen Reference와 비교한다.
+- 다음은 **R3D-06D — Target-Aware Series + Depth Relevance Audit**.
+- P2 입력을 유지하되 12개 target query를 새로 학습하고, held-out Gold에서 Series/Depth occlusion으로 target별 유효 Series와 depth 구간을 분석한다.
+- Fold0/1을 병렬 실행하고, Fold2는 relevance가 반복될 때만 confirmation으로 사용한다.
