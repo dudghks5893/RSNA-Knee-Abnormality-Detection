@@ -1,6 +1,6 @@
 # RSNA Knee Abnormality Detection — 현재 실험 상태 / 데이터 계보 / 다음 로드맵
 
-최종 업데이트: **2026-10-03**
+최종 업데이트: **2026-10-06**
 
 이 문서는 채팅이 바뀌어도 실험을 그대로 이어갈 수 있도록,
 현재까지의 데이터 생성 방식, 모델 계보, 정확한 설정값, 결과, 해석,
@@ -9,6 +9,73 @@
 내부 추적용 ID(Exp16B-2, B3A 등)는 보조적으로만 사용한다.
 실험 기록 제목은 가능한 한 **누가 봐도 무엇을 바꿨는지 바로 이해할 수 있는 설명형 이름**을 사용한다.
 
+
+## 2026-10-06 — Current R3D State / Backbone Search Complete
+
+이 섹션이 아래의 오래된 R3D 계획/상태보다 우선한다.
+
+### 현재 확정
+
+- R3D-03A/B/C backbone search: **COMPLETED**
+- R3D-04 backbone selection: **COMPLETED**
+- selected backbone: **MedicalNet ResNet34**
+- selected R34 optimizer config: **S1**
+  - backbone LR 1e-5
+  - new-layer LR 5e-5
+  - weight decay 1e-4
+- R34 pooled Gold58 screened OOF:
+  - Macro AUROC **0.5672668245**
+  - Macro AUPRC **0.4305019214**
+- R50 pooled Macro AUROC: **0.5334943117**
+- R101 pooled Macro AUROC: **0.5103637069**
+- R34 fold AUROC: 0.596915 / 0.598180 / 0.582570
+
+주의: Fold0 LR/WD screening을 같은 Gold58에 사용했으므로 **screened OOF / model-selection estimate**이며 clean/unbiased OOF가 아니다.
+
+### Current numerical policy
+
+MedicalNet full-model FP16 AMP는 후속 기본값에서 제외한다.
+
+- R34 / R50에서 대부분의 training forward가 FP32 fallback
+- R101 screening은 사실상 모든 forward가 FP32 fallback
+- FP32 validation은 finite PASS
+
+따라서 현재 R34 후속 실험은 **pure FP32**를 기준으로 한다.
+
+### Current bottleneck hypothesis
+
+현재 R3D baseline은 final 3D ResNet feature map을 바로 spatial mean하여 series당 global MRI token 1개로 줄인다.
+
+mask가 없는 대부분의 study에서 Transformer 입력은 사실상 Sagittal / Coronal / Axial global token 최대 3개에 크게 의존한다.
+국소 tear / fracture / contusion / ligament abnormality가 global average pooling에서 약해질 가능성이 있으므로,
+현재 우선순위는 segmentation 확대보다 **spatial tokenization 검증**이다.
+
+### 다음 실험
+
+**R3D-05A — R34 Global Token vs Spatial Token Fold0 Screen**
+
+동일 Fold0 / 동일 Pseudo1000 / 동일 S1 optimizer / pure FP32에서:
+- GLOB: global token baseline
+- SPT27: global + 27 spatial tokens / series
+- SPT48: global + 48 spatial tokens / series
+
+anatomy mask가 있는 경우 기존 mask-weighted anatomy token은 그대로 유지한다.
+
+판정:
+- primary: best Fold0 Macro AUROC
+- secondary: Macro AUPRC
+- 10 epoch fixed
+- no early stopping
+- 후보별 train/val curve와 runtime 기록
+
+Spatial token이 의미 있게 개선되면 3-Fold confirmation으로 확장한다.
+개선이 없으면 global baseline을 유지하고 segmentation ablation으로 이동한다.
+
+### Segmentation 의사결정은 아직 보류
+
+현재 nnU-Net은 병변 segmentation이 아니라 bone / cartilage / medial-lateral meniscus 등 9개 anatomy segmentation이다.
+backbone/representation 구조를 먼저 안정화한 뒤 mask OFF vs nnU-Net anatomy mask ON을 비교하고,
+그 다음 필요 시 lightweight student / integrated anatomy head를 검토한다.
 
 <!-- SPECIALIST_2026_10_02_CURRENT_START -->
 
