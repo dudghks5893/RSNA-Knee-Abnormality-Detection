@@ -10,7 +10,7 @@
 실험 기록 제목은 가능한 한 **누가 봐도 무엇을 바꿨는지 바로 이해할 수 있는 설명형 이름**을 사용한다.
 
 
-## 2026-10-06 — Current R3D State / R3D-06A·06B Complete
+## 2026-10-07 — Current R3D State / R3D-06C Complete
 
 이 섹션이 아래의 오래된 R3D 계획/상태보다 우선한다.
 
@@ -47,26 +47,50 @@
 - 첫 GPU screen은 **C3 vs P2**
 - ALL은 P2가 C3보다 개선될 때만 saturation test
 
-### 다음 실행 — R3D-06C
+### R3D-06C — C3 vs P2 Series Composition Screen
 
-**C3 vs P2 paired Fold0 Series Composition Screen**
+상태: **COMPLETED — PASS**
+
+공정성:
+- old-cache C3 selected-Series UID/order exact parity PASS
+- same initial model SHA PASS
+- same training Study UID trace PASS
+- canonical-overlap augmentation exact PASS
+- C3는 R3D-05C MASK_OFF metric exact 재현
+
+결과:
+- C3: AUROC 0.609698 / AUPRC 0.521793 / best epoch5 / 7.67 min
+- P2: AUROC 0.613282 / AUPRC 0.534338 / best epoch1 / 11.00 min
+- P2-C3: AUROC +0.003584 / AUPRC +0.012546
+- runtime: P2 약 +43.3%
+- Result ZIP SHA256: 811dac72ee528eef3a27843c090538641b38b972884708787987b48db7321628
+
+Target-level:
+- AUROC 상승 6 / 하락 6
+- AUPRC 상승 5 / 하락 7
+- 큰 개선: MCL, Lateral OA, Synovitis, Baker's
+- 큰 하락: ACL, Lateral Meniscus, Medial OA, Effusion, Fracture
+- Fold0 n=20이므로 label-specific routing 근거로 직접 사용하지 않음
+
+### 다음 실행 — R3D-06D
+
+**P2 vs ALL saturation Fold0 screen**
+
+목적:
+- P2(max6, 전체 series 89.8%)보다 ALL(max14)이 추가 이득을 주는지 확인
+- series를 더 늘릴수록 macro가 계속 개선되는지 또는 noise가 증가하는지 확인
 
 고정:
 - MedicalNet R34 / GLOB / MASK_OFF
 - backbone LR 1e-5 / new LR 5e-5 / WD 1e-4
 - pure FP32
-- same Gold Fold0 / Pseudo1000 / model seed / study sampling
+- same Fold0 / Pseudo1000 / model seed / study sampling
 - D24×96×96
 
-Pairing:
-- C3 canonical overlap series의 augmentation을 P2에서도 exact하게 정렬
-- C3 selection은 기존 1,446-study search cache와 exact UID/order parity를 fail-fast 검증
-- C3 initial model / sample trace는 R3D-05C MASK_OFF reference와 재현 계약
-
-R3D-06C 이후:
-- P2 승리 → ALL saturation test 조건부
-- C3 유지/승리 → series 확대 종료
-- series policy 확정 후 R3D-07 Resolution / Depth Screen
+판정:
+- ALL이 P2를 명확히 개선 → ALL 또는 cap-N 추가 검토
+- ALL이 유지/하락 → P2를 series-policy candidate로 유지
+- 이후 R3D-07 Resolution / Depth Screen
 
 <!-- SPECIALIST_2026_10_02_CURRENT_START -->
 
