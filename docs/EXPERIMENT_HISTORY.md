@@ -451,7 +451,62 @@ Result ZIP:
 
 ---
 
-## 11. 기록 원칙
+## 11. R3D-05B — R34 Backbone LR Fine-tune Strength Fold0 Screen
+
+### 목적
+
+R3D-05A에서 선택된 MedicalNet R34 + GLOB를 고정하고 pretrained backbone fine-tuning 강도만 비교했다.
+기존 R34 screening에서 가장 낮은 경계인 1e-5가 우승했기 때문에 freeze / 3e-6 / 5e-6 / 1e-5를 재비교했다.
+
+### 고정 조건
+
+- MedicalNet R34
+- GLOB representation
+- Fold0 / 동일 Gold Train-Val / 동일 Fold0 Pseudo1000
+- new-layer LR 5e-5
+- WD 1e-4
+- pure FP32
+- BatchNorm running stats frozen
+- 192 samples/epoch × 10 epochs
+- same seed / study sampling / augmentation
+
+### 결과
+
+| Variant | Backbone LR | Best epoch | Macro AUROC | Macro AUPRC | Runtime |
+|---|---:|---:|---:|---:|---:|
+| **LR10** | **1e-5** | **9** | **0.601827** | 0.499933 | 7.63 min |
+| LR5 | 5e-6 | 8 | 0.591677 | 0.492868 | 7.17 min |
+| LR3 | 3e-6 | 8 | 0.582062 | 0.484103 | 7.36 min |
+| FRZ | frozen | 9 | 0.579953 | **0.505985** | **3.77 min** |
+
+LR10 대비:
+- LR5: AUROC -0.010150 / AUPRC -0.007065
+- LR3: AUROC -0.019765 / AUPRC -0.015830
+- FRZ: AUROC -0.021874 / AUPRC +0.006052
+
+### 해석
+
+- lower-LR 방향은 성능을 개선하지 않았다.
+- backbone을 완전히 freeze하면 runtime은 약 절반으로 줄지만 primary AUROC가 가장 낮았다.
+- 1e-5가 lower-bound 우승이었던 이전 결과를 다시 확인했으며, 현재 R34 backbone LR은 **1e-5로 고정**한다.
+- LR10의 epoch8 AUROC 0.601744 / AUPRC 0.506908과 epoch9 AUROC 0.601827 / AUPRC 0.499933은 AUROC가 사실상 매우 가깝다.
+  다만 사전 정의 primary checkpoint rule에 따라 epoch9가 선택됐다.
+
+### 판정
+
+- **Backbone LR = 1e-5 채택**
+- new-layer LR = 5e-5 유지
+- WD = 1e-4 유지
+- 추가 lower-LR 탐색 중단
+- 다음: **R3D-05C — Mask ON vs OFF paired Fold0 ablation**
+
+Result ZIP:
+- r3d05b_results.zip
+- SHA256 12dd6e311d5ff33b78caab17fd2732cd41033a0276423e84a2caadc8ec0f5026
+
+---
+
+## 12. 기록 원칙
 
 이 문서에는 **실행이 끝난 실험만 추가**한다.
 
