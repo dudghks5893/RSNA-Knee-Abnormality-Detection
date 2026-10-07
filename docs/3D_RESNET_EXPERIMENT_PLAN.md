@@ -1388,3 +1388,25 @@ Freeze:
 Next:
 - 130 mm physical crop Fold1/Fold2 confirmation
 - if not robustly positive, final Main R3D input = Full-FOV interpolated D24×96
+
+
+### R3D-09AB final — Crop130 adopted
+
+3-Fold confirmation:
+- F0 ΔAUC +0.004663
+- F1 ΔAUC -0.005823
+- F2 ΔAUC +0.033412
+- mean ΔAUC **+0.010751**
+- mean ΔAUPRC **+0.003722**
+
+Decision:
+- **ADOPT 130 mm physical crop**
+- freeze depth at interpolated D24
+- freeze in-plane at 96×96
+- no more crop/resolution/depth micro-search
+
+Final Main R3D input:
+`130mm physical center crop → interpolated D24×96×96 → ALL Series`
+
+Next experiment:
+- canonical MedicalNet R34 Medial Meniscus Sag1-only specialist confirmation
