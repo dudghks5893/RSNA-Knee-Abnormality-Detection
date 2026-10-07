@@ -668,6 +668,69 @@ R3D-06G / 06H까지 끝난 뒤 다음 순서로 고정한다.
 - mixed → pooled Gold58 및 fold stability로 최종 결정
 
 
+
+### R3D-07A / 07B — Geometry First Wave
+
+상태: **NEXT — A/B 병렬**
+
+현재 Series policy:
+- base classifier = **ALL**
+- Medial Meniscus Sag1-only specialist는 별도 final candidate로 보존
+- Synovitis Sag1-only는 기각
+
+남은 시간 동안 연구축은 두 개만 유지한다.
+
+#### Account A — A_R3D-07A
+
+**Physical FOV 140 mm Crop / D24×96×96 / ALL / Fold0**
+
+변경:
+- full-frame in-plane FOV → centered 140 mm physical crop
+
+고정:
+- D24×96×96
+- ALL Series
+- R34 GLOB MASK_OFF
+- LR / WD / pseudo / Fold0 / epochs / augmentation contract
+
+목적:
+- scanner마다 다른 PixelSpacing / FOV를 물리 단위로 정규화하고
+  무릎이 입력 화면에서 차지하는 비율을 높이는 효과만 확인
+
+#### Account B — B_R3D-07B
+
+**Full FOV / D24×128×128 / ALL / Fold0**
+
+변경:
+- 96×96 → 128×128
+
+고정:
+- full-frame FOV
+- D24
+- ALL Series
+- R34 GLOB MASK_OFF
+- LR / WD / pseudo / Fold0 / epochs / augmentation contract
+
+목적:
+- 작은 병변 / 연골 / meniscus detail 보존을 위해
+  in-plane resolution 증가 효과만 확인
+
+Frozen ALL Fold0:
+- AUROC 0.617594
+- AUPRC 0.540314
+
+판정:
+- 07A만 개선 → crop 우선
+- 07B만 개선 → resolution 우선
+- 둘 다 개선 → 다음 wave에서 140mm + 128 조합
+- 둘 다 미개선 → depth / raw-slice geometry를 우선 확인
+
+주의:
+- cache는 전체 4,407 study를 다시 만들지 않고
+  Fold0 search에 필요한 Gold58 + Fold0 Pseudo1000 UID만 대상으로 생성해 시간 절감
+- baseline ALL Fold0는 재학습하지 않음
+- A/B Notebook filename과 Save Version에 Account tag 필수
+
 ## R3D-07 — Resolution / Depth Screen
 
 상태: Planned
