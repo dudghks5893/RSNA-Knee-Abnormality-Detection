@@ -1303,3 +1303,37 @@ GPU Notebook은 raw competition DICOM을 읽어 cache를 생성하지 않는다.
 - GPU training-only comparison
 - 130 mm crop은 weak positive 후보로 유지하며,
   real-slice geometry winner가 생긴 뒤 조합 여부를 판단
+
+
+### R3D-08A / R3D-08B — Actual-Slice Preservation
+
+상태: **NEXT — A/B 병렬**
+
+목적:
+- 기존 z-axis trilinear interpolation이 작은 병변 정보를 희석하는지 직접 검증
+- 단순 D32 interpolation 실패와 real-slice preservation을 구분
+
+R3D-08A:
+- Account A
+- REAL24_R96
+- Fold0 / Fold1 dual-T4
+- 원본 actual slice만 사용
+
+R3D-08B:
+- Account B
+- REAL32_R96
+- Fold0 / Fold1 dual-T4
+- 원본 actual slice만 사용
+
+공통:
+- ALL Series
+- R34 GLOB MASK_OFF
+- Transformer + CLS
+- LR/WD/pseudo/sampling contract 유지
+- baseline 재학습 없음
+- pretrained matched fraction >0.90 assert
+- Fold0/Fold1 sample trace exact assert
+
+후속:
+- 명확한 winner만 Fold2 confirmation
+- real-slice winner가 생긴 뒤 130 mm crop과 조합 여부 판단
