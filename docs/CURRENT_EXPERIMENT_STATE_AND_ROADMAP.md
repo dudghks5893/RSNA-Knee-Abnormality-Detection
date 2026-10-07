@@ -2116,3 +2116,62 @@ R3D-07B:
 GPU 자원 원칙:
 - 새 cache / slice sampling artifact 생성 = CPU-only
 - GPU notebook = training-only
+
+
+---
+
+## 2026-10-07 — R3D-08 Actual-Slice Preservation
+
+R3D-07B에서 단순 D24→D32 interpolation과 96→128 resolution 증가는 모두 하락했다.
+
+다음은 depth 숫자를 더 키우는 실험이 아니라,
+**z축 interpolation 자체를 제거하고 실제 DICOM slice만 선택**하는 실험이다.
+
+### CPU cache — A/B 병렬
+
+Account A:
+- R3D-08CACHE-A
+- REAL24_R96
+- Gold58 + Fold0/Fold1 Pseudo1000 UID union
+- 실제 slice 24장 선택
+- z interpolation 없음
+- in-plane 96×96 bilinear resize만 수행
+
+Account B:
+- R3D-08CACHE-B
+- REAL32_R96
+- 동일 UID union
+- 실제 slice 32장 선택
+- z interpolation 없음
+- in-plane 96×96 bilinear resize만 수행
+
+실제 slice 선택:
+- Series 전체 physical extent를 균등한 target position으로 나눔
+- 각 target position에서 가장 가까운 원본 slice 선택
+- source depth 부족 시 nearest slice duplicate 허용
+- 선택 index / unique slice 수 / spacing / physical extent를 manifest에 기록
+
+### GPU training — A/B 병렬
+
+Account A — R3D-08A:
+- GPU0 Fold0
+- GPU1 Fold1
+- REAL24_R96
+
+Account B — R3D-08B:
+- GPU0 Fold0
+- GPU1 Fold1
+- REAL32_R96
+
+Frozen comparison:
+- Fold0 ALL D24×96: 0.617594 / 0.540314
+- Fold1 ALL D24×96: 0.548407 / 0.453375
+
+Gate:
+- Fold0/1 둘 다 개선 → Fold2 confirmation
+- 둘 다 하락 → 해당 real-slice variant 기각
+- mixed → 평균 delta + target-level을 보고 Fold2 여부 결정
+
+GPU 자원 원칙:
+- cache 생성 = CPU-only
+- GPU notebook = training-only
