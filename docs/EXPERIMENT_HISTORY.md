@@ -1077,3 +1077,83 @@ R3D-06H — Account B:
 - 목적: Sag1이 중요하다는 관찰이 Sag1-only 학습 이득으로 실제 이어지는지 확인
 
 R3D-06G / 06H 결과 후 Series policy를 고정하고 R3D-07 Resolution / Depth screen으로 이동한다.
+
+
+---
+
+## 20. R3D-06G — ALL Fold2 + P3 Fold0
+
+### 목적
+
+R3D-06F에서 ALL-Series가 P2보다 Fold0/1 primary Macro AUROC에서 모두 우세했으므로,
+다음 두 질문을 동시에 확인했다.
+
+- ALL Fold2가 P2 Fold2보다도 좋은가?
+- P2(max6)와 ALL(max14)의 중간인 P3(plane별 Top3, max9)가 Fold0에서 가치가 있는가?
+
+GPU 병렬:
+- GPU0 → P3 Fold0
+- GPU1 → ALL Fold2
+
+### Contract
+
+- P2 / 기존 ALL baseline 재학습 없음
+- P3 series: 23,915
+- P3 mean series/study: 5.4266
+- P3 max series/study: 9
+- P2 ⊂ P3 ⊂ ALL: PASS
+- initial model SHA contract: PASS
+- sample UID trace contract: PASS
+- overall: **PASS**
+- result ZIP SHA256: `b0641481e3d4a8cad2279bcc3ccdc2fc4a5f687d1c32f3b431d66eafa87481b7`
+
+### 결과
+
+P3 Fold0:
+- best epoch: 10
+- Macro AUROC: **0.624242**
+- Macro AUPRC: **0.511143**
+
+비교:
+- P3 - P2 Fold0 AUROC: **+0.010960**
+- P3 - ALL Fold0 AUROC: **+0.006649**
+- 단 AUPRC는 P2/ALL보다 낮음
+
+ALL Fold2:
+- best epoch: 3
+- Macro AUROC: **0.622678**
+- Macro AUPRC: **0.521740**
+
+P2 Fold2 Frozen:
+- AUROC 0.588586
+- AUPRC 0.528448
+
+ALL - P2 Fold2:
+- AUROC **+0.034092**
+- AUPRC **-0.006709**
+
+### 누적 Series-policy 해석
+
+Primary Macro AUROC 기준:
+- Fold0: ALL > P2
+- Fold1: ALL > P2
+- Fold2: ALL > P2
+
+즉 **ALL은 P2보다 3/3 Fold에서 AUROC가 높았다.**
+
+동시에 P3 Fold0는:
+- P2보다 높음
+- ALL보다도 높음
+
+따라서 현재 최종 Series policy를 바로 ALL로 확정하지 않고,
+**P3 Fold1/2 확인 가치가 생겼다.**
+
+AUPRC에서는 Fold별 trade-off가 있으므로 최종 선택은
+사전 정의 primary AUROC를 우선하되 AUPRC 하락 크기도 같이 기록한다.
+
+### 판정
+
+- ALL-Series의 추가 Series는 단순 noise라고 보기 어렵다.
+- P2 확장은 성공적인 방향이었다.
+- P3가 Fold0에서 가장 높은 AUROC를 기록했으므로 P3 Fold1/2 confirmation을 진행할 가치가 있다.
+- Series policy는 현재 **P3 vs ALL** 최종 경쟁 단계다.
