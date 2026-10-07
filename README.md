@@ -46,6 +46,7 @@
 아래 문서들은 중요한 실험 기록이지만 **현재 NEXT를 결정하는 문서가 아니다.**
 
 - [구 5-Fold 병렬 계획](docs/FINAL_5FOLD_PARALLEL_EXPERIMENT_PLAN.md)
+- [2026-10-07 공개 연구 조사 / 근거 참고](docs/PUBLIC_RESEARCH_PERFORMANCE_ROADMAP_2026-10-07.md)
 - [Specialist 완료 기록](docs/SPECIALIST_EXPERIMENT_LOG.md)
 - [Specialist 과거 로드맵](docs/SPECIALIST_EXPERIMENT_ROADMAP.md)
 
