@@ -2,6 +2,12 @@
 
 최종 업데이트: **2026-09-27**
 
+> **HISTORICAL / SUPERSEDED — 2026-10-08**  
+> 이 문서는 Exp51~Exp57 시기의 DINOv2 5-Fold 확장 계획 기록이다.  
+> **현재 작업 계획 문서가 아니다.** 현재 상태/다음 실행은  
+> [CURRENT_HANDOFF.md](CURRENT_HANDOFF.md) → [CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md](CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md) → [3D_RESNET_EXPERIMENT_PLAN.md](3D_RESNET_EXPERIMENT_PLAN.md) 순서로 따른다.  
+> 아래의 "현재", "다음", "최종 목표" 표현은 당시 시점의 역사 기록으로만 해석한다.
+
 이 문서는 현재 최고 성능 파이프라인을 5-Fold로 확장하고,
 환자별 중요 MRI 선택을 더 안정화하기 위한 **최종 실험 설계 기준 문서**다.
 
