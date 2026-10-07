@@ -2060,3 +2060,59 @@ Frozen ALL Fold0:
 - 다음 우선순위는 **R3D-07B: D24×128 vs D32×96**
 - 07B 결과가 더 강하면 detail-preservation axis를 우선
 
+
+
+---
+
+## 2026-10-07 — R3D-07A/07B 결론
+
+### 완료 결과
+
+R3D-07A:
+- Full FOV D24×96 Frozen: 0.617594 / 0.540314
+- 130 mm D24×96: **0.622257 / 0.508100**
+- 150 mm D24×96: 0.618253 / 0.521752
+- crop winner: **130 mm**
+- 단 primary AUROC gain은 +0.004663으로 작고 AUPRC는 하락
+
+R3D-07B:
+- D24×128: **0.607901 / 0.504403**
+- D32×96: **0.604305 / 0.504119**
+- 둘 다 Frozen Full FOV D24×96보다 하락
+- 단순 128 resolution / 단순 D32 resample은 기각
+
+### 현재 고정 / 보류
+
+고정:
+- Series = ALL
+- Backbone = MedicalNet R34
+- Representation = GLOB
+- Mask = OFF
+- Transformer + CLS
+- 12 target heads
+
+보류 후보:
+- 130 mm physical crop
+- Medial Meniscus Sag1-only specialist
+
+기각:
+- 150 mm crop 단독 채택
+- Full-FOV 128×128
+- 단순 D32 interpolation
+- Synovitis Sag1-only hard routing
+
+### 다음 우선순위
+
+남은 핵심 실험축은 **real-slice geometry 보존**이다.
+
+다음 실험은 D24→D32처럼 숫자만 늘리는 방식이 아니라:
+- 실제 DICOM slice 위치
+- slice spacing
+- 인접 slice 보존
+- center-adjacent / spacing-aware sampling
+
+을 직접 사용하는 입력 생성 방식을 비교한다.
+
+GPU 자원 원칙:
+- 새 cache / slice sampling artifact 생성 = CPU-only
+- GPU notebook = training-only
