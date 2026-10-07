@@ -2,7 +2,7 @@
 
 최종 업데이트: **2026-10-07**
 
-상태: **R3D-06F 완료 / R3D-06G·06H A/B 병렬 실행 준비**
+상태: **R3D-06G 완료 / R3D-06H 수정 재실행 + P3 Fold1/2 confirmation 다음**
 
 이 문서는 신규 3D ResNet 계보의 **현재 결정 사항, 미결정 사항, 진행 순서, 현재 진척 상태**를 기록한다.
 
@@ -593,17 +593,27 @@ Stricter exploratory Series signal:
 
 ### R3D-06G — ALL Fold2 + P3 Fold0
 
-상태: **NEXT — Account A**
+상태: **COMPLETED — PASS**
 
-- GPU0: P3 Fold0
-- GPU1: ALL Fold2
-- P3 = plane별 Top3 / max9
-- ALL Fold2로 3-Fold consistency 확인
-- P3는 Fold0 gate 통과 시에만 Fold1/2 확장
+- P3 Fold0: 0.624242 / 0.511143
+- ALL Fold2: 0.622678 / 0.521740
+- ALL은 P2 대비 Fold0/1/2 primary AUROC 모두 우세
+- P3 Fold0는 P2/ALL Fold0보다 AUROC 우세
+- 따라서 P3 Fold1/2 confirmation 진행
 
 ### R3D-06H — Sag1 Target-Specific Input Confirmation
 
-상태: **NEXT — Account B**
+상태: **FAILED ON FIRST FORWARD — FIXED RERUN NEXT**
+
+초기 실행:
+- P2 lane / Sag1 lane 모두 학습 시작 전 실패
+- 원인: BinaryModel의 `self.type` embedding 이름이 PyTorch `nn.Module.type()` 메서드와 충돌
+- 모델/데이터 결과가 아니라 implementation bug
+- 수정본: `self.type_emb`, `self.struct_emb`
+- Fresh Save & Run All 필요
+
+재실행 목적은 동일:
+
 
 Targets:
 - Medial Meniscus
@@ -637,6 +647,25 @@ R3D-06G / 06H까지 끝난 뒤 다음 순서로 고정한다.
 - D24×96×96 → D24×128×128
 - 필요 시 그 다음 D32×128×128
 - 한 번에 한 축만 변경
+
+
+### R3D-06I — P3 Fold1/2 Confirmation
+
+상태: **NEXT — independent parallel candidate**
+
+목적:
+- Fold0에서 P3 AUROC 0.624242가 P2 0.613282 / ALL 0.617594보다 높았음
+- P3가 우연한 Fold0 효과인지 Fold1/2에서도 반복되는지 확인
+
+실행:
+- GPU0 → P3 Fold1
+- GPU1 → P3 Fold2
+- P2 / ALL baseline은 재학습하지 않고 Frozen Reference 사용
+
+판정:
+- P3가 Fold1/2에서도 ALL과 경쟁 또는 우세 → P3 우선 series policy
+- P3가 Fold1/2에서 ALL보다 일관되게 열세 → ALL 우선
+- mixed → pooled Gold58 및 fold stability로 최종 결정
 
 
 ## R3D-07 — Resolution / Depth Screen
