@@ -1362,3 +1362,29 @@ REAL32:
 - 기존 F0/F1 REAL24 cache 재사용
 - Fold2 pseudo1000에 필요한 missing Study만 CPU delta cache
 - GPU notebook은 Fold2 training only
+
+
+### R3D-08C final result — REAL24 rejected as non-robust
+
+Fold2 REAL24:
+- AUROC 0.620144 vs Frozen 0.622678
+- AUPRC 0.521160 vs Frozen 0.521740
+- ΔAUC -0.002534
+- ΔAP -0.000580
+
+REAL24 3-Fold mean:
+- ΔAUC +0.000405
+- ΔAP +0.000842
+
+Interpretation:
+- sign-only auto contract said ADOPT
+- experiment decision = **do not adopt**
+- Fold0 positive / Fold1 nearly flat negative / Fold2 negative
+- gain magnitude too small for Gold58 model selection confidence
+
+Freeze:
+- interpolated D24×96 remains current depth/resolution representation
+
+Next:
+- 130 mm physical crop Fold1/Fold2 confirmation
+- if not robustly positive, final Main R3D input = Full-FOV interpolated D24×96
