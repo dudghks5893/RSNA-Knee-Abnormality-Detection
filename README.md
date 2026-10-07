@@ -1,39 +1,58 @@
 # RSNA Knee Abnormality Detection — Experiment Log
 
+## 2026-10-08 — Current Project Status
 
-## 2026-10-05 — 3D ResNet 신규 실험 계보
+**Competition:** RSNA Knee Abnormality Detection
 
-다음 작업은 아래 3개 기준 문서부터 확인한다.
+현재 프로젝트 최고 Public LB:
+- **0.918 — Exp57**
+- 3-Fold B3A branch + 3-Fold Full-MRI Direct branch를 각각 평균한 뒤 **70:30**으로 결합
 
-- [완료 실험 기록](docs/EXPERIMENT_HISTORY.md)
-- [3D ResNet 현재 계획 / 진척 상태](docs/3D_RESNET_EXPERIMENT_PLAN.md)
-- [AI Agent Kaggle Notebook 작성 규칙](docs/AI_AGENT_KAGGLE_NOTEBOOK_RULES.md)
+현재 R3D Main:
+- **ALL Series**
+- **130 mm physical center crop**
+- **interpolated D24×96×96**
+- **MedicalNet R34**
+- **GLOB**
+- **MASK_OFF**
+- **Transformer + shared CLS**
+- Full fine-tuning / pure FP32
 
-현재 신규 계보 상태: **R3D-00 진행 중**  
-다음 단계: **R3D-00 — Data / Segmentation Source Audit (진행 중)**
+가장 최근 완료:
+- **R3D-10AB — Always Dual vs Mixed 3-Mode Fold0**
+- Full+Crop feature-token fusion은 Crop130 single-view보다 낮아 **기각**
+- Main R3D는 **Crop130 single-view 유지**
+
+현재 즉시 다음:
+1. **R3D-11CACHE** — Fold0/1/2를 모두 커버하는 canonical Crop130 cache 정리
+2. **R3D-11** — canonical R34 + Crop130 기준 Medial Meniscus Sag1-only 3-Fold paired confirmation
+3. Final-training data/budget 결정
+4. Final Main R3D 3-Fold
+5. R3D standalone hidden-test submission
+6. Exp57 + R3D (+ 통과 시 Medial Meniscus specialist) ensemble
+
+### 현재 기준 문서 — 우선순위
+
+새 채팅/새 작업은 아래 순서로 읽는다.
+
+1. [새 채팅 인수인계 / cold-start 기준](docs/CURRENT_HANDOFF.md)
+2. [현재 실험 상태 / 데이터 계보 / 다음 로드맵](docs/CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md)
+3. [3D ResNet 앞으로의 실행 계획](docs/3D_RESNET_EXPERIMENT_PLAN.md)
+4. [완료 실험 기록](docs/EXPERIMENT_HISTORY.md)
+5. [AI Agent Kaggle Notebook 작성/복구 규칙](docs/AI_AGENT_KAGGLE_NOTEBOOK_RULES.md)
+
+### Historical docs 주의
+
+아래 문서들은 중요한 실험 기록이지만 **현재 NEXT를 결정하는 문서가 아니다.**
+
+- [구 5-Fold 병렬 계획](docs/FINAL_5FOLD_PARALLEL_EXPERIMENT_PLAN.md)
+- [Specialist 완료 기록](docs/SPECIALIST_EXPERIMENT_LOG.md)
+- [Specialist 과거 로드맵](docs/SPECIALIST_EXPERIMENT_ROADMAP.md)
+
+이 README 아래쪽의 과거 섹션에도 당시의 "현재", "다음", "최종" 표현이 남아 있다.
+**2026-10-08 이후의 실제 판단은 위 Current 문서들을 우선한다.**
 
 ---
-
-
->
-
-
-> 최신 최종 실험 설계 / A-B 병렬 실행 계획:  
-> `docs/FINAL_5FOLD_PARALLEL_EXPERIMENT_PLAN.md`
-
-
-**Competition:** [RSNA Knee Abnormality Detection](https://www.kaggle.com/competitions/rsna-knee-abnormality-detection)
-
-> **현재 실험 상태 / 데이터 계보 / 다음 로드맵:** [docs/CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md](docs/CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md)  
-> 채팅이 바뀌어도 동일한 설정으로 이어가기 위한 기준 문서입니다.
-
-> **Specialist 전용 문서:**
-> - [완료 실험 기록](docs/SPECIALIST_EXPERIMENT_LOG.md)
-> - [전용 로드맵 / 설계 초안](docs/SPECIALIST_EXPERIMENT_ROADMAP.md)
->
-> **현재 최고 Public LB:** **0.918** — Exp57 3-Fold B3A + Full-MRI Direct 70:30 Hybrid
-
-
 
 <!-- SPECIALIST_2026_10_02_CURRENT_START -->
 
