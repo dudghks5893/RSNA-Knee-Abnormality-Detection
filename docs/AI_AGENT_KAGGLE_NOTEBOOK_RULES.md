@@ -551,3 +551,32 @@ Public LB를 받으면:
 - pseudo가 Gold-derived이면 반드시 Fold-aware leakage-safe version 사용
 - primary = pooled Macro AUROC
 - secondary = pooled Macro AUPRC
+
+
+---
+
+# 20. A/B Account Lane Naming Rule
+
+사용자는 Kaggle 계정 A / B를 동시에 사용할 수 있으므로,
+병렬 실행 Notebook은 **실행 계정이 파일명과 화면에서 즉시 구분되어야 한다.**
+
+필수:
+
+- Notebook filename 맨 앞에 `A_` 또는 `B_`
+- 첫 Markdown title에 `[Account A]` 또는 `[Account B]`
+- 추천 Save Version 맨 앞에 `A ` 또는 `B `
+- 사용자 전달 답변에서 반드시 `계정 A` / `계정 B`를 분리해서 표시
+- 같은 wave에서 A/B가 바뀌지 않도록 experiment-to-account mapping을 명시
+- Experiment ID 자체는 R3D-xx를 유지하고 Account tag는 실행 lane tag로 별도 표기
+
+예:
+
+~~~text
+A_R3D-06I_P3_Fold12_Confirmation_DualT4.ipynb
+B_R3D-06H_Sag1_TargetPolicy_Confirmation_Fold0_DualT4.ipynb
+
+A R3D-06I P3 F12 Confirm
+B R3D-06H Sag1 Target F0
+~~~
+
+병렬 실험이 아닌 단독 실행 Notebook에는 A/B tag를 강제하지 않는다.
