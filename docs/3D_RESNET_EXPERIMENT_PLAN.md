@@ -1264,3 +1264,21 @@ GPU training:
 
 GPU Notebook은 raw competition DICOM을 읽어 cache를 생성하지 않는다.
 
+
+
+### R3D-07A result — Physical FOV
+
+상태: **COMPLETED — PASS**
+
+- Full-FOV Frozen ALL Fold0: 0.617594 / 0.540314
+- 130 mm D24×96: **0.622257 / 0.508100**
+- 150 mm D24×96: 0.618253 / 0.521752
+- primary AUROC winner: **130 mm**
+- 130 mm AUROC gain vs baseline: **+0.004663**
+- 130 mm AUPRC delta: **-0.032215**
+
+현재 gate:
+- crop 효과는 약한 positive signal
+- 추가 130/140/150 FOV micro-search는 하지 않음
+- R3D-07B resolution/depth 결과를 먼저 확인
+- 다음 조합 실험은 07B winner가 결정된 뒤 선택
