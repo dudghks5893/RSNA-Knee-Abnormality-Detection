@@ -2,7 +2,7 @@
 
 최종 업데이트: **2026-10-07**
 
-상태: **R3D-06D 완료 / R3D-06E P2 Shared-CLS Fold1/2 Occlusion 다음**
+상태: **R3D-06F 완료 / R3D-06G·06H A/B 병렬 실행 다음**
 
 이 문서는 신규 3D ResNet 계보의 **현재 결정 사항, 미결정 사항, 진행 순서, 현재 진척 상태**를 기록한다.
 
@@ -612,6 +612,51 @@ Strict helpful gate:
 다음:
 - stable signal 존재 → R3D-06F Target-Specific Input Policy Screen
 - stable signal 부족 → hard routing 중단, P2 + Resolution/Depth로 복귀
+
+
+### R3D-06E — P2 Shared-CLS Fold1/2 Occlusion
+
+상태: **COMPLETED — PASS**
+
+- Fold1: 0.517551 / 0.479572
+- Fold2: 0.588586 / 0.528448
+- strict Series: Medial Meniscus→Sag1, Synovitis→Sag1
+- initial aggregation import failure는 저장 artifact로 복구; GPU 재학습 없음
+
+### R3D-06F — ALL-Series Saturation Fold0/1
+
+상태: **COMPLETED — PASS**
+
+- Fold0 ALL: 0.617594 / 0.540314
+- Fold1 ALL: 0.548407 / 0.453375
+- AUROC는 P2 대비 Fold0 +0.004312 / Fold1 +0.030856
+- primary 기준 ALL이 2/2 Fold 우세
+
+### R3D-06G — ALL Fold2 + P3 Fold0
+
+상태: **NEXT — Account A**
+
+- GPU0: P3 Fold0
+- GPU1: ALL Fold2
+- P3 = plane별 Top3 / max9
+- ALL Fold2로 3-Fold consistency 확인
+- P3는 Fold0 gate 통과 시에만 Fold1/2 확장
+
+### R3D-06H — Sag1 Target-Specific Input Confirmation
+
+상태: **NEXT — Account B**
+
+Targets:
+- Medial Meniscus
+- Synovitis
+
+Paired binary specialist:
+- P2 input control
+- Sag1-only input
+
+Fold0 confirmation:
+- relevance discovery는 Fold1/2에서 수행했으므로 동일 data로 discovery/confirmation을 반복하지 않음
+- 단 Fold0는 전체 R3D architecture search에 사용된 적이 있어 완전 untouched validation으로 과장하지 않음
 
 
 ## R3D-07 — Resolution / Depth Screen
