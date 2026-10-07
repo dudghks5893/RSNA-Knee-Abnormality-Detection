@@ -1498,3 +1498,64 @@ R3D-08B / REAL32:
   - 2-Fold mean이 AUROC/AUPRC 모두 양수.
 - 단, 효과 크기는 작으므로 Fold2까지 확인한 뒤 최종 채택 여부를 결정한다.
 - Fold2 cache는 기존 F0/F1 REAL24 cache를 재생성하지 않고 **missing Fold2 UID delta만 CPU로 생성**한다.
+
+
+---
+
+## 26. R3D-08C — REAL24 Fold2 Confirmation
+
+### 목적
+
+R3D-08A에서 Fold0/1까지 확인한 REAL24 actual-slice 방식의 Fold2 confirmation.
+
+- Fold2만 신규 학습
+- 기존 Fold0/1 재학습 없음
+- 기존 REAL24 base cache + Fold2 delta cache 사용
+- GPU notebook 내부 cache 생성 없음
+- MedicalNet R34 pretrained matched fraction = 1.0
+- initial model SHA exact
+- sample UID trace SHA exact
+- overall contract = PASS
+- result ZIP SHA256:
+  `4aa4f6ac57351107ace4cdf71cb4e5a3e8837db71e77554967d2d5a51ead5333`
+
+### Fold2 결과
+
+Frozen ALL D24 interpolation:
+- AUROC 0.6226784789
+- AUPRC 0.5217395176
+
+REAL24_R96:
+- best epoch 3
+- AUROC **0.6201442076**
+- AUPRC **0.5211598889**
+- ΔAUROC **-0.0025342713**
+- ΔAUPRC **-0.0005796287**
+
+### REAL24 3-Fold 비교
+
+| Fold | ΔAUROC | ΔAUPRC |
+|---|---:|---:|
+| F0 | +0.004544 | +0.002853 |
+| F1 | -0.000794 | +0.000252 |
+| F2 | -0.002534 | -0.000580 |
+
+3-Fold mean:
+- ΔAUROC **+0.000405**
+- ΔAUPRC **+0.000842**
+
+### 최종 판정
+
+Notebook의 기계적 rule은 두 평균이 0보다 크면 ADOPT로 기록했으나,
+실험 해석 기준에서는 **REAL24를 최종 Main input으로 채택하지 않는다.**
+
+근거:
+- 효과 크기가 3-Fold mean +0.000405 AUROC로 사실상 0에 가깝다.
+- 3개 Fold 중 Fold0만 명확한 개선이며 Fold1/Fold2 AUROC는 하락했다.
+- 기존 프로젝트 판단 기준에서 수천분의 일 차이는 Gold58 noise 범위로 본다.
+- 따라서 actual-slice nearest sampling의 우위가 재현됐다고 보기 어렵다.
+
+결론:
+- **KEEP interpolated D24×96**
+- REAL32는 이전과 같이 reject
+- actual-slice nearest 계열 추가 탐색 중단
