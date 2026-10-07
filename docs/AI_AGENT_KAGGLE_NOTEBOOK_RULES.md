@@ -1,6 +1,6 @@
 # AI Agent Rules — Kaggle Notebook Delivery
 
-최종 업데이트: **2026-10-05**
+최종 업데이트: **2026-10-08**
 
 이 문서는 RSNA Knee 프로젝트에서 AI Agent가 사용자에게 Kaggle Notebook을 설계/작성/수정해서 전달할 때 반드시 따라야 하는 규칙이다.
 
@@ -539,44 +539,350 @@ Public LB를 받으면:
 
 # 19. 현재 R3D 계보의 특별 규칙
 
-- DINOv2는 현재 R3D 비교 후보에서 제외
-- Backbone은 3D ResNet34 / 50 / 101
-- Full Fine-tuning
-- LoRA 사용 안 함
-- 모든 backbone candidate에 Transformer 포함
-- ROI는 BBox가 아니라 Anatomical Segmentation Mask
-- Gold58 3-Fold pooled OOF
-- initial backbone selection은 fold별 pseudo 약 1,000
-- 같은 Fold 안에서 세 backbone은 동일 pseudo UID manifest 사용
-- pseudo가 Gold-derived이면 반드시 Fold-aware leakage-safe version 사용
-- primary = pooled Macro AUROC
-- secondary = pooled Macro AUPRC
+2026-10-08 기준 현재 R3D Main은 아래로 고정한다.
 
+- Backbone: **MedicalNet R34**
+- Full Fine-tuning
+- pure FP32
+- BatchNorm running stats frozen
+- Series policy: **ALL**
+- physical center crop: **130 mm**
+- tensor: **interpolated D24×96×96**
+- representation: **GLOB**
+- anatomy mask: **OFF**
+- aggregator: **Transformer + shared CLS**
+- output: 12 independent sigmoid heads
+- backbone LR: **1e-5**
+- new-layer LR: **5e-5**
+- WD: **1e-4**
+- Gold58 deterministic 3-Fold 유지
+- Fold-specific Pseudo1000 사용
+
+현재 closed:
+
+- R50 / R101
+- coarse spatial token
+- current anatomy mask fusion
+- lower LR / frozen backbone
+- P2/P3 series cap search
+- Crop150
+- simple R128 / D32
+- REAL24 / REAL32
+- Full/Crop Dual-FOV / Mixed3
+
+새 evidence가 없으면 위 항목을 임의로 재오픈하지 않는다.
+
+DINOv2 / Exp57은 R3D 내부 backbone 후보가 아니라
+**외부 strong baseline / final ensemble source**로 취급한다.
 
 ---
 
-# 20. A/B Account Lane Naming Rule
+# 20. Account tag와 Variant 이름 규칙
 
-사용자는 Kaggle 계정 A / B를 동시에 사용할 수 있으므로,
-병렬 실행 Notebook은 **실행 계정이 파일명과 화면에서 즉시 구분되어야 한다.**
+매우 중요:
 
-필수:
-
-- Notebook filename 맨 앞에 `A_` 또는 `B_`
-- 첫 Markdown title에 `[Account A]` 또는 `[Account B]`
-- 추천 Save Version 맨 앞에 `A ` 또는 `B `
-- 사용자 전달 답변에서 반드시 `계정 A` / `계정 B`를 분리해서 표시
-- 같은 wave에서 A/B가 바뀌지 않도록 experiment-to-account mapping을 명시
-- Experiment ID 자체는 R3D-xx를 유지하고 Account tag는 실행 lane tag로 별도 표기
+**파일명 맨 앞의 `A_` / `B_`는 Kaggle 실행 계정 tag로 예약한다.**
 
 예:
 
 ~~~text
-A_R3D-06I_P3_Fold12_Confirmation_DualT4.ipynb
-B_R3D-06H_Sag1_TargetPolicy_Confirmation_Fold0_DualT4.ipynb
-
-A R3D-06I P3 F12 Confirm
-B R3D-06H Sag1 Target F0
+A_R3D-11_...
+B_R3D-11_...
 ~~~
 
-병렬 실험이 아닌 단독 실행 Notebook에는 A/B tag를 강제하지 않는다.
+의미:
+
+- A_ = Kaggle Account A에서 실행
+- B_ = Kaggle Account B에서 실행
+
+Experiment suffix의 A/B와 혼동하지 않는다.
+
+## 한 Account의 T4×2에서 두 lane을 돌릴 때
+
+가능하면 Variant를 A/B라고 부르지 않고
+설명형 이름을 사용한다.
+
+권장:
+
+~~~text
+GPU0 → ALWAYS_DUAL
+GPU1 → MIXED_3MODE
+~~~
+
+비권장:
+
+~~~text
+GPU0 → Variant A
+GPU1 → Variant B
+~~~
+
+이유:
+Account A/B와 화면에서 혼동되기 쉽다.
+
+### Historical exception
+
+`R3D-10AB`는 이미 완료된 historical experiment ID다.
+
+- 실행 계정: **Account A**
+- GPU0: ALWAYS_DUAL
+- GPU1: MIXED_3MODE
+
+여기서 `10AB`의 AB는 두 비교 variant를 뜻했으며
+Account B 실행을 뜻하지 않는다.
+
+이 naming pattern은 앞으로 반복하지 않는다.
+
+## 한 계정 T4×2 vs 두 계정 A/B
+
+입력 Dataset을 공유해야 하고
+두 작업이 한 T4×2 session에서 독립적으로 실행 가능하면
+굳이 두 Kaggle 계정으로 분리하지 않아도 된다.
+
+한 session:
+
+~~~text
+GPU0 → lane 1
+GPU1 → lane 2
+~~~
+
+가 더 단순하면 이를 우선할 수 있다.
+
+두 계정을 분리하는 경우는:
+
+- 서로 다른 Notebook을 완전히 독립 실행하는 것이 더 편함
+- Dataset 공유가 이미 완료됨
+- runtime/session limit 분리가 유리함
+- 한 T4×2 notebook에서 orchestration complexity가 지나치게 큼
+
+일 때 사용한다.
+
+---
+
+# 21. CPU preprocessing / GPU training 분리 규칙
+
+새 MRI image/cache 생성은 **CPU-only preprocessing Notebook**에서 수행한다.
+
+예:
+
+- raw DICOM decode
+- physical crop
+- resize
+- actual-slice selection
+- persistent volume cache
+- metadata manifest
+- cache consolidation
+
+설정:
+
+~~~text
+Accelerator: None / CPU
+~~~
+
+그 결과를 persisted Kaggle Input으로 만든 뒤
+GPU Notebook은 training-only로 사용한다.
+
+GPU Notebook 금지:
+
+- raw DICOM 대규모 decode
+- 수십 분짜리 cache generation
+- CPU preprocessing 동안 T4 idle reservation
+
+예외:
+아주 작은 sanity-check decode가 model 실행 contract 확인에 꼭 필요한 경우만 허용하고,
+대규모 cache generation으로 확장하지 않는다.
+
+---
+
+# 22. Kaggle Dataset Version / Mount 규칙
+
+Kaggle에서 같은 Dataset의 서로 다른 Version을
+동시에 독립 Input처럼 사용할 수 있다고 가정하지 않는다.
+
+특히 base cache와 delta cache가
+같은 Dataset의 다른 Version에만 존재하도록 설계하지 않는다.
+
+권장:
+
+1. 필요한 cache를 **한 canonical Dataset / active Version**에 합침
+2. 또는 서로 다른 Dataset slug로 분리
+3. 최종 Notebook에서는 exact mounted path를 사용
+
+Dataset 재등록 후 실제 Kaggle mount path가 바뀌면
+사용자가 공유한 **실제 path를 기준**으로 Notebook을 수정한다.
+
+Dataset 이름을 기억만으로 추정하지 않는다.
+
+---
+
+# 23. Mount 실패와 Python 실행 실패 구분
+
+아래 로그:
+
+~~~text
+Output 0 B
+ERRORED_MOUNTING_DATASET
+retry budget exhausted
+dataset loading failed
+~~~
+
+이면 Notebook Python 코드가 실행되기 전이다.
+
+판정:
+
+- Python bug 아님
+- model training 시작 안 됨
+- GPU experiment result 없음
+
+조치:
+
+1. 어떤 Dataset이 mount 실패했는지 확인
+2. 같은 Dataset 재시도만 반복하지 않음
+3. 필요하면 new slug / saved Notebook Output / consolidated Dataset으로 우회
+4. Notebook 코드를 무작정 수정하지 않음
+
+반대로 traceback에:
+
+~~~text
+Exception encountered at "In [x]"
+~~~
+
+가 있고 Python line이 나오면
+실제 Notebook code failure로 분석한다.
+
+---
+
+# 24. 실패 후 artifact recovery 우선 규칙
+
+Notebook이 마지막 aggregation / SHA check / zip 단계에서 실패했다고 해서
+곧바로 GPU training을 다시 하지 않는다.
+
+반드시 먼저 확인:
+
+- epochs가 이미 완료됐는가
+- best checkpoint가 존재하는가
+- prediction CSV가 존재하는가
+- target metric CSV가 존재하는가
+- history/log가 존재하는가
+- 실패가 post-training contract bug인가
+
+저장된 artifact로 결과 복구 가능하면
+**로컬/CPU posthoc recovery**를 우선한다.
+
+Fresh Save & Run All 재학습은
+필수 artifact가 부족하거나 결과 신뢰성을 회복할 수 없을 때만 한다.
+
+사용자는 Save & Run All workflow를 사용한다.
+같은 세션에서 "그 셀만 다시 실행"을 기본 해결책으로 제안하지 않는다.
+
+---
+
+# 25. Raw metadata와 derived policy column 규칙
+
+cache의 metadata 파일에 downstream policy column이
+항상 저장되어 있다고 가정하지 않는다.
+
+실제 사례:
+
+R3D-06A raw `series_index.csv`에는:
+
+- StudyInstanceUID
+- SeriesInstanceUID
+- Anatomical_Plane
+- Fluid_Sensitive
+- Fat_Suppression
+- volume_file
+- row_in_shard
+
+등 primitive metadata가 있지만,
+`plane_rank` / `selection_order`는 downstream ALL policy에서 생성했다.
+
+Canonical ALL policy:
+
+~~~text
+plane order:
+Sagittal → Coronal → Axial
+
+rank =
+4 × Fluid_Sensitive × Fat_Suppression
++ 2 × Fluid_Sensitive
++ Fat_Suppression
+
+sort:
+StudyInstanceUID
+→ plane order
+→ rank descending
+→ SeriesInstanceUID ascending
+
+plane_rank:
+Study + plane 내 cumcount + 1
+
+selection_order:
+Study 내 cumcount
+~~~
+
+새 Notebook이 Full cache와 derived cache를 pair할 때는
+primitive metadata에서 동일 policy를 재구성한 뒤 parity를 검사한다.
+
+없는 derived column을 곧바로 assert해서
+실험을 중단시키지 않는다.
+
+단,
+과거 실험의 실제 policy 공식을 확인할 수 없으면
+임의로 재구성하지 말고 먼저 기록/코드를 확인한다.
+
+---
+
+# 26. T4×2 independent subprocess 규칙
+
+한 Notebook에서 두 독립 training lane을 실행할 때:
+
+~~~text
+physical GPU0 → subprocess 1
+physical GPU1 → subprocess 2
+~~~
+
+각 subprocess environment:
+
+~~~text
+CUDA_VISIBLE_DEVICES=0
+CUDA_VISIBLE_DEVICES=1
+~~~
+
+처럼 물리 GPU를 분리한다.
+
+각 worker 내부에서는 자기에게 보이는 GPU가 `cuda:0`이어도 정상이다.
+
+필수:
+
+- `torch.cuda.device_count() >= 2` preflight
+- lane별 log 분리
+- lane별 returncode 확인
+- 한 lane 실패 시 다른 lane artifact 보존
+- main aggregation은 두 returncode / summary를 확인한 뒤 실행
+
+---
+
+# 27. 문서 업데이트 / 새 채팅 인수인계 규칙
+
+실험이 완료되면 최소 다음을 갱신한다.
+
+1. `EXPERIMENT_HISTORY.md`
+   - 완료 결과
+   - artifact SHA
+   - 실제 판정
+2. `CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md`
+   - 현재 Main
+   - closed/open 축
+   - 다음 액션
+3. `3D_RESNET_EXPERIMENT_PLAN.md`
+   - NEXT / dependency / gate
+4. 필요 시 `AI_AGENT_KAGGLE_NOTEBOOK_RULES.md`
+   - 새로 발견된 운영 실수 방지 규칙
+5. `CURRENT_HANDOFF.md`
+   - 새 채팅 cold-start 기준
+
+오래된 "현재 다음", "NEXT", "진행 중"이
+새 상태와 충돌하게 방치하지 않는다.
+
+README에 current status가 있으면
+그 상단 status도 같이 최신화한다.
