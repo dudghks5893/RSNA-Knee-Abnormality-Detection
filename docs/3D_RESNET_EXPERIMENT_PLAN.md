@@ -2,7 +2,7 @@
 
 최종 업데이트: **2026-10-07**
 
-상태: **R3D-06F 완료 / R3D-06G·06H A/B 병렬 실행 다음**
+상태: **R3D-06F 완료 / R3D-06G·06H A/B 병렬 실행 준비**
 
 이 문서는 신규 3D ResNet 계보의 **현재 결정 사항, 미결정 사항, 진행 순서, 현재 진척 상태**를 기록한다.
 
@@ -573,47 +573,6 @@ Stricter exploratory Series signal:
 - 여러 target의 TargetQuery Full AUROC가 0.5 미만
 - hard routing 근거로 사용 금지
 
-### R3D-06E — P2 Shared-CLS Fold1/2 + Target-wise Occlusion
-
-상태: **NEXT**
-
-원칙:
-- Fold0 P2 baseline 재학습 금지
-- Fold0 = Frozen Reference
-- 아직 실행하지 않은 Fold1/2만 새로 학습
-
-병렬:
-- GPU0 → P2 Shared-CLS Fold1
-- GPU1 → P2 Shared-CLS Fold2
-
-구조:
-- R3D-06C P2와 동일한 MedicalNet R34 + GLOB + MASK_OFF + Shared Transformer CLS
-- P2 max6
-- D24×96×96
-- pure FP32
-- backbone LR1e-5 / new LR5e-5 / WD1e-4
-- same augmentation recipe
-
-분석:
-- held-out Gold leave-one-Series-out occlusion
-- target × Sag1/Sag2/Cor1/Cor2/Ax1/Ax2
-- target × Series × D24 6-bin depth occlusion
-- TargetQuery attention은 사용하지 않음
-
-Strict helpful gate:
-1. Fold1/2 target Full AUROC 모두 >=0.50
-2. slot present 각 Fold >=10
-3. Full-Drop AUROC >+0.005 두 Fold
-4. Full-Drop AUPRC >0 두 Fold
-5. signed logit contribution >0 두 Fold
-
-06D와 동일 signal이면 secondary corroboration flag를 추가한다.
-
-다음:
-- stable signal 존재 → R3D-06F Target-Specific Input Policy Screen
-- stable signal 부족 → hard routing 중단, P2 + Resolution/Depth로 복귀
-
-
 ### R3D-06E — P2 Shared-CLS Fold1/2 Occlusion
 
 상태: **COMPLETED — PASS**
@@ -657,6 +616,27 @@ Paired binary specialist:
 Fold0 confirmation:
 - relevance discovery는 Fold1/2에서 수행했으므로 동일 data로 discovery/confirmation을 반복하지 않음
 - 단 Fold0는 전체 R3D architecture search에 사용된 적이 있어 완전 untouched validation으로 과장하지 않음
+
+
+### Series / Target policy decision rule
+
+R3D-06G / 06H까지 끝난 뒤 다음 순서로 고정한다.
+
+1. 전체 입력 Series policy
+- ALL Fold2까지 P2보다 primary AUROC 우세 → ALL 우선
+- P3 Fold0가 ALL에 근접/우세 → P3 Fold1/2 추가 확인
+- P3 Fold0가 명확히 열세 → P3 중단
+
+2. target-specific policy
+- occlusion signal만으로 hard routing 금지
+- R3D-06H에서 Sag1-only가 paired P2 specialist보다 실제 AUROC/AUPRC가 좋아야 후보 유지
+- 그렇지 않으면 Sag1은 '중요한 정보원'으로만 기록하고 전체 input 유지
+
+3. Series policy 확정 후
+- R3D-07 Resolution / Depth로 이동
+- D24×96×96 → D24×128×128
+- 필요 시 그 다음 D32×128×128
+- 한 번에 한 축만 변경
 
 
 ## R3D-07 — Resolution / Depth Screen
