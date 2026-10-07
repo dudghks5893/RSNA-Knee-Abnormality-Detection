@@ -1337,3 +1337,28 @@ R3D-08B:
 후속:
 - 명확한 winner만 Fold2 confirmation
 - real-slice winner가 생긴 뒤 130 mm crop과 조합 여부 판단
+
+
+### R3D-08 Actual-Slice screen result
+
+상태: **F0/F1 COMPLETED**
+
+REAL24:
+- Fold0: 0.622138 / 0.543167
+- Fold1: 0.547613 / 0.453627
+- mean ΔAUROC vs Frozen = **+0.001875**
+- mean ΔAUPRC vs Frozen = **+0.001553**
+- decision: **Fold2 confirmation**
+
+REAL32:
+- Fold0: 0.604739 / 0.504463
+- Fold1: 0.559398 / 0.450640
+- mean ΔAUROC vs Frozen = **-0.000932**
+- mean ΔAUPRC vs Frozen = **-0.019293**
+- decision: **stop**
+
+다음 experiment:
+- R3D-08C — REAL24 Fold2 confirmation
+- 기존 F0/F1 REAL24 cache 재사용
+- Fold2 pseudo1000에 필요한 missing Study만 CPU delta cache
+- GPU notebook은 Fold2 training only
