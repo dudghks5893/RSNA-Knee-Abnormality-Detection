@@ -2,6 +2,11 @@
 
 최종 업데이트: **2026-10-07**
 
+> **RESEARCH REFERENCE / EXECUTION STATUS OVERRIDDEN — 2026-10-08**  
+> 이 문서는 2026-10-07 공개 자료 조사 당시의 근거와 우선순위를 보존한다. 아래의 "현재 R3D", "아직", "다음" 표현은 조사 당시 상태다.  
+> 이후 실제 controlled experiments에서 **Crop130은 3-Fold mean ΔAUROC +0.010751로 채택**, R128 / simple D32 / REAL24 / REAL32 / current Dual-FOV는 기각됐다.  
+> 현재 실행 상태와 NEXT는 [CURRENT_HANDOFF.md](CURRENT_HANDOFF.md), [CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md](CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md), [3D_RESNET_EXPERIMENT_PLAN.md](3D_RESNET_EXPERIMENT_PLAN.md)를 따른다.
+
 목적:
 - 현재 공개된 competition host 자료, Kaggle discussion / notebook, peer-reviewed 자료 중
   재현 가능하거나 근거가 비교적 강한 내용만 정리한다.
