@@ -72,35 +72,55 @@ Target-level:
 - 큰 하락: ACL, Lateral Meniscus, Medial OA, Effusion, Fracture
 - Fold0 n=20이므로 label-specific routing 근거로 직접 사용하지 않음
 
-### 다음 실행 — R3D-06D
+### R3D-06D — Target-Aware Series + Depth Relevance Audit
 
-**Target-Aware Series + Depth Relevance Audit**
+상태: **COMPLETED — PASS / ARCHITECTURE NOT SELECTED**
 
-실행 정책:
-- 기존 C3/P2 baseline은 다시 학습하지 않음
-- Frozen Reference:
-  - C3 Fold0 AUROC 0.609698 / AUPRC 0.521793
-  - P2 Fold0 AUROC 0.613282 / AUPRC 0.534338
-- 비교 계약 자체가 바뀌는 경우에만 baseline 재실행
+실행:
+- 기존 C3/P2 baseline 재학습 없음
+- GPU0 Fold0 TargetQuery-P2
+- GPU1 Fold1 TargetQuery-P2
+- Series occlusion 144 rows
+- Depth occlusion 864 rows
+- result ZIP SHA256: c3b044295b143778417724262f6a7f3147fc5e9dfab794f75fb39e7c14af34bf
 
-새 실험:
-- GPU0: TargetQuery-P2 Fold0
-- GPU1: TargetQuery-P2 Fold1
-- MedicalNet R34 / D24×96×96 / MASK_OFF / FP32
-- backbone LR 1e-5 / new LR 5e-5 / WD 1e-4
-- fold별 leakage-safe Pseudo1000 사용
+Classifier:
+- Fold0: AUROC 0.586461 / AUPRC 0.510576 / best epoch10
+- Fold1: AUROC 0.527435 / AUPRC 0.470353 / best epoch1
+- Fold0 frozen P2 Shared-CLS 대비: AUROC -0.026820 / AUPRC -0.023763
 
-목적:
-- target별 Sag1/Sag2/Cor1/Cor2/Ax1/Ax2 relevance 분석
-- attention은 secondary diagnostic
-- primary relevance는 held-out Gold leave-one-Series-out occlusion
-- D24를 6개 depth bin으로 나눠 target×Series×depth occlusion 수행
-- Fold0/1에서 같은 방향의 relevance가 반복되는지 확인
+판정:
+- TargetQuery architecture는 최종 classifier 후보로 채택하지 않음
+- 06D relevance는 exploratory / secondary evidence로만 보존
+- 자동 helpful gate가 평균 signed contribution을 사용해 원래 의도보다 느슨했음
+- stricter manual review에서 Series 후보:
+  - ACL Cor2
+  - Baker's Ax1
+  - Contusion Cor1
+  - Lateral Meniscus Sag1
+  - Lateral OA Sag1
+  - Synovitis Sag1
+- 여러 target에서 TargetQuery Full AUROC < 0.5이므로 hard routing 금지
 
-다음 gate:
-- 안정적인 Series/Depth relevance 반복 → Fold2 confirmation + target-specific input policy
-- 불안정 → hard routing 보류
-- baseline repeated training은 하지 않음
+### 다음 실행 — R3D-06E
+
+**P2 Shared-CLS Fold1/2 + Target-wise Series/Depth Occlusion**
+
+핵심:
+- Fold0 P2는 Frozen Reference로 유지하고 재학습하지 않음
+- GPU0 → 아직 실행하지 않은 P2 Shared-CLS Fold1
+- GPU1 → 아직 실행하지 않은 P2 Shared-CLS Fold2
+- R3D-06C와 동일한 P2 Shared-CLS architecture / augmentation recipe
+- best checkpoint에서 held-out Gold Series/Depth occlusion
+
+Strict gate:
+- target Full AUROC >= 0.50 in both Fold1/2
+- slot present >=10 in both folds
+- Full-Drop AUROC > +0.005 in both folds
+- Full-Drop AUPRC >0 in both folds
+- signed logit contribution >0 in both folds
+
+이 gate를 통과한 signal만 R3D-06F target-specific input policy 후보로 사용한다.
 
 <!-- SPECIALIST_2026_10_02_CURRENT_START -->
 
