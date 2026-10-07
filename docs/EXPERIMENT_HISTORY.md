@@ -1436,3 +1436,65 @@ D32_R96:
     physical FOV 축은 약한 positive signal로 남는다.
 - 다음 단계는 무작정 resolution/depth 숫자를 더 키우지 않고,
   **원본 slice geometry / spacing / adjacency 보존 방식**을 직접 검증하는 쪽이 우선이다.
+
+
+---
+
+## 25. R3D-08A/B — Actual-Slice Preservation
+
+### 목적
+
+기존 D24/D32 z-interpolation 대신 실제 DICOM slice만 선택하는 입력을 검증했다.
+
+- REAL24_R96: 전체 physical extent를 균등하게 덮는 24개 목표 위치에서 nearest actual slice 선택
+- REAL32_R96: 같은 방식으로 32개 actual slice 선택
+- z축 interpolation 없음
+- in-plane만 96×96 bilinear resize
+- Series policy = ALL
+- MedicalNet R34 / GLOB / MASK_OFF / Transformer + CLS
+- Fold0 / Fold1 병렬
+- Frozen ALL baseline 재학습 없음
+
+### Contract
+
+R3D-08A / REAL24:
+- Fold0 pretrained matched fraction: 1.0
+- Fold1 pretrained matched fraction: 1.0
+- initial model SHA exact: PASS
+- sample UID trace exact: PASS
+- overall: **PASS**
+- result ZIP SHA256: `7d444acf5b2d42827362a0abd5ecb21e7d42d47c2004d18dda89e215027ee8c6`
+
+R3D-08B / REAL32:
+- Fold0 pretrained matched fraction: 1.0
+- Fold1 pretrained matched fraction: 1.0
+- initial model SHA exact: PASS
+- sample UID trace exact: PASS
+- overall: **PASS**
+- result ZIP SHA256: `7cbe011ab15637819e2c787dc7820381a03bf707eadf4f563ea649b3f073656b`
+
+### 결과
+
+| Variant | Fold | AUROC | AUPRC | ΔAUROC vs Frozen | ΔAUPRC vs Frozen |
+|---|---:|---:|---:|---:|---:|
+| REAL24_R96 | 0 | **0.622138** | **0.543167** | **+0.004544** | **+0.002853** |
+| REAL24_R96 | 1 | 0.547613 | 0.453627 | -0.000794 | +0.000252 |
+| REAL32_R96 | 0 | 0.604739 | 0.504463 | -0.012855 | -0.035852 |
+| REAL32_R96 | 1 | **0.559398** | 0.450640 | +0.010991 | -0.002734 |
+
+2-Fold mean delta:
+- REAL24 AUROC: **+0.001875**
+- REAL24 AUPRC: **+0.001553**
+- REAL32 AUROC: **-0.000932**
+- REAL32 AUPRC: **-0.019293**
+
+### 판정
+
+- **REAL32는 추가 confirmation하지 않는다.**
+  - Fold1 AUROC는 개선됐지만 Fold0 하락이 크고 2-Fold mean AUROC/AUPRC 모두 음수.
+- **REAL24는 Fold2 confirmation으로 승격한다.**
+  - Fold0에서 AUROC/AUPRC 동시 개선.
+  - Fold1 AUROC는 -0.000794로 사실상 flat이며 AUPRC는 소폭 개선.
+  - 2-Fold mean이 AUROC/AUPRC 모두 양수.
+- 단, 효과 크기는 작으므로 Fold2까지 확인한 뒤 최종 채택 여부를 결정한다.
+- Fold2 cache는 기존 F0/F1 REAL24 cache를 재생성하지 않고 **missing Fold2 UID delta만 CPU로 생성**한다.
