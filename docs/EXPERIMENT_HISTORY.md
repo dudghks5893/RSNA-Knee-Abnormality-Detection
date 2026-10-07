@@ -6,6 +6,11 @@
 진행 예정 작업과 현재 계획은 [3D_RESNET_EXPERIMENT_PLAN.md](3D_RESNET_EXPERIMENT_PLAN.md)를 따른다.
 Kaggle Notebook 작성 규칙은 [AI_AGENT_KAGGLE_NOTEBOOK_RULES.md](AI_AGENT_KAGGLE_NOTEBOOK_RULES.md)를 따른다.
 
+> **현재 해석 주의 — 2026-10-08**  
+> 이 문서는 완료 실험을 시간순으로 보존하므로 초기 R3D 섹션에는 당시의 segmentation / mask / "다음 실험" 계획이 남아 있다.  
+> 현재 Main R3D는 **ALL + Crop130 + interpolated D24×96×96 + MedicalNet R34 + GLOB + MASK_OFF + Transformer/CLS**다.  
+> 현재 상태와 NEXT는 [CURRENT_HANDOFF.md](CURRENT_HANDOFF.md)와 [CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md](CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md)를 우선한다.
+
 ---
 
 ## 1. 현재 프로젝트 기준점
