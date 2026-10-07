@@ -1,3 +1,29 @@
+## 2026-10-07 — Series Policy Finalized after A_R3D-06I
+
+- A_R3D-06I Fold1은 10 epochs 완료 후 post-training trace dictionary bug로 종료했으나 best artifact가 이미 저장되어 재학습 없이 복구했다.
+- P3 Fold1: AUROC 0.531304 / AUPRC 0.460057 / best epoch1
+- P3 Fold2: AUROC 0.613601 / AUPRC 0.545053 / best epoch7
+
+3-Fold mean Macro AUROC:
+- P2: 0.573140
+- P3: 0.589716
+- **ALL: 0.596226**
+
+판정:
+- Series cap 추가 탐색 종료
+- **기본 Series policy = ALL**
+- 06H target-specific Sag1 specialist는 별도 독립 연구로만 계속
+- 다음 주력 축:
+  1. physical crop / MRI field-of-view
+  2. in-plane resolution
+  3. depth / real-slice geometry
+
+병렬 notebook naming:
+- 파일명 맨 앞에 `A_` / `B_`
+- Save Version도 `A ` / `B `로 시작
+
+---
+
 # RSNA Knee Abnormality Detection — 현재 실험 상태 / 데이터 계보 / 다음 로드맵
 
 최종 업데이트: **2026-10-06**
