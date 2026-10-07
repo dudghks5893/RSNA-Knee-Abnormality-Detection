@@ -1231,3 +1231,70 @@ Series 개수 최적화는 종료하고,
 
 1. MRI를 더 잘 보여주기 — physical FOV / crop / resolution
 2. 작은 병변 보존 — depth / real-slice geometry / adjacency
+
+
+---
+
+## 22. R3D-06H — Sag1 Target-Specific Confirmation
+
+### 목적
+
+R3D-06E 실제 P2 Shared-CLS occlusion에서 Fold1/2 strict candidate로 남은:
+
+- Medial Meniscus → Sag1
+- Synovitis → Sag1
+
+에 대해, "Sag1이 중요하다"와 "Sag1만 쓰는 것이 더 좋다"를 구분하기 위해
+동일 binary specialist architecture에서 P2 input과 Sag1-only input을 paired 비교했다.
+
+실행:
+- Account B
+- GPU0: P2 lane
+- GPU1: Sag1-only lane
+- Fold0 confirmation
+- pair별 initial model SHA exact
+- pair별 sample UID trace exact
+- overall contract: **PASS**
+- result ZIP SHA256: `541a24c709a8cc22af293aae86eb36b22c182e9563b035bff0272a772c59c075`
+
+### 결과
+
+Medial Meniscus:
+- P2: AUROC **0.677083** / AUPRC **0.591098** / best epoch5
+- Sag1-only: AUROC **0.729167** / AUPRC **0.756302** / best epoch2
+- Sag1-only - P2:
+  - AUROC **+0.052083**
+  - AUPRC **+0.165204**
+- 판정: **KEEP_SAG1_ONLY_CANDIDATE**
+
+Synovitis:
+- P2: AUROC **0.680000** / AUPRC **0.757973** / best epoch4
+- Sag1-only: AUROC **0.590000** / AUPRC **0.583247** / best epoch8
+- Sag1-only - P2:
+  - AUROC **-0.090000**
+  - AUPRC **-0.174726**
+- 판정: **REJECT_SAG1_ONLY_HARD_ROUTING**
+
+### 해석
+
+- Medial Meniscus는 실제 학습 비교에서도 Sag1-only가 P2 specialist보다 크게 개선되어,
+  현재 target-specific reduced-input 후보로 보존한다.
+- Synovitis는 Sag1 occlusion relevance가 있었지만 Sag1-only 학습은 크게 악화됐다.
+  따라서 Sag1은 유용한 정보원일 수 있으나 다른 Series와 함께 봐야 하며 hard routing은 기각한다.
+- target-specific Series 연구는 여기서 추가 확장하지 않는다.
+- 남은 시간에는 Medial Meniscus Sag1-only를 최종 ensemble / specialist 후보로만 보존한다.
+
+### Series 연구 최종 결론
+
+R3D-06I까지 포함한 전체 모델의 기본 Series policy:
+- **ALL 고정**
+
+target-specific 예외 후보:
+- **Medial Meniscus Sag1-only specialist**
+- Synovitis Sag1-only는 기각
+
+이후 GPU 연구는 Series 개수/slot search가 아니라:
+1. MRI를 더 잘 보여주기 — physical FOV / crop / resolution
+2. 작은 병변 보존 — depth / real-slice geometry / adjacency
+
+두 축에 집중한다.
