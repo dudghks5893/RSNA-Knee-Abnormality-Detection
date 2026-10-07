@@ -2019,37 +2019,44 @@ B: SS02B ACL Native Selector
 - Fresh Save & Run All 재실행
 
 
-### R3D-07 cache execution correction
+### R3D-07 cache/runtime execution
 
-R3D-07A/07B는 새 image tensor cache가 필요하므로 **GPU notebook 내부에서 raw DICOM cache를 생성하지 않는다.**
+현재 실제 운영:
 
-수정된 실행 순서:
-
-1. **Account A / CPU only**
-   - `A_R3D-07CACHE_Shared_GeometryDetail_CPU.ipynb`
-   - Accelerator None
-   - Fold0 search용 Gold58 + Pseudo1000 UID만 decode
-   - 한 번의 raw decode pass에서 아래 4개 cache 생성:
-     - crop130_d24_96
-     - crop150_d24_96
-     - r128_d24
-     - d32_r96
-   - Dataset 이름: `rsna-knee-r3d07-geometry-cache-v1`
-
-2. Dataset을 Account B와 공유
-
-3. **Account A / GPU**
-   - `A_R3D-07A_Crop130_150_Fold0_DualT4_TRAIN_ONLY.ipynb`
-   - cache 생성 없음
-   - GPU0 CROP130 / GPU1 CROP150
-
-4. **Account B / GPU**
-   - `B_R3D-07B_R128_D32_Fold0_DualT4_TRAIN_ONLY.ipynb`
-   - cache 생성 없음
-   - GPU0 R128_D24 / GPU1 D32_R96
-
-원칙:
-- preprocessing/cache = CPU-only prerequisite
+- Account A CPU cache:
+  - `A_R3D-07CACHE-A_Crop130_150_CPU_FINAL.ipynb`
+  - 130/150 mm crop cache만 생성
+- Account B CPU cache:
+  - `B_R3D-07CACHE-B_R128_D32_CPU_FINAL.ipynb`
+  - D24×128 / D32×96 cache만 생성
+- GPU Notebook은 cache 생성 없이 training-only
+- preprocessing/cache = CPU-only
 - model training = GPU-only
-- GPU 할당 상태에서 장시간 CPU cache 생성 금지
+
+### R3D-07A — Physical FOV Crop
+
+상태: **COMPLETED — PASS**
+
+Frozen ALL Fold0:
+- AUROC 0.617594
+- AUPRC 0.540314
+
+130 mm:
+- AUROC **0.622257**
+- AUPRC 0.508100
+- delta AUROC **+0.004663**
+- delta AUPRC -0.032215
+
+150 mm:
+- AUROC 0.618253
+- AUPRC 0.521752
+- delta AUROC +0.000659
+- delta AUPRC -0.018563
+
+판정:
+- primary AUROC만 보면 130 mm가 현재 최고
+- gain이 작고 AUPRC 하락이 커서 **crop 채택은 보류**
+- 추가 FOV micro-search는 중단
+- 다음 우선순위는 **R3D-07B: D24×128 vs D32×96**
+- 07B 결과가 더 강하면 detail-preservation axis를 우선
 
