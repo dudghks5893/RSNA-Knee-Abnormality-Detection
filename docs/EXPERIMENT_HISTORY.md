@@ -1559,3 +1559,85 @@ Notebook의 기계적 rule은 두 평균이 0보다 크면 ADOPT로 기록했으
 - **KEEP interpolated D24×96**
 - REAL32는 이전과 같이 reject
 - actual-slice nearest 계열 추가 탐색 중단
+
+
+---
+
+## 27. R3D-09AB — Crop130 Fold1/Fold2 Confirmation
+
+### 목적
+
+R3D-07A Fold0에서 확인한 130 mm physical center crop 신호를 Fold1/Fold2에서 재확인.
+
+- Fold1 → GPU0
+- Fold2 → GPU1
+- T4 x2 병렬
+- Full-FOV baseline 재학습 없음
+- GPU cache 생성 없음
+- 기존 Fold0 Crop130 결과 재사용
+- result ZIP SHA256:
+  `c765db1249de50306136a3d67a4b948ae21e8082355b5045f92baa58dcc57e82`
+
+### Fold1
+
+- best epoch 1
+- Crop130 AUROC **0.5425839207**
+- Crop130 AUPRC **0.4476319738**
+- Full-FOV AUROC 0.5484070328
+- Full-FOV AUPRC 0.4533746122
+- ΔAUROC **-0.0058231121**
+- ΔAUPRC **-0.0057426384**
+- pretrained matched fraction 1.0
+- trace SHA exact
+- PASS
+
+### Fold2
+
+- best epoch 5
+- Crop130 AUROC **0.6560900905**
+- Crop130 AUPRC **0.5708631953**
+- Full-FOV AUROC 0.6226784789
+- Full-FOV AUPRC 0.5217395176
+- ΔAUROC **+0.0334116116**
+- ΔAUPRC **+0.0491236777**
+- pretrained matched fraction 1.0
+- trace SHA exact
+- PASS
+
+### 3-Fold summary
+
+| Fold | ΔAUROC | ΔAUPRC |
+|---|---:|---:|
+| F0 | +0.004663 | -0.032215 |
+| F1 | -0.005823 | -0.005743 |
+| F2 | +0.033412 | +0.049124 |
+
+Mean:
+- Full-FOV AUROC 0.5962264063
+- Crop130 AUROC **0.6069769665**
+- mean ΔAUROC **+0.0107505602**
+- Full-FOV AUPRC 0.5051428721
+- Crop130 AUPRC **0.5088648964**
+- mean ΔAUPRC **+0.0037220243**
+- positive AUROC folds = 2/3
+- positive AUPRC folds = 1/3
+
+### 판정
+
+**ADOPT CROP130 as Main R3D input.**
+
+근거:
+- Primary metric인 Macro AUROC 3-Fold mean이 +0.01075로 상승.
+- AUROC가 2/3 Fold에서 개선.
+- secondary AUPRC도 3-Fold mean 기준 소폭 양수.
+- Fold2가 개선폭을 크게 이끌어 fold heterogeneity는 있으나, 평균 효과가 REAL24의 +0.0004와 달리 실용적으로 의미 있는 크기.
+
+주의:
+- Fold2 gain 비중이 크므로 crop 자체가 모든 fold에서 일관되게 개선된 것은 아님.
+- 최종 채택은 대회 목표인 AUROC 우선의 실용적 선택이며, AUPRC 일관성은 낮음.
+
+Main input freeze:
+- physical center crop = **130 mm**
+- depth = **interpolated D24**
+- in-plane = **96×96**
+- Series = **ALL**
