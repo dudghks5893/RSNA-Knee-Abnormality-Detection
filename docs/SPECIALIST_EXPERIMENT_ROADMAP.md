@@ -2,6 +2,11 @@
 
 최종 업데이트: **2026-10-03**
 
+> **HISTORICAL SPECIALIST LINEAGE — 2026-10-08 NOTE**  
+> 이 문서는 SS 계보의 완료/과거 계획 기록이다. 현재 R3D 작업의 "NEXT"를 결정하는 문서가 아니다.  
+> 현재 작업은 [CURRENT_HANDOFF.md](CURRENT_HANDOFF.md), [CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md](CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md), [3D_RESNET_EXPERIMENT_PLAN.md](3D_RESNET_EXPERIMENT_PLAN.md)를 우선한다.  
+> 아래의 "현재", "다음", "진행" 표현은 해당 시점의 역사 기록으로 해석한다.
+
 > 상태: **MCL 0.904375 Gate PASS / LM 0.8940625 / Lane A Fracture, Lane B LM Top-60 진행**
 >
 > 현재 우선순위는 아래 2026-10-02 Current Specialist Roadmap을 따른다.
