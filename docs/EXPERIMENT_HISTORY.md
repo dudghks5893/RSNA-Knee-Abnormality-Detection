@@ -987,3 +987,93 @@ P2 개선:
 - ALL Fold2를 추가해 3-Fold 방향 일치 여부를 확인한다.
 - 동시에 P2/ALL 사이의 cap 후보 P3(top3/plane, max9)를 Fold0에서만 먼저 screen한다.
 - target-specific Sag1-only는 Medial Meniscus / Synovitis에 대해 별도 fair specialist pair로 확인한다.
+
+
+---
+
+## 19. R3D-06A~06F — Series / Target Relevance 중간 결론
+
+이 절은 R3D-06A~06F에서 완료된 결과를 한 번에 이해하기 위한 누적 결론이다.
+
+### 데이터 구조
+
+- Study = 한 무릎 검사 단위
+- Study 안에 여러 MRI Series가 존재
+- Series 안에 여러 Slice가 존재
+- 현재 search tensor는 Series 전체를 D24×96×96으로 resample
+- 따라서 현재 Series 실험과 Slice/Depth 실험은 서로 다른 축이다.
+
+Series policy:
+- C3 = Sagittal / Coronal / Axial 각 Top1 → 정확히 3 Series
+- P2 = 각 plane Top2 → 3~6 Series
+- ALL = usable Series 전부 → 3~14 Series
+- 다음 확인 후보 P3 = 각 plane Top3 → 3~9 Series
+
+### 누적 결과
+
+1. All-Series cache
+- 4,407 studies / 24,371 series / 819,078 slices
+- decode failure 0
+- 기존 cache 4,338 series와 volume / metadata exact parity PASS
+- 따라서 이후 series composition 실험은 동일한 MRI preprocessing 위에서 비교 가능
+
+2. C3 vs P2
+- Fold0 C3: AUROC 0.609698 / AUPRC 0.521793
+- Fold0 P2: AUROC 0.613282 / AUPRC 0.534338
+- P2가 macro 기준 소폭 우세
+- 그러나 target별 AUROC는 6개 상승 / 6개 하락으로 반응이 크게 갈림
+
+3. TargetQuery 시도
+- target별로 다른 Series를 자동 선택하게 하려는 구조를 시험
+- Fold0 AUROC 0.586461로 기존 P2 0.613282보다 낮음
+- 따라서 TargetQuery architecture는 미채택
+- 해당 relevance는 secondary evidence로만 보존
+
+4. 실제 P2 Shared-CLS에서 직접 occlusion
+- Fold1 P2: 0.517551 / 0.479572
+- Fold2 P2: 0.588586 / 0.528448
+- Fold1/2 strict Series 후보:
+  - Medial Meniscus → Sag1
+  - Synovitis → Sag1
+- Synovitis → Sag1은 06D에서도 같은 방향
+- Series를 제거했을 때 성능이 반복적으로 나빠졌다는 뜻이며, Sag1-only가 최적이라는 뜻은 아직 아님
+
+5. Depth / Slice-region relevance
+- 현재 D24를 6개 구간으로 가려서 검사
+- 대표 반복 후보:
+  - Medial Meniscus Sag1 D2 [8:12] — 약 33~50%
+  - Medial OA Cor1 D2 [8:12] — 약 33~50%
+  - Synovitis Cor1 D4 [16:20] — 약 67~83%
+- 아직 원본 DICOM slice 번호 확정 단계는 아니며 normalized depth 후보 단계
+
+6. P2 vs ALL
+- Fold0: P2 0.613282 → ALL 0.617594, AUROC +0.004312
+- Fold1: P2 0.517551 → ALL 0.548407, AUROC +0.030856
+- primary Macro AUROC는 현재 2/2 Fold에서 ALL 우세
+- 다만 Fold1 AUPRC는 P2 0.479572 > ALL 0.453375로 metric trade-off 존재
+
+### 현재 인사이트
+
+- 단순히 적은 Series만 고르는 것이 항상 유리하지 않다.
+- 전체 Series를 더 보여주는 방향이 현재 primary AUROC에서는 유리한 신호를 보인다.
+- 동시에 질환마다 유효한 Series가 다르다는 신호도 존재한다.
+- 따라서 최종 방향은 다음 두 축을 분리해서 확인한다.
+  1. 전체 모델 입력: P2 / P3 / ALL 중 어디가 최적인가
+  2. 특정 질환: Sag1 같은 일부 Series만 쓰는 별도 policy가 실제로 이득인가
+- relevance 분석만 보고 hard routing을 넣지 않고 실제 학습 비교로 확인한다.
+- 이미 재현성이 확보된 baseline은 반복 학습하지 않고 Frozen Reference를 사용한다.
+- 서로 독립적인 실험은 두 Kaggle 계정 A/B에서 병렬 실행한다.
+
+### 다음 실행
+
+R3D-06G — Account A:
+- GPU0: P3 Fold0
+- GPU1: ALL Fold2
+- 목적: ALL의 3-Fold 방향 일치와 P3 중간 cap 가치 확인
+
+R3D-06H — Account B:
+- Medial Meniscus / Synovitis
+- P2 binary specialist vs Sag1-only binary specialist
+- 목적: Sag1이 중요하다는 관찰이 Sag1-only 학습 이득으로 실제 이어지는지 확인
+
+R3D-06G / 06H 결과 후 Series policy를 고정하고 R3D-07 Resolution / Depth screen으로 이동한다.
