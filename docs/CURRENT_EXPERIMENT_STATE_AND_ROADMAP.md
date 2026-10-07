@@ -10,6 +10,39 @@
 실험 기록 제목은 가능한 한 **누가 봐도 무엇을 바꿨는지 바로 이해할 수 있는 설명형 이름**을 사용한다.
 
 
+## 2026-10-07 — R3D 현재 한눈에 보기
+
+현재 고정:
+- Backbone: **MedicalNet R34**
+- Representation: **GLOB**
+- Mask: **OFF**
+- Backbone LR: **1e-5**
+- New-layer LR: **5e-5**
+- Precision: **FP32**
+- Search resolution: **D24×96×96**
+
+현재 핵심 질문:
+1. Study마다 Series를 몇 개까지 볼 것인가? — P2 / P3 / ALL
+2. 질환별로 특정 Series / depth만 쓰는 것이 실제로 더 좋은가?
+
+현재까지:
+- C3→P2: Fold0 macro 소폭 개선
+- P2→ALL: primary AUROC가 Fold0/1 모두 개선
+- 실제 P2 occlusion에서 Medial Meniscus→Sag1, Synovitis→Sag1이 2-Fold strict candidate
+- TargetQuery architecture는 성능 저하로 미채택
+- baseline 반복 재학습은 중단하고 Frozen Reference 사용
+
+현재 병렬 wave:
+- **Account A / R3D-06G**: P3 Fold0 + ALL Fold2
+- **Account B / R3D-06H**: Medial Meniscus / Synovitis의 P2 vs Sag1-only specialist
+
+다음 gate:
+- Series policy 확정
+- target-specific routing 채택/기각
+- 이후 R3D-07 Resolution / Depth
+
+---
+
 ## 2026-10-07 — Current R3D State / R3D-06F Complete
 
 이 섹션이 아래의 오래된 R3D 계획/상태보다 우선한다.
