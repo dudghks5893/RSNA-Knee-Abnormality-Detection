@@ -2175,3 +2175,35 @@ Gate:
 GPU 자원 원칙:
 - cache 생성 = CPU-only
 - GPU notebook = training-only
+
+
+---
+
+## R3D-08 Actual-Slice 결과 및 다음
+
+상태:
+- R3D-08A REAL24 Fold0/1: **PASS**
+- R3D-08B REAL32 Fold0/1: **PASS**
+
+REAL24:
+- F0 0.622138 / 0.543167 — ΔAUC +0.004544 / ΔAP +0.002853
+- F1 0.547613 / 0.453627 — ΔAUC -0.000794 / ΔAP +0.000252
+- 2-Fold mean ΔAUC +0.001875 / ΔAP +0.001553
+- **Fold2 confirmation 진행**
+
+REAL32:
+- F0 0.604739 / 0.504463 — ΔAUC -0.012855 / ΔAP -0.035852
+- F1 0.559398 / 0.450640 — ΔAUC +0.010991 / ΔAP -0.002734
+- 2-Fold mean ΔAUC -0.000932 / ΔAP -0.019293
+- **중단**
+
+다음:
+1. CPU-only: 기존 REAL24 F0/F1 cache에 없는 Fold2 pseudo UID만 delta cache 생성
+2. GPU-only: REAL24 Fold2 하나만 confirmation
+3. Fold2 결과 후 Full-FOV interpolated D24 vs REAL24 3-Fold mean 확정
+4. REAL24가 유지되면 130 mm crop과의 조합 여부를 마지막으로 판단
+
+자원 원칙:
+- 기존 F0/F1 REAL24 cache 재생성 금지
+- delta cache만 CPU 생성
+- GPU는 training-only
