@@ -1375,3 +1375,64 @@ Frozen ALL Fold0:
 - 130/140/150 mm micro-search는 추가하지 않는다.
 - R3D-07B의 resolution/depth 결과를 먼저 확인한다.
 - 07B에서 큰 개선이 나오면 그 winner와 130 mm를 조합하는 실험의 우선순위를 판단한다.
+
+
+---
+
+## 24. R3D-07B — Resolution 128 vs Depth 32
+
+### 목적
+
+기존 ALL / D24×96×96 Fold0를 Frozen baseline으로 두고,
+작은 병변 정보 보존을 위해 한 축씩만 바꿨다.
+
+- R128_D24: in-plane 96→128, depth는 D24 유지
+- D32_R96: depth 24→32, in-plane은 96 유지
+
+실행:
+- Account B
+- GPU0: R128_D24
+- GPU1: D32_R96
+- cache는 CPU 선행 생성
+- GPU notebook 내부 cache 생성 없음
+- baseline 재학습 없음
+- initial model SHA exact
+- sample UID trace exact
+- overall contract: **PASS**
+- result ZIP SHA256:
+  `26b9ec567d1259716d3e57b9906a414c4e1f7089ce901e2c71bce69e34011047`
+
+### 결과
+
+Frozen ALL Fold0:
+- AUROC **0.617594**
+- AUPRC **0.540314**
+
+R128_D24:
+- best epoch 10
+- AUROC **0.607901**
+- AUPRC **0.504403**
+- delta:
+  - AUROC **-0.009692**
+  - AUPRC **-0.035912**
+
+D32_R96:
+- best epoch 2
+- AUROC **0.604305**
+- AUPRC **0.504119**
+- delta:
+  - AUROC **-0.013289**
+  - AUPRC **-0.036195**
+
+### 판정
+
+- 단순 in-plane 해상도 증가 96→128은 현재 구조에서 성능을 낮췄다.
+- 단순 depth 증가 D24→D32도 성능을 낮췄다.
+- 따라서 **Full-FOV R128**과 **단순 D32 interpolation**은 모두 기각한다.
+- 단, 이 결과가 "작은 병변 보존이 중요하지 않다"는 뜻은 아니다.
+  - D32는 real-slice adjacency / spacing-aware selection을 직접 검증한 것이 아니라
+    raw volume을 32 depth로 uniform resample한 방식이다.
+  - 130 mm crop에서는 primary AUROC가 +0.004663 상승했으므로
+    physical FOV 축은 약한 positive signal로 남는다.
+- 다음 단계는 무작정 resolution/depth 숫자를 더 키우지 않고,
+  **원본 slice geometry / spacing / adjacency 보존 방식**을 직접 검증하는 쪽이 우선이다.
