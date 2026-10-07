@@ -1157,3 +1157,77 @@ AUPRC에서는 Fold별 trade-off가 있으므로 최종 선택은
 - P2 확장은 성공적인 방향이었다.
 - P3가 Fold0에서 가장 높은 AUROC를 기록했으므로 P3 Fold1/2 confirmation을 진행할 가치가 있다.
 - Series policy는 현재 **P3 vs ALL** 최종 경쟁 단계다.
+
+
+---
+
+## 21. R3D-06I — P3 Fold1/2 Confirmation
+
+### 목적
+
+R3D-06G에서 P3 Fold0가 AUROC 0.624242로 P2 / ALL보다 높았기 때문에,
+기존 baseline을 다시 학습하지 않고 P3의 Fold1 / Fold2만 새로 학습했다.
+
+실행 lane:
+- Account A
+- GPU0 → P3 Fold1
+- GPU1 → P3 Fold2
+
+### 실행 이슈 / 복구
+
+Fold1:
+- 10 epochs 학습 완료
+- best predictions / target metrics 저장 완료
+- post-training trace validation에서 worker-local `EXPECTED_TRACE_SHA`에 fold1 key가 누락되어 `KeyError: 1`
+- 학습 자체 실패가 아니라 **post-training contract bug**
+- deterministic Fold1 trace SHA는 기존 P2/ALL과 동일한 `724f4b6e...`
+- GPU 재학습 없이 저장 artifact / log로 결과 복구
+
+Fold2:
+- 정상 완료 / PASS
+
+Recovered result ZIP:
+- `A_R3D-06I_recovered_results_no_pt.zip`
+- SHA256 `da23ffa80e1b4dbd08b95a888448f7e0cfd75af0ffbf24ea85cb4c3609b11c73`
+
+### P3 결과
+
+| Fold | Best epoch | Macro AUROC | Macro AUPRC |
+|---|---:|---:|---:|
+| Fold0 | 10 | 0.624242 | 0.511143 |
+| Fold1 | 1 | 0.531304 | 0.460057 |
+| Fold2 | 7 | 0.613601 | 0.545053 |
+
+### Series policy 3-Fold 비교
+
+| Policy | Fold0 AUC | Fold1 AUC | Fold2 AUC | 3-Fold mean AUC |
+|---|---:|---:|---:|---:|
+| P2 | 0.613282 | 0.517551 | 0.588586 | 0.573140 |
+| P3 | **0.624242** | 0.531304 | 0.613601 | 0.589716 |
+| **ALL** | 0.617594 | **0.548407** | **0.622678** | **0.596226** |
+
+3-Fold mean AUPRC:
+- P2 0.514119
+- P3 0.505418
+- ALL 0.505143
+
+### 해석
+
+- P3는 P2보다 Fold0/1/2 primary AUROC가 모두 높다.
+- 그러나 ALL과 비교하면:
+  - Fold0: P3 우세
+  - Fold1: ALL 우세
+  - Fold2: ALL 우세
+- 사전 정의 primary metric인 Macro AUROC의 3-Fold mean은 **ALL > P3 > P2**.
+- AUPRC는 P2가 가장 높아 metric trade-off는 남는다.
+- 남은 시간이 짧고 Series policy의 큰 방향은 충분히 확인했으므로 추가 P3/P4 cap search는 중단한다.
+- **기본 R3D Series policy는 ALL로 고정**한다.
+- target-specific Series 연구는 R3D-06H specialist confirmation만 독립적으로 마무리한다.
+
+### 다음
+
+Series 개수 최적화는 종료하고,
+성능 연구 축을 아래 두 개로 좁힌다.
+
+1. MRI를 더 잘 보여주기 — physical FOV / crop / resolution
+2. 작은 병변 보존 — depth / real-slice geometry / adjacency
