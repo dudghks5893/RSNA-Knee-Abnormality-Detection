@@ -1245,3 +1245,22 @@ Conclusion:
 현재 154-mask coverage + anatomy-token fusion은 classification 성능을 개선하지 않았다.
 후속 R3D 기본 classifier는 MASK_OFF로 진행한다.
 다음은 all-series neutral cache와 series composition 실험이다.
+
+
+### R3D-07 cache/runtime separation
+
+R3D-07A/07B의 새 tensor cache는 GPU Notebook 내부에서 만들지 않는다.
+
+Shared prerequisite:
+- **Account A**
+- `A_R3D-07CACHE_Shared_GeometryDetail_CPU.ipynb`
+- Accelerator: None / CPU
+- 4개 variant cache를 한 번의 raw decode pass로 생성
+- 생성 후 Kaggle Dataset `rsna-knee-r3d07-geometry-cache-v1`로 저장하고 Account B에 공유
+
+GPU training:
+- Account A: `A_R3D-07A_Crop130_150_Fold0_DualT4_TRAIN_ONLY.ipynb`
+- Account B: `B_R3D-07B_R128_D32_Fold0_DualT4_TRAIN_ONLY.ipynb`
+
+GPU Notebook은 raw competition DICOM을 읽어 cache를 생성하지 않는다.
+
