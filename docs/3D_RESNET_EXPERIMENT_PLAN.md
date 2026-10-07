@@ -642,8 +642,8 @@ R3D-06G / 06H까지 끝난 뒤 다음 순서로 고정한다.
 - R3D-06H에서 Sag1-only가 paired P2 specialist보다 실제 AUROC/AUPRC가 좋아야 후보 유지
 - 그렇지 않으면 Sag1은 '중요한 정보원'으로만 기록하고 전체 input 유지
 
-3. Series policy 확정 후
-- R3D-07 Resolution / Depth로 이동
+3. Series policy는 **ALL로 확정**
+- R3D-07 physical geometry / Resolution / Depth로 이동
 - D24×96×96 → D24×128×128
 - 필요 시 그 다음 D32×128×128
 - 한 번에 한 축만 변경
