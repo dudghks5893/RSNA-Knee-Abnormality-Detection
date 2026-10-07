@@ -10,7 +10,7 @@
 실험 기록 제목은 가능한 한 **누가 봐도 무엇을 바꿨는지 바로 이해할 수 있는 설명형 이름**을 사용한다.
 
 
-## 2026-10-07 — Current R3D State / R3D-06C Complete
+## 2026-10-07 — Current R3D State / R3D-06F Complete
 
 이 섹션이 아래의 오래된 R3D 계획/상태보다 우선한다.
 
@@ -102,25 +102,61 @@ Classifier:
   - Synovitis Sag1
 - 여러 target에서 TargetQuery Full AUROC < 0.5이므로 hard routing 금지
 
-### 다음 실행 — R3D-06E
+### R3D-06E — P2 Shared-CLS Fold1/2 + Target-wise Occlusion
 
-**P2 Shared-CLS Fold1/2 + Target-wise Series/Depth Occlusion**
+상태: **COMPLETED — PASS (artifact recovery, no retraining)**
 
-핵심:
-- Fold0 P2는 Frozen Reference로 유지하고 재학습하지 않음
-- GPU0 → 아직 실행하지 않은 P2 Shared-CLS Fold1
-- GPU1 → 아직 실행하지 않은 P2 Shared-CLS Fold2
-- R3D-06C와 동일한 P2 Shared-CLS architecture / augmentation recipe
-- best checkpoint에서 held-out Gold Series/Depth occlusion
+결과:
+- Fold1: AUROC 0.517551 / AUPRC 0.479572 / best epoch3
+- Fold2: AUROC 0.588586 / AUPRC 0.528448 / best epoch6
+- Fold1+2 pooled diagnostic: AUROC 0.548300 / AUPRC 0.450897
+- training / occlusion worker는 모두 정상 종료
+- aggregation import 누락은 저장된 output으로 posthoc 복구
+- recovered ZIP SHA256: 9c43a7b998f4100725c8cec2d5783a4d2fb41407d800ac44543a0366a29ed230
 
-Strict gate:
-- target Full AUROC >= 0.50 in both Fold1/2
-- slot present >=10 in both folds
-- Full-Drop AUROC > +0.005 in both folds
-- Full-Drop AUPRC >0 in both folds
-- signed logit contribution >0 in both folds
+Strict Series candidate:
+- Medial Meniscus → Sag1
+- Synovitis → Sag1
+- Synovitis Sag1은 06D secondary signal과도 일치
 
-이 gate를 통과한 signal만 R3D-06F target-specific input policy 후보로 사용한다.
+Strict Depth candidate는 10개였으나 Series hard routing 후보는 위 2개만 유지.
+
+### R3D-06F — ALL-Series Saturation Fold0/1
+
+상태: **COMPLETED — PASS**
+
+결과:
+- Fold0 P2 Frozen: 0.613282 / 0.534338
+- Fold0 ALL: 0.617594 / 0.540314
+- Fold1 P2: 0.517551 / 0.479572
+- Fold1 ALL: 0.548407 / 0.453375
+
+Primary AUROC:
+- Fold0 ALL-P2 +0.004312
+- Fold1 ALL-P2 +0.030856
+
+따라서 ALL이 AUROC 기준 두 Fold 모두 우세.
+Fold1 AUPRC는 P2가 +0.026197 높아 trade-off 존재.
+
+### 현재 A/B 병렬 wave
+
+계정 A — **R3D-06G**
+- GPU0: P3 Fold0
+- GPU1: ALL Fold2
+- 목적:
+  - ALL 3-Fold 방향 일치 확인
+  - P3(top3/plane, max9)가 ALL에 근접하는지 Fold0 gate
+
+계정 B — **R3D-06H**
+- Medial Meniscus / Synovitis에 대해 P2 binary specialist vs Sag1-only binary specialist
+- GPU0: P2 control lane
+- GPU1: Sag1-only lane
+- discovery는 Fold1/2에서 했고 confirmation은 Fold0에서 수행
+- pair별 initial SHA / sample trace exact pairing
+
+실행 원칙:
+- 이미 존재하는 baseline은 재학습하지 않음
+- 새 Fold / 새 policy / fair control이 필요한 architecture change만 학습
 
 <!-- SPECIALIST_2026_10_02_CURRENT_START -->
 
