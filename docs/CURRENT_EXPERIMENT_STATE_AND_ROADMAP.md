@@ -2207,3 +2207,45 @@ REAL32:
 - 기존 F0/F1 REAL24 cache 재생성 금지
 - delta cache만 CPU 생성
 - GPU는 training-only
+
+
+---
+
+## R3D-08C 완료 — REAL24 최종 판정
+
+Fold2:
+- Frozen ALL D24: 0.622678 / 0.521740
+- REAL24: 0.620144 / 0.521160
+- ΔAUC -0.002534
+- ΔAP -0.000580
+
+REAL24 3-Fold mean delta:
+- AUROC **+0.000405**
+- AUPRC **+0.000842**
+
+판정:
+- Notebook auto decision은 sign-only rule 때문에 ADOPT_REAL24_MAIN_INPUT이었으나,
+  실제 실험 판정은 **KEEP_INTERPOLATED_D24**.
+- Fold0만 개선, Fold1/Fold2 AUROC 하락.
+- 효과 크기가 Gold58 noise보다 작아 actual-slice nearest의 안정적 이점으로 보지 않음.
+
+현재 Main R3D 고정:
+- Series = ALL
+- Backbone = MedicalNet R34
+- Representation = GLOB
+- Mask = OFF
+- Aggregation = Transformer + shared CLS
+- Depth = interpolated D24
+- Resolution = 96×96
+
+남은 입력축:
+- **130 mm physical crop confirmation across Fold1/Fold2**
+  - Fold0에서 +0.004663 AUROC 신호가 있었으나 아직 1-Fold뿐
+  - 150 mm / R128 / D32 / REAL24 계열은 중단
+- 130 mm가 3-Fold에서 재현되지 않으면 Full-FOV D24×96로 Main input 완전 동결
+
+그 다음:
+1. Medial Meniscus Sag1 specialist canonical confirmation
+2. Final Main R3D 3-Fold training
+3. Hidden-test inference / R3D standalone submission
+4. Exp57 + R3D (+ validated MedMen specialist) ensemble
