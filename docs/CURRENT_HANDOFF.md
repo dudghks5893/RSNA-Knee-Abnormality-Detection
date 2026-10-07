@@ -823,9 +823,10 @@ T4×2 내부 variant는:
 - `docs/EXPERIMENT_HISTORY.md`
 - `docs/AI_AGENT_KAGGLE_NOTEBOOK_RULES.md`
 
-Historical / superseded banner가 붙은 문서:
+Historical / superseded / research-reference 문서:
 
 - `docs/FINAL_5FOLD_PARALLEL_EXPERIMENT_PLAN.md`
+- `docs/PUBLIC_RESEARCH_PERFORMANCE_ROADMAP_2026-10-07.md`
 - `docs/SPECIALIST_EXPERIMENT_ROADMAP.md`
 - `docs/SPECIALIST_EXPERIMENT_LOG.md`
 
