@@ -142,220 +142,97 @@ R3D-10AB Fold0:
 
 ---
 
-# 4. 다음 prerequisite — R3D-11CACHE
+# 4. Cache 실행 상태
 
-## 목적
+## 현재 Crop130 cache
 
-Medial Meniscus specialist를 3-Fold paired confirmation하기 전에
-Crop130 cache를 한 mounted Dataset으로 정리한다.
+**R3D-11CACHE 완료/PASS**: 1,446 studies / 8,027 series / 32 float16 shards, 약 3.31 GiB. 기존 cache 통합, raw decode 0.
 
-현재 stable Crop130 root:
+- 현재 mount: `/kaggle/input/rsna-knee-wide224-persistent-cache-v1/r3d11cache`
+- volume/index: `crop130_d24_96/`; Gold와 fold pseudo: `manifests/`.
+- Index SHA256: `114bc191102849cc5df8b3f45c3a2b6361446d3e190f5315e13cdf6d002d1ef4`.
+- Gold58와 3fold pseudo scope coverage PASS. 최종 4,407명 전체 cache는 아니다.
 
-`/kaggle/input/datasets/yhlucas/rsna-knee-r3d-crop130-search-cache-v3/crop130_d24_96`
+**R3D-12CACHE Full4407 CPU 노트북 전달 완료, 성공 결과는 아직 미확인**.
 
-현재 확인된 scope:
-- 1,058 studies
-- Fold0 Gold + Fold0 Pseudo1000 중심
+- 기존 8,027 series 재사용 + 누락 16,344 series 생성, 목표 4,407 studies / 24,371 series.
+- raw root: `/kaggle/input/competitions/rsna-knee-abnormality-detection/train_series`.
+- 목표 단일 독립 폴더: `/kaggle/working/r3d12cache_full/`, 약 10.04 GiB float16 shards. 대용량 이미지별 파일/전체 cache ZIP 중복 생성 없음.
+- CPU-only; exact candidate paths; 전체 input 재귀 탐색 금지. 학습과 별도 실행 가능.
+- 초기 metadata root 누락 오류는 preflight에서 발생. PathFix 노트북은 원본 `train_series.csv` fallback을 사용하며 full scope/기존 cache metadata parity를 검증한다.
+- 현재 cache 성공으로 오인하거나 full-data 학습을 먼저 시작하지 않는다.
 
-R3D-09 Fold1/Fold2에서는
-별도 delta cache를 함께 사용했다.
-
-따라서 R3D-11 전에:
-
-~~~text
-Fold0 base Crop130
-+
-Fold1/Fold2 missing-study Crop130 delta
-        ↓
-single canonical Crop130 search Dataset
-~~~
-
-으로 정리한다.
-
-## 원칙
-
-우선순위:
-
-1. 기존 base/delta artifact를 파일 수준으로 합쳐 재사용
-2. 기존 artifact가 불완전할 때만 missing studies CPU build
-3. raw DICOM 전체 재decode는 마지막 수단
-
-Runtime:
-- **CPU only**
-- GPU 예약 금지
-
-Contract:
-
-- Gold58 coverage
-- F0 Pseudo1000 coverage
-- F1 Pseudo1000 coverage
-- F2 Pseudo1000 coverage
-- Full-FOV metadata와 Study/Series UID exact parity
-- volume shard existence
-- row_in_shard valid
-- crop = 130 mm
-- target shape = D24×96×96
-- decode failure = 0 if any new build occurred
-
-Output은 가능한 한:
-- 하나의 Dataset slug
-- 하나의 active Version
-- exact mounted root
-
-로 고정한다.
-
-같은 Dataset의 여러 Version을 동시에 mount하는 설계는 금지한다.
 
 ---
 
-# 5. R3D-11 — Medial Meniscus Sag1 Canonical Confirmation
+# 5. R3D-11 — 완료/PASS, 최종 채택 보류
 
-상태: **NEXT AFTER R3D-11CACHE**
+## R3D-11 결과 검토 — 2026-10-08
 
-## 배경
+- 대상: **Medial Meniscus 단일 target**. 아래 AUROC/AUPRC는 12-target Macro 값이 아니다.
+- Pipeline / paired contracts: **PASS**. 자동 adoption_status: **REVIEW_REQUIRED**.
+- 검토 결론: **SAG1은 유망 후보로 보존하되 최종 specialist 채택·hard routing은 보류**. Main은 ALL 유지. 이번 결과만으로 specialist 추가 학습을 시작하지 않는다.
 
-R3D-06H Fold0에서:
+| Scope | ALL AUROC | SAG1 AUROC | ΔAUROC | ALL AUPRC | SAG1 AUPRC |
+|---|---:|---:|---:|---:|---:|
+| F0 | 0.531250 | 0.697917 | +0.166667 | 0.426910 | 0.618876 |
+| F1 | 0.555556 | 0.777778 | +0.222222 | 0.649439 | 0.823719 |
+| F2 | 0.659091 | 0.738636 | +0.079545 | 0.730888 | 0.770433 |
+| Pooled Gold58 OOF | 0.582933 | 0.606971 | +0.024038 | 0.553281 | 0.599431 |
 
-- P2 binary specialist: 0.677083 / 0.591098
-- Sag1-only binary specialist: **0.729167 / 0.756302**
-- ΔAUROC **+0.052083**
-- ΔAUPRC **+0.165204**
+해석:
 
-강한 신호였지만:
+- 세 fold 모두 AUROC/AUPRC 개선. Pooled AUPRC Δ = **+0.046150**.
+- Pooled AUROC 차이의 descriptive paired bootstrap 95% 구간: **[-0.193510, +0.238011]**. 선택된 checkpoint에 조건부이며 epoch/구조 선택 및 fold 간 의존성을 보정한 독립 검정이 아니다. 우월성 확정 불가.
+- Fold마다 점수 분포가 달라 fold 내부 순위 개선이 pooled 순위 개선으로 그대로 이어지지 않는다. SAG1 F0 확률 범위 **0.44657543–0.44822356**으로 매우 좁다. ALL F1은 전원 0.5 초과. 원인 확정은 하지 않으며 calibration/학습 안정성 점검 대상이다.
+- SAG1 pooled threshold 0.5 sensitivity **0.076923**, specificity **1.0**. 높은 fold AUROC만으로 임계값 성능이나 확률 품질을 보장하지 않는다. Gold58에 사후 calibration을 맞춰 개선으로 보고하지 않는다.
+- Gold58은 epoch 선택과 반복 실험에 사용된 model-selection validation이다. 독립 최종 test로 부르지 않는다.
 
-- 현재 Main input Crop130 이전 실험
-- final canonical R34 contract와 완전히 동일하지 않은 구현 흔적이 있음
-- 따라서 최종 ensemble에 쓰기 전 재확인이 필요
+재현·검증:
 
-## 새로운 paired design
+- Gold58 unique UID, 양성26/음성32. 저장 OOF 예측에서 pooled AUROC/AUPRC를 재계산해 metrics.csv와 일치 확인.
+- Canonical MedicalNet R34 pretrained matched fraction 1.0; Crop130 interpolated D24×96×96; FP32; BN stats frozen; MASK_OFF.
+- 각 fold ALL/SAG1의 초기 모델 SHA, study sampling trace, 공통 SAG1 증강 trace 일치. 세 paired contracts PASS.
+- 10 epochs × 192 study draws; fold-specific Pseudo1000 + training Gold; Gold sampling probability .25; accumulation4. 실제 unique sampled studies F0 799/F1 788/F2 788.
+- 매 epoch 종료 후 validation. AUROC 우선/AUPRC tie-break. ALL best epoch F0/F1/F2 = **5/3/6**, SAG1 = **6/8/4**.
+- ALL runtime 약 **32.3–32.9분/fold**, SAG1 **6.8–7.0분/fold**. 병렬 실행 조건의 관측치이며 최종 full-data 시간 추정으로 직접 쓰지 않는다.
+- Historical normalized weighted BCE 유지: 단일 target의 양수 scalar weight는 분자/분모에서 상쇄된다. pseudo .35 및 confidence가 의도한 sample attenuation으로 작동한다고 해석하지 않는다. 최종 학습에서 unknown mask와 loss 정규화를 명시적으로 재설계한다.
+- 여섯 best.pt는 search 산출물. 최종 모델 초기화에 재사용하지 않는다.
+- 결과 원본: `A_R3D-11_results_no_pt.zip`; SHA256 `b6bd762858cc581b6f025dd9d155292f67c817f554d2f1f2479658a669af8848`.
 
-Target:
-- **Medial Meniscus only**
-
-Control:
-
-~~~text
-Crop130
-+ ALL Series
-+ canonical R34
-+ binary Medial Meniscus head
-~~~
-
-Candidate:
-
-~~~text
-Crop130
-+ Sagittal plane_rank=1 only
-+ same canonical R34
-+ same binary Medial Meniscus head
-~~~
-
-중요:
-
-기존 P2 control이 아니라
-**현재 Main policy와 직접 비교 가능한 ALL control**을 사용한다.
-
-## Validation
-
-가능하면 3-Fold paired confirmation:
-
-- F0
-- F1
-- F2
-
-Gold split은 현재 R3D Gold58 그대로 유지.
-
-각 Fold:
-
-- training-side Gold
-- 해당 fold Pseudo1000
-- held-out Gold validation
-- ALL / Sag1 pair는 같은 Study sampling trace
-- same initial model state
-- same optimizer
-- same augmentation RNG
-- same epochs
-- only Series policy changes
-
-## Primary metric
-
-- **Gold58 pooled OOF Medial Meniscus AUROC**
-
-Secondary:
-
-- pooled AUPRC
-- Fold별 AUROC
-- Fold별 AUPRC
-- stability / failure pattern
-
-## Gate
-
-Sag1-only candidate 유지:
-
-- pooled AUROC가 ALL control보다 명확히 우세
-- AUPRC도 치명적으로 악화되지 않음
-- 특정 Fold에서 catastrophic collapse 없음
-
-그렇지 않으면:
-
-- Medial Meniscus specialist routing 종료
-- final R3D는 12-target Main만 사용
 
 ---
 
-# 6. R3D-12 — Main Final Training Policy Decision
+# 6. R3D-12 — 라벨 및 최종 학습 정책
 
-R3D-11 뒤 반드시 사용자와 먼저 결정한다.
+## 확정된 최종 학습 방향
 
-미결정 항목:
+- **단일 Main R3D 모델**, 3-fold 최종 학습 아님. 기존 3-fold는 구조 비교용이었다.
+- 학습 범위: **report-only 4,349 studies 전체**. 검증: **공식 Gold58 전원**, 학습에서 제외.
+- 신규 라벨에서 supervision이 전혀 없는 study는 손실에 기여할 수 없다. 실제 유효 supervision 수는 audit 후 별도로 기록한다.
+- Main: ALL → Crop130 → interpolated D24×96×96 → MedicalNet R34 → GLOB + metadata → Transformer/shared CLS → 12 heads.
+- Search best.pt를 이어 학습하지 않고 MedicalNet pretrained에서 새로 시작한다.
+- Epoch은 전체 학습 목록 순회를 기준으로 한다. 192 draws/epoch search budget을 최종 학습에 그대로 적용하지 않는다.
+- Epoch 종료 시 Gold58 12-target Macro AUROC 우선, Macro AUPRC tie-break로 best.pt 선정. Epoch 수/compute budget/unknown mask 및 loss 정규화의 구체 구현은 아직 확정 전.
+- Gold58은 이미 반복 탐색에 사용되었으므로 untouched test가 아니다.
+- 먼저 standalone R3D Public LB 확인, 이후 Exp57(0.918)과 ensemble 상보성 검토. SAG1은 보류 후보이며 자동 추가하지 않는다.
 
-- final train에서 Pseudo1000 유지 여부
-- report-only pseudo를 더 확장할지
-- samples/epoch
-- epochs
-- checkpoint policy
-- training compute budget
-- 기존 search checkpoint 재사용 / fresh final training 여부
+## 바로 다음 작업
 
-금지:
+1. 원본 report 기반 라벨 감사/재구축: 공식 target 정의 확인 → 근거 문장과 상태를 보존하는 소규모 pilot → 애매한 사례 사용자 리뷰.
+2. `positive / negative / uncertain / not-mentioned / insufficient`를 구분. 언급 없음·불완전 report를 자동 음성으로 만들지 않는다. LLM 자기 확신을 calibrated probability로 취급하지 않는다.
+3. 기존 V4 full-data routing은 CommonGold57을 이용해 reader/target 정책을 골랐다. 이를 그대로 학습하고 Gold58을 독립 검증이라 부르지 않는다. 새 라벨 정책은 Gold 결과에 맞춰 조정하지 않는다.
+4. 병행한 R3D-12CACHE 완료 audit 확인 후 새 라벨 manifest, supervision coverage와 최종 loss/budget 확정.
+5. 단일 Main full-data 학습 → standalone 제출 → 필요 시 Exp57 blend 평가.
 
-**Search가 Pseudo1000이었다는 이유만으로 final도 자동 Pseudo1000로 확정하지 않는다.**
+라벨 재생성 자체는 아직 시작하지 않았다. 현재 원본 report/V4 master/method/old audit 자료는 확보했으며 원래 추출 prompt·근거 문장은 제공 자료에 없다.
 
-반대로:
 
-**Final이니까 자동으로 4,349 pseudo 전체를 쓰지도 않는다.**
+# 7. R3D-13 — Final Main Single Model
 
-data scope 변경은 성능에 큰 영향을 주는 독립 변수다.
-사용자와 명시적으로 결정하고 문서화한 뒤 실행한다.
+필수 artifact: 단일 best.pt와 SHA, Gold58 validation predictions/12-target metrics, 정확한 train/val manifests, label version/evidence/mask 정책, training config와 runtime/GPU summary.
+이 validation predictions를 3-fold OOF라고 부르지 않는다.
 
----
-
-# 7. R3D-13 — Final Main 3-Fold
-
-확정 architecture:
-
-- Crop130
-- ALL
-- interpolated D24×96×96
-- MedicalNet R34
-- GLOB
-- MASK_OFF
-- Transformer + shared CLS
-- 12 heads
-
-필수 artifact:
-
-- Fold0 best checkpoint + SHA
-- Fold1 best checkpoint + SHA
-- Fold2 best checkpoint + SHA
-- fold validation predictions
-- pooled Gold58 OOF predictions
-- pooled target metrics
-- exact train/val manifests
-- training config
-- runtime / GPU summary
-
-이 단계에서는 search용 baseline을 다시 비교하지 않는다.
 
 ---
 
@@ -376,14 +253,12 @@ Hidden Study
 → all usable Series
 → 130 mm physical crop
 → interpolated D24×96×96
-→ Fold0 R34
-→ Fold1 R34
-→ Fold2 R34
-→ probability mean
+→ single final R34
+→ 12-target probabilities
 → submission.csv
 ~~~
 
-정확한 fold ensemble은 R3D-12 final policy에서 확정한다.
+최종 단일 모델 best checkpoint를 사용한다.
 
 ---
 
@@ -392,8 +267,8 @@ Hidden Study
 입력 후보:
 
 1. **Exp57** — Public LB 0.918
-2. **R3D final 3-Fold**
-3. **Medial Meniscus Sag1 specialist** — R3D-11 PASS 시에만
+2. **R3D final single model**
+3. **Medial Meniscus Sag1 specialist** — 현재 보류; pipeline PASS는 채택 PASS가 아님
 
 Exp57은:
 
@@ -484,9 +359,10 @@ subprocess + `CUDA_VISIBLE_DEVICES` 방식 사용 가능.
 - **R3D-11CACHE** — consolidated Crop130 3-Fold cache
 - **R3D-11** — Medial Meniscus Sag1 canonical paired confirmation
 - **R3D-12** — final-training data/budget decision
-- **R3D-13** — final Main 3-Fold
+- **R3D-13** — final Main single model
 - **R3D-14** — standalone hidden-test submission
 - **R3D-15** — final Exp57 + R3D ensemble
 
 번호는 실제 실행 결과에 따라 세부 suffix를 추가할 수 있으나,
 새 채팅에서 임의로 과거 번호를 재사용하지 않는다.
+
