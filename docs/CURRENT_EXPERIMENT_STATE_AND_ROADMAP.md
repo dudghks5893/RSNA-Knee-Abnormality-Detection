@@ -32,13 +32,26 @@
 - TargetQuery architecture는 성능 저하로 미채택
 - baseline 반복 재학습은 중단하고 Frozen Reference 사용
 
-현재 병렬 wave:
-- **Account A / R3D-06G**: P3 Fold0 + ALL Fold2
-- **Account B / R3D-06H**: Medial Meniscus / Synovitis의 P2 vs Sag1-only specialist
+현재 결과:
+- **R3D-06G COMPLETED — PASS**
+  - P3 Fold0 AUROC 0.624242 / AUPRC 0.511143
+  - ALL Fold2 AUROC 0.622678 / AUPRC 0.521740
+  - ALL은 P2보다 Fold0/1/2 모두 primary AUROC 우세
+  - P3 Fold0는 P2와 ALL Fold0보다 모두 높은 AUROC
+- **R3D-06H implementation failure**
+  - 학습 시작 전 첫 forward에서 중단
+  - 원인: BinaryModel의 `self.type` 이름이 PyTorch `nn.Module.type()`과 충돌
+  - 데이터/모델 결과가 아니라 코드 구현 오류
+  - 수정: `self.type_emb`, `self.struct_emb`
+  - Fresh Save & Run All 재실행 필요
+
+현재 다음:
+- Account A 후보: **P3 Fold1/2 confirmation**
+- Account B: **R3D-06H FIXED — P2 vs Sag1-only specialist**
 
 다음 gate:
-- Series policy 확정
-- target-specific routing 채택/기각
+- P3 vs ALL 최종 Series policy 확정
+- target-specific Sag1-only routing 채택/기각
 - 이후 R3D-07 Resolution / Depth
 
 ---
@@ -1881,3 +1894,28 @@ SHA256 = 0e66dd3369bb418037db2d979a40d3191f6a6669e3b9833fc59621bc2482577c
 A: SS02A Lateral Meniscus Native Selector
 B: SS02B ACL Native Selector
 ```
+
+
+### R3D-06G — ALL Fold2 + P3 Fold0
+
+상태: **COMPLETED — PASS**
+
+- P3 Fold0: AUROC 0.624242 / AUPRC 0.511143 / best epoch10
+- ALL Fold2: AUROC 0.622678 / AUPRC 0.521740 / best epoch3
+- P3 Fold0 - P2 Fold0 AUROC +0.010960
+- P3 Fold0 - ALL Fold0 AUROC +0.006649
+- ALL Fold2 - P2 Fold2 AUROC +0.034092
+- ALL은 P2보다 Fold0/1/2 primary AUROC 모두 우세
+- P3 Fold0가 현재 Fold0 series-cap 후보 중 최고 AUROC
+- 다음: P3 Fold1/2 confirmation
+
+### R3D-06H — Sag1 Target-Specific Confirmation
+
+상태: **FAILED — IMPLEMENTATION BUG / FIXED NOTEBOOK READY**
+
+- P2 lane / Sag1 lane 모두 첫 forward에서 종료
+- 원인: `BinaryModel.self.type`이 `nn.Module.type()`과 이름 충돌
+- 학습/checkpoint 생성 전 실패
+- 결과 해석 불가
+- 수정본에서 `type_emb` / `struct_emb`로 변경
+- Fresh Save & Run All 재실행
