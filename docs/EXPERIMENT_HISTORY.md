@@ -1,6 +1,6 @@
 # RSNA Knee — Experiment History
 
-최종 업데이트: **2026-10-07**
+최종 업데이트: **2026-10-08**
 
 이 문서는 **완료된 실험과 그 결과만 기록하는 기준 문서**다.
 진행 예정 작업과 현재 계획은 [3D_RESNET_EXPERIMENT_PLAN.md](3D_RESNET_EXPERIMENT_PLAN.md)를 따른다.
@@ -1641,3 +1641,126 @@ Main input freeze:
 - depth = **interpolated D24**
 - in-plane = **96×96**
 - Series = **ALL**
+
+
+---
+
+## 28. R3D-10AB — Always Dual vs Mixed 3-Mode Fold0
+
+### 목적
+
+R3D-09AB에서 Main input으로 채택한 Crop130 single-view보다,
+Full-FOV와 Crop130을 함께 활용하는 방식이 더 좋은지 Fold0에서 controlled screen했다.
+
+Variant A — **ALWAYS_DUAL**:
+- 모든 training step에서 Full-FOV + Crop130 동시 입력
+- 하나의 shared MedicalNet R34가 두 view의 feature를 각각 추출
+- Full/Crop은 FOV embedding으로 구분
+- Transformer에는 같은 Series의 Full token + Crop token을 모두 입력
+- validation도 Dual simultaneous inference
+
+Variant B — **MIXED_3MODE**:
+- 각 training step에서 다음 세 mode를 1/3 확률로 선택
+  - FULL_ONLY
+  - CROP_ONLY
+  - DUAL = Full + Crop130
+- validation은 같은 checkpoint로
+  - Full-only
+  - Crop-only
+  - Dual simultaneous
+  - Full/Crop single-view probability 50:50 average
+  를 모두 평가
+- checkpoint selection primary = Dual simultaneous Macro AUROC
+
+공통:
+- Fold0
+- ALL Series
+- D24×96×96
+- MedicalNet R34
+- GLOB
+- MASK_OFF
+- Transformer + shared CLS
+- Full fine-tuning / pure FP32
+- backbone LR 1e-5 / new-layer LR 5e-5 / WD 1e-4
+- 192 samples/epoch × 10 epochs
+- 동일 Study sampling trace
+- Full/Crop paired Series parity audit PASS
+- pretrained matched fraction = 1.0
+- GPU0 ALWAYS_DUAL / GPU1 MIXED_3MODE on T4×2
+- result ZIP SHA256:
+  `da5dbf79b88bbe4c9d8f1537c322cdc0b761356c70ab6d27d6df2bedee52fbe6`
+
+### Input / policy audit
+
+실행 전:
+- Fold0 Gold + Pseudo1000 coverage PASS
+- Full/Crop Study coverage PASS
+- Full/Crop paired Series UID/order PASS
+- plane / Fluid / Fat metadata parity PASS
+- shard file 존재 / row_in_shard 범위 PASS
+- Fold0 required studies: 1,058
+- paired series: 5,882
+
+중요:
+- R3D-06A raw `series_index.csv`에는 `plane_rank` / `selection_order`가 저장되어 있지 않다.
+- 기존 R3D ALL policy와 동일하게
+  - plane order: Sagittal → Coronal → Axial
+  - rank = 4×Fluid×Fat + 2×Fluid + Fat
+  - tie-break = SeriesInstanceUID
+  로 런타임에서 `plane_rank` / `selection_order`를 재구성했다.
+
+Crop130 mounted root:
+`/kaggle/input/datasets/yhlucas/rsna-knee-r3d-crop130-search-cache-v3/crop130_d24_96`
+
+### 결과
+
+Frozen references:
+- Full-FOV Fold0: AUROC **0.617594** / AUPRC **0.540314**
+- Crop130 Fold0: AUROC **0.622257** / AUPRC **0.508100**
+
+Always Dual:
+- best epoch: **2**
+- AUROC **0.609809**
+- AUPRC **0.494292**
+- vs Full-FOV ΔAUROC **-0.007785**
+- vs Crop130 ΔAUROC **-0.012448**
+- runtime **28.22 min**
+- status PASS
+
+Mixed 3-Mode:
+- actual mode counts:
+  - FULL_ONLY 621
+  - CROP_ONLY 645
+  - DUAL 654
+- best epoch: **6** by Dual AUROC
+- Dual AUROC **0.610704**
+- Dual AUPRC **0.483695**
+- Full-only AUROC **0.612836**
+- Crop-only AUROC **0.604505**
+- Full/Crop probability average AUROC **0.607573**
+- vs Crop130 Dual ΔAUROC **-0.011553**
+- runtime **25.43 min**
+- status PASS
+
+### 최종 판정
+
+**Dual-FOV feature-token fusion은 Main R3D에 채택하지 않는다.**
+
+근거:
+- ALWAYS_DUAL과 MIXED_3MODE Dual 모두 Frozen Crop130보다 약 -0.012 AUROC.
+- Mixed3에서 가장 높은 inference mode도 Full-only 0.612836으로,
+  Frozen Full 0.617594 / Frozen Crop130 0.622257보다 낮았다.
+- Fold0 screen에서 baseline보다 명확히 낮아 Fold1/Fold2 confirmation 기대값이 낮다.
+
+해석 제한:
+- 이것은 "Full + Crop 정보를 함께 쓰는 아이디어 전체"의 영구 기각이 아니다.
+- 현재 검증한 구조는
+  **shared R34 → Full/Crop feature token → FOV embedding → shared Transformer**
+  방식이다.
+- 현재 구조에서는 additional view의 정보 이득보다 representation / optimization interference가 더 컸을 가능성이 있다.
+
+결론:
+- **Main R3D = Crop130 single-view 유지**
+- R3D-10AB Fold1/Fold2 confirmation은 진행하지 않음
+- Full+Crop feature-level fusion 탐색은 현재 종료
+- 다음: canonical R34 + Crop130 기준 Medial Meniscus Sag1-only specialist 재확인
