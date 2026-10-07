@@ -1,6 +1,6 @@
 # RSNA Knee — Experiment History
 
-최종 업데이트: **2026-10-06**
+최종 업데이트: **2026-10-07**
 
 이 문서는 **완료된 실험과 그 결과만 기록하는 기준 문서**다.
 진행 예정 작업과 현재 계획은 [3D_RESNET_EXPERIMENT_PLAN.md](3D_RESNET_EXPERIMENT_PLAN.md)를 따른다.
@@ -783,3 +783,81 @@ AUROC는 6 target 상승 / 6 target 하락, AUPRC는 5 상승 / 7 하락이었�
 - 다음은 **R3D-06D — Target-Aware Series + Depth Relevance Audit**.
 - P2 입력을 유지하되 12개 target query를 새로 학습하고, held-out Gold에서 Series/Depth occlusion으로 target별 유효 Series와 depth 구간을 분석한다.
 - Fold0/1을 병렬 실행하고, Fold2는 relevance가 반복될 때만 confirmation으로 사용한다.
+
+---
+
+## 16. R3D-06D — Target-Aware Series + Depth Relevance Audit
+
+### 목적
+
+기존 C3/P2 baseline을 다시 학습하지 않고, P2 input에 target query를 추가해
+target별 Series slot 및 D24 depth-bin relevance를 Fold0/1에서 탐색했다.
+
+Primary relevance는 held-out Gold leave-one-Series-out / depth-bin occlusion이며,
+attention은 secondary diagnostic으로만 사용했다.
+
+### Contract
+
+- baseline retrained: **False**
+- Fold0/1 leakage-safe Pseudo1000: PASS
+- R34 / all-series cache SHA contract: PASS
+- Fold0 complete: PASS
+- Fold1 complete: PASS
+- series relevance rows: 144
+- depth relevance rows: 864
+- overall: **PASS**
+- result ZIP SHA256: `c3b044295b143778417724262f6a7f3147fc5e9dfab794f75fb39e7c14af34bf`
+
+### Classifier 성능
+
+| Fold | Best epoch | Macro AUROC | Macro AUPRC |
+|---|---:|---:|---:|
+| Fold0 TargetQuery-P2 | 10 | 0.586461 | 0.510576 |
+| Fold1 TargetQuery-P2 | 1 | 0.527435 | 0.470353 |
+
+Fold0 Frozen P2 Shared-CLS reference:
+- AUROC 0.613282
+- AUPRC 0.534338
+
+따라서 TargetQuery-P2 Fold0는 frozen P2 대비:
+- AUROC **-0.026820**
+- AUPRC **-0.023763**
+
+TargetQuery architecture 자체를 최종 classifier 후보로 채택하지 않는다.
+
+### 2-Fold exploratory Series signals
+
+자동 summary는 두 Fold AUROC delta가 양수이고 평균 signed contribution이 양수이면 helpful로 분류했다.
+다만 원래 판정 원칙보다 느슨하므로 후속 해석에서는 두 Fold signed contribution까지 같은 방향인지 수동 재검증했다.
+
+더 엄격한 조건에서 남은 exploratory helpful signal:
+- ACL → Cor2
+- Baker's → Ax1
+- Contusion → Cor1
+- Lateral Meniscus → Sag1
+- Lateral OA → Sag1
+- Synovitis → Sag1
+
+단, TargetQuery target별 Full AUROC가 여러 target에서 0.5 미만이었다.
+따라서 위 신호를 hard routing에 직접 사용하지 않는다.
+
+특히 상대적으로 해석 신뢰도가 더 높은 target은 Fold0/1 Full AUROC가 모두 0.5 이상이었던
+Contusion / Synovitis 쪽이다.
+
+### Depth signals
+
+2-Fold에서 비교적 반복된 normalized D24 후보는:
+- Fracture Cor2 D2/D3 (33~67%)
+- Lateral OA Sag1 D2/D3 및 Ax1 D3
+
+하지만 해당 TargetQuery classifier의 fold별 target 성능이 불안정하므로 이 역시 exploratory evidence로만 보존한다.
+
+### 판정
+
+- **R3D-06D execution PASS**
+- **TargetQuery architecture는 성능상 미채택**
+- 06D relevance는 secondary evidence로만 보존
+- 같은 약한 TargetQuery를 Fold2에 그대로 반복하지 않는다.
+- 다음은 아직 실행하지 않은 P2 Shared-CLS Fold1/2를 새로 학습해,
+  실제 P2 classifier에서 직접 Series/Depth occlusion relevance를 측정한다.
+- 후속: **R3D-06E — P2 Shared-CLS Fold1/2 + Target-wise Occlusion**
