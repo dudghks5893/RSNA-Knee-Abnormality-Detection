@@ -36,6 +36,78 @@
 실험 기록 제목은 가능한 한 **누가 봐도 무엇을 바꿨는지 바로 이해할 수 있는 설명형 이름**을 사용한다.
 
 
+## 2026-10-07 — Series Search Closed / Geometry Phase
+
+### Series policy 최종
+
+기본 12-target R3D classifier:
+- **ALL usable Series**
+- 근거:
+  - P2 3-Fold mean AUROC: 0.573140
+  - P3 3-Fold mean AUROC: 0.589716
+  - ALL 3-Fold mean AUROC: **0.596226**
+  - ALL > P3 on Fold1/2, P3 > ALL only on Fold0
+- 추가 P4 / max10 / max11 cap search는 중단
+
+Target-specific specialist:
+- Medial Meniscus:
+  - P2 0.677083 / 0.591098
+  - Sag1-only **0.729167 / 0.756302**
+  - Sag1-only candidate 보존
+- Synovitis:
+  - P2 **0.680000 / 0.757973**
+  - Sag1-only 0.590000 / 0.583247
+  - Sag1-only hard routing 기각
+
+### 남은 시간의 연구 축
+
+Series / backbone / mask / TargetQuery search는 종료한다.
+
+GPU 우선순위는 두 개만 유지:
+1. **MRI를 어떻게 보여줄 것인가**
+   - physical FOV
+   - fixed-mm center crop
+   - in-plane resolution
+2. **작은 병변을 얼마나 보존할 것인가**
+   - D24 vs D32
+   - real-slice adjacency
+   - spacing-aware depth sampling
+
+Validation:
+- Gold58 3-Fold는 그대로 고정
+- 지금 새 validation 체계를 만드는 데 시간을 쓰지 않음
+- 큰 구조적 개선만 3-Fold / milestone submission으로 확인
+- Public LB는 방향 확인용으로 사용하고 split/weight를 LB에 맞춰 반복 조정하지 않음
+
+### 다음 A/B wave
+
+Account A:
+- **A_R3D-07A**
+- fixed physical FOV 140 mm center crop
+- D24×96×96
+- ALL Series
+- Fold0 screen
+- 목적: crop 효과만 분리
+
+Account B:
+- **B_R3D-07B**
+- full FOV
+- D24×128×128
+- ALL Series
+- Fold0 screen
+- 목적: in-plane resolution 효과만 분리
+
+두 실험 모두 frozen ALL Fold0:
+- AUROC 0.617594
+- AUPRC 0.540314
+
+와 비교한다.
+
+둘 중 하나라도 큰 개선이면 해당 방향을 즉시 확장하고,
+둘 다 개선이면 다음 wave에서 **140 mm crop + 128×128** 조합을 확인한다.
+
+---
+
 ## 2026-10-07 — R3D 현재 한눈에 보기
 
 현재 고정:
