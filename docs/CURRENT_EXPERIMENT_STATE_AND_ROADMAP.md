@@ -2249,3 +2249,38 @@ REAL24 3-Fold mean delta:
 2. Final Main R3D 3-Fold training
 3. Hidden-test inference / R3D standalone submission
 4. Exp57 + R3D (+ validated MedMen specialist) ensemble
+
+
+---
+
+## R3D-09AB 완료 — Main input freeze
+
+130 mm physical crop 3-Fold:
+- F0 ΔAUROC +0.004663 / ΔAUPRC -0.032215
+- F1 ΔAUROC -0.005823 / ΔAUPRC -0.005743
+- F2 ΔAUROC +0.033412 / ΔAUPRC +0.049124
+- mean ΔAUROC **+0.010751**
+- mean ΔAUPRC **+0.003722**
+
+결론:
+- **Crop130 채택**
+- 입력 탐색 종료
+- REAL24 / REAL32 / R128 / D32 / Crop150 중단
+
+현재 Main R3D 최종 입력/구조:
+- 130 mm physical center crop
+- interpolated D24 × 96 × 96
+- ALL Series
+- MedicalNet R34
+- GLOB
+- MASK_OFF
+- Transformer + shared CLS
+- 12 target heads
+- Full fine-tuning
+
+다음 단계:
+1. **Medial Meniscus Sag1-only specialist canonical R34 confirmation**
+2. specialist가 재현되면 target-specific blend 후보로 유지
+3. Final Main R3D 3-Fold training
+4. Hidden-test R3D standalone submission
+5. Exp57 + R3D (+ validated Medial Meniscus specialist) final ensemble
