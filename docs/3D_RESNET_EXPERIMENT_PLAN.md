@@ -2,7 +2,7 @@
 
 최종 업데이트: **2026-10-07**
 
-상태: **R3D-06C 완료 / R3D-06D Target-Aware Series+Depth Audit 다음**
+상태: **R3D-06D 완료 / R3D-06E P2 Shared-CLS Fold1/2 Occlusion 다음**
 
 이 문서는 신규 3D ResNet 계보의 **현재 결정 사항, 미결정 사항, 진행 순서, 현재 진척 상태**를 기록한다.
 
@@ -546,41 +546,72 @@ Target-level:
 
 ### R3D-06D — Target-Aware Series + Depth Relevance Audit
 
-상태: **READY TO RUN**
+상태: **COMPLETED — PASS / TARGETQUERY NOT SELECTED**
+
+결과:
+- baseline 재학습 없음
+- Fold0 TargetQuery-P2: AUROC 0.586461 / AUPRC 0.510576
+- Fold1 TargetQuery-P2: AUROC 0.527435 / AUPRC 0.470353
+- Frozen P2 Fold0 대비 TargetQuery Fold0:
+  - AUROC -0.026820
+  - AUPRC -0.023763
+
+판정:
+- TargetQuery architecture는 classifier 성능이 낮아 미채택
+- Series/Depth relevance는 secondary evidence로만 보존
+- 같은 TargetQuery Fold2 반복은 하지 않음
+
+Stricter exploratory Series signal:
+- ACL Cor2
+- Baker's Ax1
+- Contusion Cor1
+- Lateral Meniscus Sag1
+- Lateral OA Sag1
+- Synovitis Sag1
+
+주의:
+- 여러 target의 TargetQuery Full AUROC가 0.5 미만
+- hard routing 근거로 사용 금지
+
+### R3D-06E — P2 Shared-CLS Fold1/2 + Target-wise Occlusion
+
+상태: **NEXT**
 
 원칙:
-- 재현이 이미 확인된 C3/P2 shared-CLS baseline은 다시 학습하지 않는다.
-- baseline은 Frozen Reference로만 사용한다.
-- preprocessing / fold / pseudo / architecture contract 자체가 달라질 때만 baseline 재실행을 고려한다.
+- Fold0 P2 baseline 재학습 금지
+- Fold0 = Frozen Reference
+- 아직 실행하지 않은 Fold1/2만 새로 학습
 
-새 구조:
-- P2 input 유지
-- MedicalNet R34 series token
-- shared Series Transformer
-- 12 target queries
-- target별 attention pooling
-- 12 independent sigmoid heads
+병렬:
+- GPU0 → P2 Shared-CLS Fold1
+- GPU1 → P2 Shared-CLS Fold2
 
-병렬 실행:
-- GPU0 → Fold0
-- GPU1 → Fold1
+구조:
+- R3D-06C P2와 동일한 MedicalNet R34 + GLOB + MASK_OFF + Shared Transformer CLS
+- P2 max6
+- D24×96×96
+- pure FP32
+- backbone LR1e-5 / new LR5e-5 / WD1e-4
+- same augmentation recipe
 
 분석:
 - held-out Gold leave-one-Series-out occlusion
-- target별 Sag1/Sag2/Cor1/Cor2/Ax1/Ax2 relevance
-- attention weight는 secondary diagnostic
-- D24를 6개 depth bin으로 나눠 target×Series×depth occlusion
-- Fold0/1 sign consistency / signed-logit contribution / attention 일치 여부 기록
+- target × Sag1/Sag2/Cor1/Cor2/Ax1/Ax2
+- target × Series × D24 6-bin depth occlusion
+- TargetQuery attention은 사용하지 않음
 
-판정:
-- 반복되는 relevance가 충분함 → Fold2 confirmation + target-specific input policy
-- 불안정 → hard routing 보류
-- slice/depth가 안정적이면 raw DICOM slice/window index로 역매핑
+Strict helpful gate:
+1. Fold1/2 target Full AUROC 모두 >=0.50
+2. slot present 각 Fold >=10
+3. Full-Drop AUROC >+0.005 두 Fold
+4. Full-Drop AUPRC >0 두 Fold
+5. signed logit contribution >0 두 Fold
 
-Notebook:
-- `R3D-06D_TargetAware_Series_Depth_Relevance_Fold01_DualT4.ipynb`
-- T4 x2 / Internet Off / Save & Run All
-- 추천 Save Version: `R3D-06D Target Series Depth F01`
+06D와 동일 signal이면 secondary corroboration flag를 추가한다.
+
+다음:
+- stable signal 존재 → R3D-06F Target-Specific Input Policy Screen
+- stable signal 부족 → hard routing 중단, P2 + Resolution/Depth로 복귀
 
 
 ## R3D-07 — Resolution / Depth Screen
