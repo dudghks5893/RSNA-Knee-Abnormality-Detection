@@ -1282,3 +1282,24 @@ GPU Notebook은 raw competition DICOM을 읽어 cache를 생성하지 않는다.
 - 추가 130/140/150 FOV micro-search는 하지 않음
 - R3D-07B resolution/depth 결과를 먼저 확인
 - 다음 조합 실험은 07B winner가 결정된 뒤 선택
+
+
+### R3D-07B result — Resolution / Depth
+
+상태: **COMPLETED — PASS**
+
+- Frozen ALL Fold0 D24×96: 0.617594 / 0.540314
+- D24×128: **0.607901 / 0.504403**
+- D32×96: **0.604305 / 0.504119**
+
+판정:
+- simple 96→128 resolution increase: reject
+- simple D24→D32 uniform resample: reject
+- 추가 160/192/224 또는 D40/D48 숫자 확대는 현재 근거 없음
+
+다음:
+- real-slice adjacency / physical spacing-aware depth policy
+- CPU-only cache generation
+- GPU training-only comparison
+- 130 mm crop은 weak positive 후보로 유지하며,
+  real-slice geometry winner가 생긴 뒤 조합 여부를 판단
