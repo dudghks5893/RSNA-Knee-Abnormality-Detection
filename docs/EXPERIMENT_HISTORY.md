@@ -861,3 +861,129 @@ Contusion / Synovitis 쪽이다.
 - 다음은 아직 실행하지 않은 P2 Shared-CLS Fold1/2를 새로 학습해,
   실제 P2 classifier에서 직접 Series/Depth occlusion relevance를 측정한다.
 - 후속: **R3D-06E — P2 Shared-CLS Fold1/2 + Target-wise Occlusion**
+
+---
+
+## 17. R3D-06E — P2 Shared-CLS Fold1/2 + Target-wise Occlusion
+
+### 목적
+
+Fold0 P2를 다시 학습하지 않고, 아직 실행하지 않았던 P2 Shared-CLS Fold1/2를 새로 학습한 뒤
+실제 P2 classifier에서 target별 Series / D24 depth-bin occlusion relevance를 측정했다.
+
+### 실행 / 복구
+
+- GPU0: P2 Shared-CLS Fold1
+- GPU1: P2 Shared-CLS Fold2
+- Fold1/2 worker returncode: 0 / 0
+- training + occlusion 완료
+- 최초 Notebook은 aggregation cell에서 sklearn metric top-level import 누락으로 NameError 발생
+- GPU artifact는 이미 완성되어 있었으므로 **재학습하지 않고 저장된 output으로 aggregation을 복구**
+- recovered result ZIP SHA256: `9c43a7b998f4100725c8cec2d5783a4d2fb41407d800ac44543a0366a29ed230`
+
+### 성능
+
+| Fold | Best epoch | Macro AUROC | Macro AUPRC |
+|---|---:|---:|---:|
+| Fold1 P2 | 3 | 0.517551 | 0.479572 |
+| Fold2 P2 | 6 | 0.588586 | 0.528448 |
+
+Fold1+2 38-study pooled diagnostic:
+- Macro AUROC **0.548300**
+- Macro AUPRC **0.450897**
+
+주의: 위 pooled 값은 Fold0를 포함하지 않은 Fold1+2 diagnostic이다.
+
+### Strict Series relevance
+
+Fold1/2 모두에서:
+- target Full AUROC >= 0.50
+- slot present >= 10
+- Full-Drop AUROC > +0.005
+- Full-Drop AUPRC > 0
+- signed logit contribution > 0
+
+를 만족한 Series는 2개였다.
+
+| Target | Series | Mean ΔAUROC | Mean ΔAUPRC | 06D corroboration |
+|---|---|---:|---:|---|
+| Medial Meniscus | Sag1 | +0.056439 | +0.061633 | No |
+| Synovitis | Sag1 | +0.044949 | +0.056513 | Yes |
+
+### Strict Depth relevance
+
+10개 target×series×depth 후보가 strict gate를 통과했다.
+
+대표:
+- Medial Meniscus Sag1 D2 [8:12] — mean ΔAUROC +0.056187
+- Medial OA Cor1 D2 [8:12] — +0.050000
+- Synovitis Cor1 D4 [16:20] — +0.033586
+- PF OA Cor1 D4 [16:20] — +0.023810
+
+단 PF OA Fold1 Full AUROC는 0.500이므로 약한 후보로 본다.
+
+### 판정
+
+- target-specific Series relevance는 **Medial Meniscus→Sag1, Synovitis→Sag1** 두 후보만 유지한다.
+- occlusion에서 Sag1이 필요하다는 것과 Sag1-only가 최적인 것은 다르므로 별도 paired confirmation이 필요하다.
+- baseline 재학습 없이 후속 target-specific input confirmation을 설계한다.
+
+---
+
+## 18. R3D-06F — ALL-Series Saturation Fold0/1
+
+### 목적
+
+P2가 전체 Series의 89.8%를 사용하는 상태에서 남은 Series까지 모두 넣었을 때
+classification primary AUROC가 추가 개선되는지 확인했다.
+
+### Contract
+
+- P2 baseline 재학습: **False**
+- ALL Fold0 / Fold1만 새로 학습
+- initial model SHA = R3D-06C exact
+- Fold0 sample UID trace = R3D-06C exact
+- Gold / pseudo / R34 / all-series cache contract PASS
+- overall: **PASS**
+- result ZIP SHA256: `42f6994555a914e9b1389c08b86ab0e9638db2763bca6057291b4a3521b7b6d5`
+
+### 결과
+
+| Fold | Policy | Best epoch | Macro AUROC | Macro AUPRC |
+|---|---|---:|---:|---:|
+| Fold0 | P2 Frozen | 1 | 0.613282 | 0.534338 |
+| Fold0 | **ALL** | **2** | **0.617594** | **0.540314** |
+| Fold1 | P2 | 3 | 0.517551 | **0.479572** |
+| Fold1 | **ALL** | **1** | **0.548407** | 0.453375 |
+
+Delta:
+- Fold0 ALL-P2 AUROC **+0.004312**, AUPRC **+0.005976**
+- Fold1 ALL-P2 AUROC **+0.030856**, AUPRC **-0.026197**
+
+Primary Macro AUROC는 Fold0/1 모두 ALL이 높았다.
+AUPRC는 Fold1에서 P2가 높아 metric trade-off가 존재한다.
+
+### Target-level Fold1 ALL-P2 AUROC
+
+ALL 개선:
+- MCL +0.0625
+- Lateral Meniscus +0.1818
+- Medial OA +0.0429
+- Lateral OA +0.1000
+- Effusion +0.0476
+- Baker's +0.1000
+- Fracture +0.1795
+
+P2 개선:
+- ACL +0.0341
+- Medial Meniscus +0.0444
+- PF OA +0.0119
+- Synovitis +0.1250
+- Contusion +0.1286
+
+### 판정
+
+- primary AUROC 기준 ALL이 Fold0/1에서 같은 방향으로 우세하다.
+- ALL Fold2를 추가해 3-Fold 방향 일치 여부를 확인한다.
+- 동시에 P2/ALL 사이의 cap 후보 P3(top3/plane, max9)를 Fold0에서만 먼저 screen한다.
+- target-specific Sag1-only는 Medial Meniscus / Synovitis에 대해 별도 fair specialist pair로 확인한다.
