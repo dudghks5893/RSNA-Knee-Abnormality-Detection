@@ -1298,3 +1298,80 @@ target-specific 예외 후보:
 2. 작은 병변 보존 — depth / real-slice geometry / adjacency
 
 두 축에 집중한다.
+
+
+---
+
+## 23. R3D-07A — Physical FOV Crop 130mm vs 150mm
+
+### 목적
+
+Series policy를 ALL로 고정한 뒤,
+원본 MRI에서 고정 physical FOV를 먼저 crop하여 D24×96×96으로 만드는 방식이
+기존 full-FOV D24×96×96보다 유리한지 Fold0에서 확인했다.
+
+실행:
+- Account A
+- GPU0: 130 mm center crop
+- GPU1: 150 mm center crop
+- baseline ALL Fold0는 재학습하지 않고 Frozen Reference 사용
+- initial model SHA exact
+- sample UID trace exact
+- GPU notebook 내부 cache 생성 없음
+- overall contract: **PASS**
+- result ZIP SHA256:
+  `0e9b83fbdcc71d570b9b9478ea63d99b80eae07e38149f2422221f52f05cd757`
+
+### 결과
+
+Frozen ALL Fold0:
+- AUROC **0.617594**
+- AUPRC **0.540314**
+
+130 mm:
+- best epoch 10
+- AUROC **0.622257**
+- AUPRC **0.508100**
+- vs Full FOV:
+  - AUROC **+0.004663**
+  - AUPRC **-0.032215**
+
+150 mm:
+- best epoch 2
+- AUROC **0.618253**
+- AUPRC **0.521752**
+- vs Full FOV:
+  - AUROC **+0.000659**
+  - AUPRC **-0.018563**
+
+130 mm vs 150 mm:
+- AUROC **+0.004004** in favor of 130 mm
+- AUPRC **-0.013652** in favor of 150 mm
+
+### Target-level 130 mm vs 150 mm
+
+130 mm AUROC 우세:
+- ACL +0.1667
+- Medial Meniscus +0.0521
+- Lateral Meniscus +0.2396
+- Medial OA +0.0133
+- Effusion +0.1000
+- Baker's +0.1094
+
+150 mm AUROC 우세:
+- MCL +0.2549
+- Lateral OA +0.1406
+- PF OA +0.0440
+- Synovitis +0.0700
+- Contusion +0.0521
+- Fracture +0.0714
+
+### 판정
+
+- primary Macro AUROC 기준 130 mm가 세 후보 중 최고.
+- 그러나 Frozen Full FOV 대비 gain은 **+0.004663**으로 작고,
+  AUPRC는 **-0.032215** 하락했다.
+- 따라서 **physical crop을 최종 채택할 만큼 강한 증거는 아직 아니다.**
+- 130/140/150 mm micro-search는 추가하지 않는다.
+- R3D-07B의 resolution/depth 결과를 먼저 확인한다.
+- 07B에서 큰 개선이 나오면 그 winner와 130 mm를 조합하는 실험의 우선순위를 판단한다.
