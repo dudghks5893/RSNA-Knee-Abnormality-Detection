@@ -129,21 +129,22 @@ ALL Series
 
 ## 바로 다음 작업
 
-1. **Competition-aligned report label policy v2 freeze 완료**. 기준 문서: [LABEL_RECONSTRUCTION_POLICY_V2.md](LABEL_RECONSTRUCTION_POLICY_V2.md).
-2. 별도 Pilot 실행은 취소했다. Pilot 검증은 Full notebook 내부 gate로 통합했다. 실행 상세: [LABEL_V6_FULL4349_EXECUTION.md](LABEL_V6_FULL4349_EXECUTION.md).
-3. 현재 실행 대상:
-   - Account A: `A_LABEL-V6A_Qwen3_8B_Full4349.ipynb` / `LABEL-V6A-FULL4349`
-   - Account B: `B_LABEL-V6B_MistralNemo12B_Full4349.ipynb` / `LABEL-V6B-FULL4349`
-   - 둘 다 T4×2 / Internet ON / fresh Save & Run All.
-4. 각 Full notebook은 synthetic policy unit test → blind Pilot28 machine/evidence preflight → **report-only 4,349 전체**를 같은 실행에서 처리한다. Gold/V4/pilot reference decisions는 reader에 노출하지 않는다.
-5. 각 reader는 exact quote/Unicode offset/report SHA, 5-state, inference flag와 audit metadata를 저장한다. 마지막 CPU audit은 정확히 **4,349 unique studies / 52,188 decisions**를 강제하고 evidence offset을 원본 report에 다시 대조한다.
-6. 두 Full result ZIP 확보 후 A/B agreement candidates와 adjudication queue를 분리하고 target별 5-state 분포 / supervision coverage / positive prevalence / agreement/adjudication / script subgroup / exact-duplicate consistency를 감사한다.
-7. 기존 V4 Broad/Strict 및 Gold58 prevalence는 descriptive reference만 사용하며 policy/reader routing을 Gold 성능에 맞춰 반복 튜닝하지 않는다.
-8. canonical release 뒤 target별 N_pos/N_neg/mask coverage에서 class weight와 **masked per-target BCE → 12-target macro average** loss를 확정한다. 이전 normalized-weight cancellation은 반복하지 않는다.
-9. canonical label release → 단일 Main full-data R3D → standalone Public LB → 필요 시 Exp57 complementary blend. 같은 canonical manifest를 Exp57 old-vs-new label 재학습 비교에도 사용할 수 있게 유지한다.
+1. **Competition-aligned report label policy v2 freeze 완료**: [LABEL_RECONSTRUCTION_POLICY_V2.md](LABEL_RECONSTRUCTION_POLICY_V2.md).
+2. Qwen3-8B / Mistral-Nemo-12B Kaggle GPU reader plan은 **폐기/미실행**. 현재 실행 계약: [LABEL_V6_SOL_CHUNKED_EXECUTION.md](LABEL_V6_SOL_CHUNKED_EXECUTION.md).
+3. report-only 4,349 studies를 원본 `train.csv` 행 순서 그대로 **87 chunks**로 고정:
+   - Chunk 001–086 = 50 studies / 600 decisions
+   - Chunk 087 = 49 studies / 588 decisions
+   - 총 52,188 decisions
+   - report-only UID manifest SHA256 = `e675c1cfb8e88b3ec00af4fcba77bfb010e324e3a3473b04089da651af630a94`
+   - chunk manifest SHA256 = `66179ef419094e6204ea3c39c4696d1da68463320bc9c58168e96d993e5a0cd5`
+4. primary reader는 **GPT-5.6 Sol**. 기본 최대 5 chunks/chat으로 18개 chat에 배치하되, context 품질이 우려되면 더 일찍 끊고 최신 cumulative Master/Handoff로 새 chat에서 계속한다.
+5. 각 chunk는 모든 study의 12 targets를 직접 판정하고 exact report evidence + Unicode offset + report SHA를 보존한다. 이전 completed chunk는 integrity defect가 없으면 재판정하지 않는다.
+6. 4,349 완료 후 4,349 studies / 52,188 decisions 전체 contract, target별 5-state distribution / supervised coverage / positive prevalence / language·script / duplicate consistency를 감사한다.
+7. HIGH-review / inference-used / contradiction / ambiguity / distribution anomaly를 **GPT-6 Astra가 원본 report + frozen policy로 독립 재판정**하고 최종 adjudication 후 canonical LABEL-V6를 freeze한다.
+8. canonical release 후에만 target별 N_pos/N_neg/mask coverage로 class weight와 **masked per-target BCE → 12-target macro average** loss를 확정한다.
+9. canonical label release → R3D-13 single Main full-data → standalone Public LB → 필요 시 Exp57 complementary blend. 동일 canonical manifest를 Exp57 old-vs-new label 비교에도 사용한다.
 
-중요: 공식 Gold는 report-derived가 아니라 image-derived consensus label이며 report와 불일치할 수 있다. 새 라벨은 공식 영상 판정 기준을 최대한 모사하는 report-derived supervision이지 새로운 ground truth가 아니다.
-
+중요: 공식 Gold는 MRI image-derived consensus label이다. 새 라벨은 공식 영상 판정 기준을 최대한 모사하는 report-derived supervision이며 새로운 ground truth가 아니다.
 
 ---
 
