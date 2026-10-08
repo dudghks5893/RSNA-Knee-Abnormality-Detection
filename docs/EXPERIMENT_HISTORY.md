@@ -1900,3 +1900,47 @@ competition host의 image-label definition을 최대한 모사하는 report-deri
 - agreement candidates / adjudication queue 분리.
 - release 전 target별 state distribution, mask coverage, positive prevalence, A/B agreement/adjudication, language/script, duplicate consistency audit.
 - final class weights는 released report-only labels의 N_pos/N_neg에서만 계산한다.
+
+
+---
+
+## LABEL-V6-SOL-CHUNK — GPT-5.6 Sol chunked reconstruction plan freeze (2026-10-08)
+
+### Decision
+
+The prepared Qwen3-8B / Mistral-Nemo-12B Kaggle GPU Full4349 reader notebooks were **not executed** and are superseded.
+Primary report labeling is moved to GPT-5.6 Sol because label quality is more important than saving inference cost/GPU time with weaker local readers.
+
+### Frozen workbench scope
+
+- source train.csv SHA256: `8ca2203c0e9d61c080c7a314c7cdb51c1b03a1d9eb4770819f7f34af53ef4e33`
+- total studies 4,407
+- Gold58 excluded
+- report-only 4,349
+- partial-label rows 0
+- empty reports 0
+- 12 targets / 52,188 decisions
+- source row order preserved
+- Chunks 001–086: 50 studies / 600 decisions
+- Chunk 087: 49 studies / 588 decisions
+- total 87 chunks
+- default max 5 chunks/chat -> 18 planned chats
+- report-only UID manifest SHA256: `e675c1cfb8e88b3ec00af4fcba77bfb010e324e3a3473b04089da651af630a94`
+- chunk manifest SHA256: `66179ef419094e6204ea3c39c4696d1da68463320bc9c58168e96d993e5a0cd5`
+
+### Execution contract
+
+Each GPT-5.6 Sol chat receives only its assigned raw report chunks plus frozen policy/schema. Gold/V4/pseudo labels are excluded from reader context.
+After every chunk the reader creates a chunk artifact, audit, cumulative Master and Handoff. Evidence spans are exact report substrings with zero-based Python Unicode offsets and report SHA checks.
+
+### Final review
+
+After all 4,349:
+- programmatic 4,349 / 52,188 contract audit
+- target-wise state / coverage / prevalence / language-script / duplicate audit
+- HIGH-review, inference-used, contradiction/ambiguity and anomaly cases extracted
+- GPT-6 Astra independently rereads those cases
+- final adjudication -> canonical LABEL-V6 SHA
+- class weights/loss finalized only from canonical report-only N_pos/N_neg
+
+Current execution details: `docs/LABEL_V6_SOL_CHUNKED_EXECUTION.md`.
