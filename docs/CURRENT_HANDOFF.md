@@ -79,13 +79,24 @@ Competition:
 
 ## 바로 다음 작업
 
-1. 원본 report 기반 라벨 감사/재구축: 공식 target 정의 확인 → 근거 문장과 상태를 보존하는 소규모 pilot → 애매한 사례 사용자 리뷰.
-2. `positive / negative / uncertain / not-mentioned / insufficient`를 구분. 언급 없음·불완전 report를 자동 음성으로 만들지 않는다. LLM 자기 확신을 calibrated probability로 취급하지 않는다.
-3. 기존 V4 full-data routing은 CommonGold57을 이용해 reader/target 정책을 골랐다. 이를 그대로 학습하고 Gold58을 독립 검증이라 부르지 않는다. 새 라벨 정책은 Gold 결과에 맞춰 조정하지 않는다.
-4. 병행한 R3D-12CACHE 완료 audit 확인 후 새 라벨 manifest, supervision coverage와 최종 loss/budget 확정.
-5. 단일 Main full-data 학습 → standalone 제출 → 필요 시 Exp57 blend 평가.
-
-라벨 재생성 자체는 아직 시작하지 않았다. 현재 원본 report/V4 master/method/old audit 자료는 확보했으며 원래 추출 prompt·근거 문장은 제공 자료에 없다.
+1. **Competition-aligned report label policy v2 freeze 완료**: [LABEL_RECONSTRUCTION_POLICY_V2.md](LABEL_RECONSTRUCTION_POLICY_V2.md).
+2. 공식 Gold는 report extraction이 아니라 MRI image-derived consensus label이다. 보고서와 Gold 불일치는 예상 가능하므로 새 라벨은 ground truth가 아니라 공식 영상 기준을 최대한 모사하는 report-derived supervision으로 취급한다.
+3. 5-state:
+   - positive / negative = supervised
+   - insufficient / not_mentioned / uncertain = masked
+   - borderline/on-the-fence는 host 원칙상 negative. 단 threshold 판정에 필요한 severity/extent 자체가 report에 없으면 insufficient.
+4. 28-study / 336-target pilot policy-v2 재감사 완료(정책 시험용, final release 아님):
+   - positive 35
+   - negative 189
+   - insufficient 46
+   - not_mentioned 66
+   - uncertain 0
+   - supervised 224 / masked 112
+5. 다음 실행은 **report-only 4,349 전체 A/B blind multilingual independent reading**. Gold/V4/pilot 답을 reader에게 노출하지 않고 exact report quote/Unicode offset/report SHA를 보존한다.
+6. A/B 검증 → agreement candidates / adjudication queue 분리 → target별 5-state 분포, supervision coverage, positive prevalence, reader agreement/adjudication, 언어·script subgroup, duplicate consistency 감사.
+7. V4/Gold 분포는 descriptive reference만 사용. policy/reader/threshold를 Gold 점수에 맞춰 반복 튜닝하지 않는다.
+8. final release 뒤 report-only 4,349의 N_pos/N_neg로 class weight를 계산하고 masked per-target BCE를 각 target별 정규화한 뒤 12-target macro 평균한다. weight 합으로 나누어 scalar weight가 상쇄되는 과거 오류를 반복하지 않는다.
+9. canonical release → single Main R3D full-data → standalone LB → 필요 시 Exp57 complementary blend. 같은 manifest로 Exp57 old-vs-new label retrain 비교 가능하게 유지한다.
 
 
 ---
@@ -394,14 +405,20 @@ Study group cumcount
 - Index SHA256: `114bc191102849cc5df8b3f45c3a2b6361446d3e190f5315e13cdf6d002d1ef4`.
 - Gold58와 3fold pseudo scope coverage PASS. 최종 4,407명 전체 cache는 아니다.
 
-**R3D-12CACHE Full4407 CPU 노트북 전달 완료, 성공 결과는 아직 미확인**.
+**R3D-12CACHE Full4407 완료/PASS — 2026-10-08**.
 
-- 기존 8,027 series 재사용 + 누락 16,344 series 생성, 목표 4,407 studies / 24,371 series.
-- raw root: `/kaggle/input/competitions/rsna-knee-abnormality-detection/train_series`.
-- 목표 단일 독립 폴더: `/kaggle/working/r3d12cache_full/`, 약 10.04 GiB float16 shards. 대용량 이미지별 파일/전체 cache ZIP 중복 생성 없음.
-- CPU-only; exact candidate paths; 전체 input 재귀 탐색 금지. 학습과 별도 실행 가능.
-- 초기 metadata root 누락 오류는 preflight에서 발생. PathFix 노트북은 원본 `train_series.csv` fallback을 사용하며 full scope/기존 cache metadata parity를 검증한다.
-- 현재 cache 성공으로 오인하거나 full-data 학습을 먼저 시작하지 않는다.
+- 4,407 studies / 24,371 unique series.
+- reused 8,027 + new 16,344 series.
+- ALL + Crop130 + interpolated D24×96×96 + float16.
+- 160 shards / 10,780,971,008 bytes (~10.04 GiB).
+- decode failures 0; full metadata parity / reused shard SHA / new shard readback / 12-series Crop130 exact parity 모두 PASS.
+- runtime 479.195 min (~7h59m).
+- series index SHA256: `e72c9238c97e0957bb7fccee91489d23847519dd1aaf01e40620411875abe217`.
+- shard manifest SHA256: `bf4a008de5fbf9a239066524b38d0b0632891b83ff2781bde07538ff75bd44a0`.
+- audit ZIP SHA256: `73d6b93d678f6922cc72b8103961fc6a7baa67cd8fe41f740709ebbf8c69e39c`.
+- study roles: report-only 4,349 / Gold validation 58.
+- 학습 입력은 audit ZIP이 아니라 전체 `r3d12cache_full/` Dataset.
+- **캐시 생성 단계 종료. 재실행하지 않는다.**
 
 
 ---
