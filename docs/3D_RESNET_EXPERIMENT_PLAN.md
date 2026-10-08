@@ -226,14 +226,13 @@ R3D-10AB Fold0:
 ## 바로 다음 작업
 
 1. Competition-aligned label policy v2 freeze 완료: [LABEL_RECONSTRUCTION_POLICY_V2.md](LABEL_RECONSTRUCTION_POLICY_V2.md).
-2. 28-study / 336-target policy pilot 재감사 완료. 이것은 final release가 아니다.
-3. report-only 4,349 전체에 대해 A/B blind multilingual independent read를 실행하고 exact evidence quote/offset/report SHA를 보존한다.
-4. agreement candidates와 adjudication queue를 분리한 뒤 target별 5-state distribution, supervised coverage, prevalence, reader agreement, language/script subgroup, duplicate consistency를 감사한다.
-5. final release 뒤 report-only 4,349의 N_pos/N_neg에서 class weight를 계산한다. masked per-target BCE를 target별 supervised count로 정규화한 뒤 12-target macro mean을 사용해 macro-AUC 평가 구조와 맞춘다.
+2. 별도 Pilot user-run은 폐기하고 Full4349 notebook 내부 자동 gate로 통합: [LABEL_V6_FULL4349_EXECUTION.md](LABEL_V6_FULL4349_EXECUTION.md).
+3. Account A Qwen3-8B / Account B Mistral-Nemo 12B가 report-only 4,349 전체를 blind independent read한다. 각 notebook은 T4×2에서 두 disjoint lane을 사용하고 exact evidence quote/offset/report SHA를 보존한다.
+4. Full reader가 완료되면 agreement candidates와 adjudication queue를 분리하고 target별 5-state distribution, supervised coverage, positive prevalence, reader agreement, script subgroup, exact duplicate consistency를 감사한다.
+5. canonical release 뒤 report-only 4,349의 N_pos/N_neg에서 class weight를 계산한다. masked per-target BCE를 target별 supervised count로 정규화한 뒤 12-target macro mean을 사용해 macro-AUC 평가 구조와 맞춘다.
 6. canonical release → R3D-13 single Main full-data training → R3D-14 standalone LB → R3D-15 Exp57 complementary ensemble.
 
 Gold58/V4는 descriptive reference다. 새 label policy나 reader routing을 Gold 성능에 맞춰 반복 조정하지 않는다.
-
 
 # 7. R3D-13 — Final Main Single Model
 
