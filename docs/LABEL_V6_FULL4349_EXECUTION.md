@@ -1,3 +1,9 @@
+# SUPERSEDED — DO NOT EXECUTE
+
+This Qwen3-8B / Mistral-Nemo-12B Kaggle GPU reader plan was superseded on 2026-10-08 before execution. Current plan: [LABEL_V6_SOL_CHUNKED_EXECUTION.md](LABEL_V6_SOL_CHUNKED_EXECUTION.md).
+
+---
+
 # LABEL-V6 Full4349 A/B Execution Plan
 
 Date: 2026-10-08
