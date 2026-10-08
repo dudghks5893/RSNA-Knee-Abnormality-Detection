@@ -8,7 +8,7 @@
 - Gold58 rows are excluded; exactly 4,349 report-only studies are read.
 - Original CSV row order / report bytes / chunk sources are unchanged.
 - 87 chunks: 001–086 have 50 studies, 087 has 49. Total 52,188 target decisions.
-- Report-only UID index SHA256 `e675c1cfb8e88b3ec00af4fcba77bfb010e324e3a3473b04089da651af630a94`.
+- Original report-only UID-list manifest SHA256 `e675c1cfb8e88b3ec00af4fcba77bfb010e324e3a3473b04089da651af630a94`; new `SOURCE_UID_INDEX.csv` (with row and report SHA metadata) SHA256 `45598d6adf24704f2509969c776f924588455c83dc2b32b875a37de3f287d9c9`.
 - Chunk manifest SHA256 `66179ef419094e6204ea3c39c4696d1da68463320bc9c58168e96d993e5a0cd5`.
 - Frozen competition policy: [LABEL_RECONSTRUCTION_POLICY_V2.md](LABEL_RECONSTRUCTION_POLICY_V2.md). **No Gold/V4/predictions available to reader.**
 - Primary reader = **user-selected GPT-6 in ChatGPT**, preferably higher reasoning effort when available. Do not assume a specific internal model/backend revision. The reader is a candidate labeler, not clinical ground truth.
