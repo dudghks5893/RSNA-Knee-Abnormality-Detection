@@ -80,24 +80,18 @@ Competition:
 ## 바로 다음 작업
 
 1. **Competition-aligned report label policy v2 freeze 완료**: [LABEL_RECONSTRUCTION_POLICY_V2.md](LABEL_RECONSTRUCTION_POLICY_V2.md).
-2. 공식 Gold는 report extraction이 아니라 MRI image-derived consensus label이다. 보고서와 Gold 불일치는 예상 가능하므로 새 라벨은 ground truth가 아니라 공식 영상 기준을 최대한 모사하는 report-derived supervision으로 취급한다.
-3. 5-state:
-   - positive / negative = supervised
-   - insufficient / not_mentioned / uncertain = masked
-   - borderline/on-the-fence는 host 원칙상 negative. 단 threshold 판정에 필요한 severity/extent 자체가 report에 없으면 insufficient.
-4. 28-study / 336-target pilot policy-v2 재감사 완료(정책 시험용, final release 아님):
-   - positive 35
-   - negative 189
-   - insufficient 46
-   - not_mentioned 66
-   - uncertain 0
-   - supervised 224 / masked 112
-5. 다음 실행은 **report-only 4,349 전체 A/B blind multilingual independent reading**. Gold/V4/pilot 답을 reader에게 노출하지 않고 exact report quote/Unicode offset/report SHA를 보존한다.
-6. A/B 검증 → agreement candidates / adjudication queue 분리 → target별 5-state 분포, supervision coverage, positive prevalence, reader agreement/adjudication, 언어·script subgroup, duplicate consistency 감사.
-7. V4/Gold 분포는 descriptive reference만 사용. policy/reader/threshold를 Gold 점수에 맞춰 반복 튜닝하지 않는다.
-8. final release 뒤 report-only 4,349의 N_pos/N_neg로 class weight를 계산하고 masked per-target BCE를 각 target별 정규화한 뒤 12-target macro 평균한다. weight 합으로 나누어 scalar weight가 상쇄되는 과거 오류를 반복하지 않는다.
-9. canonical release → single Main R3D full-data → standalone LB → 필요 시 Exp57 complementary blend. 같은 manifest로 Exp57 old-vs-new label retrain 비교 가능하게 유지한다.
+2. 별도 Pilot notebook 실행은 하지 않는다. Pilot 검증은 Full4349 notebook 내부 gate로 통합했다. 실행 계약: [LABEL_V6_FULL4349_EXECUTION.md](LABEL_V6_FULL4349_EXECUTION.md).
+3. 현재 실행 파일:
+   - Account A — `A_LABEL-V6A_Qwen3_8B_Full4349.ipynb`, `LABEL-V6A-FULL4349`
+   - Account B — `B_LABEL-V6B_MistralNemo12B_Full4349.ipynb`, `LABEL-V6B-FULL4349`
+   - 각자 T4×2 / Internet ON / fresh Save & Run All.
+4. 각 notebook은 synthetic policy unit test → blind Pilot28 parser/evidence preflight → report-only **4,349 studies 전체**를 자동 진행한다. Gold58/V4/pilot reference decisions는 reader에 노출하지 않는다.
+5. 각 reader output은 canonical label이 아니다. 두 result ZIP을 받은 뒤 UID+target+report SHA 기준으로 교차검증하고 agreement candidate / disagreement / inference-used / flags / invalid / duplicate-inconsistent item을 분리해 adjudication한다.
+6. canonical release 전 target별 5-state distribution, supervised coverage, positive prevalence, A/B agreement/adjudication rate, script subgroup, exact duplicate consistency를 감사한다.
+7. canonical release 후에만 report-only 4,349의 N_pos/N_neg/mask coverage로 class weight와 masked per-target BCE의 정규화를 확정한다. 이전 normalized-weight cancellation을 반복하지 않는다.
+8. canonical label release → R3D-13 single Main full-data → standalone Public LB → 필요 시 Exp57 complementary blend. 같은 manifest를 Exp57 old-vs-new label 재학습에도 사용할 수 있게 유지한다.
 
+중요: 공식 Gold는 MRI image-derived consensus label이다. 새 라벨은 공식 영상 판정 기준을 최대한 모사하는 report-derived supervision이며 새로운 ground truth가 아니다.
 
 ---
 
