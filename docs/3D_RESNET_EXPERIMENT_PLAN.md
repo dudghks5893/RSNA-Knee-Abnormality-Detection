@@ -153,14 +153,20 @@ R3D-10AB Fold0:
 - Index SHA256: `114bc191102849cc5df8b3f45c3a2b6361446d3e190f5315e13cdf6d002d1ef4`.
 - Gold58와 3fold pseudo scope coverage PASS. 최종 4,407명 전체 cache는 아니다.
 
-**R3D-12CACHE Full4407 CPU 노트북 전달 완료, 성공 결과는 아직 미확인**.
+**R3D-12CACHE Full4407 완료/PASS — 2026-10-08**.
 
-- 기존 8,027 series 재사용 + 누락 16,344 series 생성, 목표 4,407 studies / 24,371 series.
-- raw root: `/kaggle/input/competitions/rsna-knee-abnormality-detection/train_series`.
-- 목표 단일 독립 폴더: `/kaggle/working/r3d12cache_full/`, 약 10.04 GiB float16 shards. 대용량 이미지별 파일/전체 cache ZIP 중복 생성 없음.
-- CPU-only; exact candidate paths; 전체 input 재귀 탐색 금지. 학습과 별도 실행 가능.
-- 초기 metadata root 누락 오류는 preflight에서 발생. PathFix 노트북은 원본 `train_series.csv` fallback을 사용하며 full scope/기존 cache metadata parity를 검증한다.
-- 현재 cache 성공으로 오인하거나 full-data 학습을 먼저 시작하지 않는다.
+- 4,407 studies / 24,371 unique series.
+- reused 8,027 + new 16,344.
+- ALL + Crop130 + interpolated D24×96×96 + float16.
+- 160 shards / 10,780,971,008 bytes (~10.04 GiB).
+- decode failure 0.
+- metadata parity / reused shard SHA / new shard readback / 12-series Crop130 exact parity 모두 PASS.
+- runtime 479.195 min.
+- series index SHA256 `e72c9238c97e0957bb7fccee91489d23847519dd1aaf01e40620411875abe217`.
+- shard manifest SHA256 `bf4a008de5fbf9a239066524b38d0b0632891b83ff2781bde07538ff75bd44a0`.
+- audit ZIP SHA256 `73d6b93d678f6922cc72b8103961fc6a7baa67cd8fe41f740709ebbf8c69e39c`.
+- report-only 4,349 / Gold58 role split exact.
+- **cache generation closed; do not rerun.**
 
 
 ---
@@ -219,13 +225,14 @@ R3D-10AB Fold0:
 
 ## 바로 다음 작업
 
-1. 원본 report 기반 라벨 감사/재구축: 공식 target 정의 확인 → 근거 문장과 상태를 보존하는 소규모 pilot → 애매한 사례 사용자 리뷰.
-2. `positive / negative / uncertain / not-mentioned / insufficient`를 구분. 언급 없음·불완전 report를 자동 음성으로 만들지 않는다. LLM 자기 확신을 calibrated probability로 취급하지 않는다.
-3. 기존 V4 full-data routing은 CommonGold57을 이용해 reader/target 정책을 골랐다. 이를 그대로 학습하고 Gold58을 독립 검증이라 부르지 않는다. 새 라벨 정책은 Gold 결과에 맞춰 조정하지 않는다.
-4. 병행한 R3D-12CACHE 완료 audit 확인 후 새 라벨 manifest, supervision coverage와 최종 loss/budget 확정.
-5. 단일 Main full-data 학습 → standalone 제출 → 필요 시 Exp57 blend 평가.
+1. Competition-aligned label policy v2 freeze 완료: [LABEL_RECONSTRUCTION_POLICY_V2.md](LABEL_RECONSTRUCTION_POLICY_V2.md).
+2. 28-study / 336-target policy pilot 재감사 완료. 이것은 final release가 아니다.
+3. report-only 4,349 전체에 대해 A/B blind multilingual independent read를 실행하고 exact evidence quote/offset/report SHA를 보존한다.
+4. agreement candidates와 adjudication queue를 분리한 뒤 target별 5-state distribution, supervised coverage, prevalence, reader agreement, language/script subgroup, duplicate consistency를 감사한다.
+5. final release 뒤 report-only 4,349의 N_pos/N_neg에서 class weight를 계산한다. masked per-target BCE를 target별 supervised count로 정규화한 뒤 12-target macro mean을 사용해 macro-AUC 평가 구조와 맞춘다.
+6. canonical release → R3D-13 single Main full-data training → R3D-14 standalone LB → R3D-15 Exp57 complementary ensemble.
 
-라벨 재생성 자체는 아직 시작하지 않았다. 현재 원본 report/V4 master/method/old audit 자료는 확보했으며 원래 추출 prompt·근거 문장은 제공 자료에 없다.
+Gold58/V4는 descriptive reference다. 새 label policy나 reader routing을 Gold 성능에 맞춰 반복 조정하지 않는다.
 
 
 # 7. R3D-13 — Final Main Single Model
