@@ -1,3 +1,22 @@
+## 2026-10-08 — user-confirmed Kaggle full cache mounted path
+
+The user provided actual Kaggle mounted cache path:
+`/kaggle/input/rsna-knee-wide224-persistent-cache-v1/r3d12cache_full`
+
+Kaggle Add Input sidebar lists:
+- `rsna_knee_v4_consensus_dataset`
+- `rsna-knee-r3d-medicalnet-pretrain`
+- `rsna-knee-wide224-persistent-cache-v1` → `r3d12cache_full`
+
+New fixed-input notebook revision (supersedes the earlier versions for user execution):
+- `R3D-12V4DATA_CPU_Preflight_KnownMount.ipynb`; SHA256 `d9c7ba710c59b7c581d0c77347aa3e321bfd04bd35d39ec440d923fd03a83be7`
+- `R3D-13V4_Full4349_R34_Main_KnownMount.ipynb`; SHA256 `5e8bc3515659bb2a99f5e19a534de472ec4921d34011f0d90363aa077ef364ee`
+- `RSNA_Knee_R3D13V4_VerifiedMount_Notebooks.zip`; SHA256 `d26c2da83b42c3e8c3db5085400cf629b6bea6903802bcd23beab30d0318ec56`
+
+Revision fixes the exact full cache path, adds screenshot-known V4 and pretrained dataset candidate names. All original training parameters unchanged. Validation of mount contents / canonical checkpoint shape/SHA and Kaggle execution remains pending. Run CPU preflight before GPU.
+
+---
+
 # R3D-12V4DATA / R3D-13V4 Kaggle Notebook Delivery (2026-10-08)
 
 Status: **NOTEBOOKS DELIVERED; NO KAGGLE EXECUTION RESULT VERIFIED.**
