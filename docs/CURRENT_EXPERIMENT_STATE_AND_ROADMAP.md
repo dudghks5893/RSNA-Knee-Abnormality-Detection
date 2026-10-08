@@ -129,13 +129,19 @@ ALL Series
 
 ## 바로 다음 작업
 
-1. 원본 report 기반 라벨 감사/재구축: 공식 target 정의 확인 → 근거 문장과 상태를 보존하는 소규모 pilot → 애매한 사례 사용자 리뷰.
-2. `positive / negative / uncertain / not-mentioned / insufficient`를 구분. 언급 없음·불완전 report를 자동 음성으로 만들지 않는다. LLM 자기 확신을 calibrated probability로 취급하지 않는다.
-3. 기존 V4 full-data routing은 CommonGold57을 이용해 reader/target 정책을 골랐다. 이를 그대로 학습하고 Gold58을 독립 검증이라 부르지 않는다. 새 라벨 정책은 Gold 결과에 맞춰 조정하지 않는다.
-4. 병행한 R3D-12CACHE 완료 audit 확인 후 새 라벨 manifest, supervision coverage와 최종 loss/budget 확정.
-5. 단일 Main full-data 학습 → standalone 제출 → 필요 시 Exp57 blend 평가.
+1. **Competition-aligned report label policy v2는 freeze 완료**. 기준 문서: [LABEL_RECONSTRUCTION_POLICY_V2.md](LABEL_RECONSTRUCTION_POLICY_V2.md).
+2. 새 5-state 의미:
+   - positive / negative = supervised
+   - insufficient / not_mentioned / uncertain = masked
+   - 공식 host의 “borderline/on-the-fence는 negative” 원칙을 반영하되, 기준을 판정하는 데 필요한 severity/extent 자체가 report에 없으면 negative로 만들지 않고 insufficient로 둔다.
+3. 28-study / 336-target pilot은 policy-v2 재감사를 완료한 **정책 시험용 자료**이며 final release가 아니다. 재감사 제안 분포: positive 35 / negative 189 / insufficient 46 / not_mentioned 66 / uncertain 0, supervised 224 / masked 112.
+4. 다음 실행은 **report-only 4,349 studies 전체에 대한 A/B blind multilingual independent reading**. Gold/V4/pilot 답을 reader에게 보여주지 않는다. exact evidence quote/offset/report SHA를 보존한다.
+5. A/B 결과 검증 후 agreement 후보와 adjudication queue를 분리하고, target별 5-state 분포 / supervision coverage / positive prevalence / reader agreement / adjudication rate / 언어·script별 분포 / duplicate consistency를 감사한다.
+6. 기존 V4 Broad/Strict 및 Gold58 prevalence는 descriptive reference로만 비교한다. 새 정책·threshold를 Gold 결과에 맞춰 반복 조정하지 않는다.
+7. label release 후 report-only 4,349에서 target별 N_pos/N_neg/mask coverage를 계산하고 **masked per-target BCE → 12-target macro average** loss 및 class weight를 확정한다. 이전 normalized-weight cancellation은 반복하지 않는다.
+8. canonical label release 후 단일 Main full-data R3D → standalone Public LB → 필요 시 Exp57 complementary blend. 같은 새 label manifest를 Exp57 재학습에도 사용할 수 있게 유지한다.
 
-라벨 재생성 자체는 아직 시작하지 않았다. 현재 원본 report/V4 master/method/old audit 자료는 확보했으며 원래 추출 prompt·근거 문장은 제공 자료에 없다.
+중요: 공식 Gold는 report-derived가 아니라 image-derived consensus label이며 report와 불일치할 수 있다. 새 라벨은 공식 영상 판정 기준을 최대한 모사하는 report-derived supervision이지 새로운 ground truth가 아니다.
 
 
 ---
@@ -255,14 +261,22 @@ study별 `selection_order`를 생성한다.
 - Index SHA256: `114bc191102849cc5df8b3f45c3a2b6361446d3e190f5315e13cdf6d002d1ef4`.
 - Gold58와 3fold pseudo scope coverage PASS. 최종 4,407명 전체 cache는 아니다.
 
-**R3D-12CACHE Full4407 CPU 노트북 전달 완료, 성공 결과는 아직 미확인**.
+**R3D-12CACHE Full4407 완료/PASS — 2026-10-08**.
 
-- 기존 8,027 series 재사용 + 누락 16,344 series 생성, 목표 4,407 studies / 24,371 series.
-- raw root: `/kaggle/input/competitions/rsna-knee-abnormality-detection/train_series`.
-- 목표 단일 독립 폴더: `/kaggle/working/r3d12cache_full/`, 약 10.04 GiB float16 shards. 대용량 이미지별 파일/전체 cache ZIP 중복 생성 없음.
-- CPU-only; exact candidate paths; 전체 input 재귀 탐색 금지. 학습과 별도 실행 가능.
-- 초기 metadata root 누락 오류는 preflight에서 발생. PathFix 노트북은 원본 `train_series.csv` fallback을 사용하며 full scope/기존 cache metadata parity를 검증한다.
-- 현재 cache 성공으로 오인하거나 full-data 학습을 먼저 시작하지 않는다.
+- 전체 **4,407 studies / 24,371 unique series**.
+- 기존 R3D-11CACHE **8,027 series 재사용** + 누락 **16,344 series 신규 생성**.
+- ALL usable Series / Crop130 / interpolated D24×96×96 / float16, 총 **160 shards / 10,780,971,008 bytes (~10.04 GiB)**.
+- raw decode failures **0**.
+- full Study/Series metadata parity PASS.
+- 기존 shard SHA equality PASS / 신규 shard readback PASS.
+- 기존 Crop130 12-series raw rebuild exact parity PASS (max abs 0).
+- runtime **479.195 min (~7h59m)**.
+- `series_index.csv` SHA256: `e72c9238c97e0957bb7fccee91489d23847519dd1aaf01e40620411875abe217`.
+- `shard_manifest.csv` SHA256: `bf4a008de5fbf9a239066524b38d0b0632891b83ff2781bde07538ff75bd44a0`.
+- audit ZIP SHA256: `73d6b93d678f6922cc72b8103961fc6a7baa67cd8fe41f740709ebbf8c69e39c`.
+- `study_roles.csv`: report-only train 4,349 / Gold validation 58 exact.
+- 학습용 artifact는 audit ZIP이 아니라 `r3d12cache_full/` 전체 Dataset이다.
+- **캐시 축은 종료. 재생성하지 않는다.**
 
 
 ---
