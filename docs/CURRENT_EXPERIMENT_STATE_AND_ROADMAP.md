@@ -129,17 +129,18 @@ ALL Series
 
 ## 바로 다음 작업
 
-1. **Competition-aligned report label policy v2는 freeze 완료**. 기준 문서: [LABEL_RECONSTRUCTION_POLICY_V2.md](LABEL_RECONSTRUCTION_POLICY_V2.md).
-2. 새 5-state 의미:
-   - positive / negative = supervised
-   - insufficient / not_mentioned / uncertain = masked
-   - 공식 host의 “borderline/on-the-fence는 negative” 원칙을 반영하되, 기준을 판정하는 데 필요한 severity/extent 자체가 report에 없으면 negative로 만들지 않고 insufficient로 둔다.
-3. 28-study / 336-target pilot은 policy-v2 재감사를 완료한 **정책 시험용 자료**이며 final release가 아니다. 재감사 제안 분포: positive 35 / negative 189 / insufficient 46 / not_mentioned 66 / uncertain 0, supervised 224 / masked 112.
-4. 다음 실행은 **report-only 4,349 studies 전체에 대한 A/B blind multilingual independent reading**. Gold/V4/pilot 답을 reader에게 보여주지 않는다. exact evidence quote/offset/report SHA를 보존한다.
-5. A/B 결과 검증 후 agreement 후보와 adjudication queue를 분리하고, target별 5-state 분포 / supervision coverage / positive prevalence / reader agreement / adjudication rate / 언어·script별 분포 / duplicate consistency를 감사한다.
-6. 기존 V4 Broad/Strict 및 Gold58 prevalence는 descriptive reference로만 비교한다. 새 정책·threshold를 Gold 결과에 맞춰 반복 조정하지 않는다.
-7. label release 후 report-only 4,349에서 target별 N_pos/N_neg/mask coverage를 계산하고 **masked per-target BCE → 12-target macro average** loss 및 class weight를 확정한다. 이전 normalized-weight cancellation은 반복하지 않는다.
-8. canonical label release 후 단일 Main full-data R3D → standalone Public LB → 필요 시 Exp57 complementary blend. 같은 새 label manifest를 Exp57 재학습에도 사용할 수 있게 유지한다.
+1. **Competition-aligned report label policy v2 freeze 완료**. 기준 문서: [LABEL_RECONSTRUCTION_POLICY_V2.md](LABEL_RECONSTRUCTION_POLICY_V2.md).
+2. 별도 Pilot 실행은 취소했다. Pilot 검증은 Full notebook 내부 gate로 통합했다. 실행 상세: [LABEL_V6_FULL4349_EXECUTION.md](LABEL_V6_FULL4349_EXECUTION.md).
+3. 현재 실행 대상:
+   - Account A: `A_LABEL-V6A_Qwen3_8B_Full4349.ipynb` / `LABEL-V6A-FULL4349`
+   - Account B: `B_LABEL-V6B_MistralNemo12B_Full4349.ipynb` / `LABEL-V6B-FULL4349`
+   - 둘 다 T4×2 / Internet ON / fresh Save & Run All.
+4. 각 Full notebook은 synthetic policy unit test → blind Pilot28 machine/evidence preflight → **report-only 4,349 전체**를 같은 실행에서 처리한다. Gold/V4/pilot reference decisions는 reader에 노출하지 않는다.
+5. 각 reader는 exact quote/Unicode offset/report SHA, 5-state, inference flag와 audit metadata를 저장한다. 마지막 CPU audit은 정확히 **4,349 unique studies / 52,188 decisions**를 강제하고 evidence offset을 원본 report에 다시 대조한다.
+6. 두 Full result ZIP 확보 후 A/B agreement candidates와 adjudication queue를 분리하고 target별 5-state 분포 / supervision coverage / positive prevalence / agreement/adjudication / script subgroup / exact-duplicate consistency를 감사한다.
+7. 기존 V4 Broad/Strict 및 Gold58 prevalence는 descriptive reference만 사용하며 policy/reader routing을 Gold 성능에 맞춰 반복 튜닝하지 않는다.
+8. canonical release 뒤 target별 N_pos/N_neg/mask coverage에서 class weight와 **masked per-target BCE → 12-target macro average** loss를 확정한다. 이전 normalized-weight cancellation은 반복하지 않는다.
+9. canonical label release → 단일 Main full-data R3D → standalone Public LB → 필요 시 Exp57 complementary blend. 같은 canonical manifest를 Exp57 old-vs-new label 재학습 비교에도 사용할 수 있게 유지한다.
 
 중요: 공식 Gold는 report-derived가 아니라 image-derived consensus label이며 report와 불일치할 수 있다. 새 라벨은 공식 영상 판정 기준을 최대한 모사하는 report-derived supervision이지 새로운 ground truth가 아니다.
 
