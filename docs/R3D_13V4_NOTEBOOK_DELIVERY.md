@@ -1,3 +1,18 @@
+## 2026-10-08 — R3D-12V4DATA Kaggle CPU preflight ACTUAL PASS
+
+User-provided `R3D-12V4DATA_audit.zip` and full Kaggle Run All console log checked. This is a **completed, executed** CPU preflight, not a projected PASS.
+
+- PASS: 4,349 report-only V4 train UIDs; 58 Gold validation UIDs; no UID duplicates/overlap; all 12 targets.
+- Cache: full `/kaggle/input/rsna-knee-wide224-persistent-cache-v1/r3d12cache_full`, 4,407 studies, 24,371 series, 160 shards; contract and index/manifest SHA exact.
+- V4 broad CSV mounted: `/kaggle/input/datasets/yhlucas/rsna-knee-v4-consensus-dataset/rsna_knee_pseudolabels_v4_routed_broad.csv`; SHA256 `93863c59f99a70e2fd5c2d1674bc91266f3c459d398755911e033dbdac8d381c`.
+- MedicalNet R34 weights mounted: `/kaggle/input/datasets/yhlucas/rsna-knee-r3d-medicalnet-pretrained-v1/resnet_34.pth`; SHA256 `977a1be79298602fa35980de9c03789229ad36087fb1f4d9bde468aec653c658`.
+- Official train.csv SHA256 `8ca2203c0e9d61c080c7a314c7cdb51c1b03a1d9eb4770819f7f34af53ef4e33`.
+- Independent archive inspection: ZIP CRC PASS, audit JSON status PASS, train/validation disjointness PASS, target distribution 12 rows.
+- V4 pseudo mean confidence: Synovitis 0.17318, Effusion 0.43578, Fracture 0.44261, Lateral OA 0.50461. Interpret as supplied heuristic confidence, not measured accuracy.
+- Next: **run R3D-13V4_Full4349_R34_Main_KnownMount.ipynb** with GPU, existing four Add Inputs. This is training and is NOT yet executed. Do not assert Kaggle GPU runtime/memory/performance before run.
+
+---
+
 ## 2026-10-08 — user-confirmed Kaggle full cache mounted path
 
 The user provided actual Kaggle mounted cache path:
