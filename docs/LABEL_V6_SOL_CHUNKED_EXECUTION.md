@@ -1,3 +1,9 @@
+# SUPERSEDED — GPT-5.6 Sol package is no longer the current execution plan
+
+Do not use the legacy GPT-5.6 Sol Chat Packs/prompts. Current user-selected GPT-6 plan: [LABEL_V6_GPT6_CHUNKED_EXECUTION.md](LABEL_V6_GPT6_CHUNKED_EXECUTION.md). Original report chunks and frozen competition policy remain unchanged.
+
+---
+
 # LABEL-V6 — GPT-5.6 Sol Chunked Execution Plan
 
 Date: 2026-10-08
