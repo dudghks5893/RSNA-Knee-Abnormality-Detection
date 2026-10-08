@@ -1818,14 +1818,20 @@ Mixed 3-Mode:
 - Index SHA256: `114bc191102849cc5df8b3f45c3a2b6361446d3e190f5315e13cdf6d002d1ef4`.
 - Gold58와 3fold pseudo scope coverage PASS. 최종 4,407명 전체 cache는 아니다.
 
-**R3D-12CACHE Full4407 CPU 노트북 전달 완료, 성공 결과는 아직 미확인**.
+**R3D-12CACHE Full4407 완료/PASS — 2026-10-08**.
 
-- 기존 8,027 series 재사용 + 누락 16,344 series 생성, 목표 4,407 studies / 24,371 series.
-- raw root: `/kaggle/input/competitions/rsna-knee-abnormality-detection/train_series`.
-- 목표 단일 독립 폴더: `/kaggle/working/r3d12cache_full/`, 약 10.04 GiB float16 shards. 대용량 이미지별 파일/전체 cache ZIP 중복 생성 없음.
-- CPU-only; exact candidate paths; 전체 input 재귀 탐색 금지. 학습과 별도 실행 가능.
-- 초기 metadata root 누락 오류는 preflight에서 발생. PathFix 노트북은 원본 `train_series.csv` fallback을 사용하며 full scope/기존 cache metadata parity를 검증한다.
-- 현재 cache 성공으로 오인하거나 full-data 학습을 먼저 시작하지 않는다.
+- 전체 **4,407 studies / 24,371 unique series**.
+- reused **8,027** + new **16,344** series.
+- ALL + Crop130 + interpolated D24×96×96 + float16.
+- **160 shards / 10,780,971,008 bytes (~10.04 GiB)**.
+- decode failures **0**.
+- full Study/Series metadata parity, reused shard SHA equality, new shard readback, 12-series Crop130 raw rebuild exact parity 모두 PASS.
+- runtime **479.195 min (~7h59m)**.
+- series index SHA256: `e72c9238c97e0957bb7fccee91489d23847519dd1aaf01e40620411875abe217`.
+- shard manifest SHA256: `bf4a008de5fbf9a239066524b38d0b0632891b83ff2781bde07538ff75bd44a0`.
+- audit ZIP SHA256: `73d6b93d678f6922cc72b8103961fc6a7baa67cd8fe41f740709ebbf8c69e39c`.
+- study roles: report-only 4,349 / Gold58 validation.
+- cache generation은 완료되어 재실행하지 않는다.
 
 ## 확정된 최종 학습 방향
 
@@ -1848,3 +1854,49 @@ Mixed 3-Mode:
 5. 단일 Main full-data 학습 → standalone 제출 → 필요 시 Exp57 blend 평가.
 
 라벨 재생성 자체는 아직 시작하지 않았다. 현재 원본 report/V4 master/method/old audit 자료는 확보했으며 원래 추출 prompt·근거 문장은 제공 자료에 없다.
+
+
+---
+
+## R3D-12LABEL-POLICY — Competition-aligned report label policy v2 freeze (2026-10-08)
+
+### 목적
+
+최종 full-data 학습 전에 report-only 4,349 studies의 supervision을 기존 V4 Gold-dependent routing에서 분리하고,
+competition host의 image-label definition을 최대한 모사하는 report-derived label policy를 고정한다.
+
+### Source-of-truth 원칙
+
+- 공식 Gold는 report extraction이 아니라 MSK radiologist image review consensus다.
+- report와 Gold의 불일치는 가능하고 예상된다.
+- 기존 V4 broad/strict/master, reader routing, Public LB, Gold58 결과는 새 판정 규칙을 바꾸는 근거로 사용하지 않는다.
+- policy 문서: `docs/LABEL_RECONSTRUCTION_POLICY_V2.md`.
+
+### 5-state
+
+- positive / negative → supervised
+- insufficient / not_mentioned / uncertain → masked
+- host의 borderline/on-the-fence negative 원칙 반영.
+- 단, threshold를 판정하기 위한 severity/extent가 report에 없으면 automatic negative가 아니라 insufficient.
+- positive/negative는 원문 exact evidence quote + Unicode offsets를 보존한다.
+
+### 28-study pilot policy-v2 재감사
+
+- 28 studies × 12 targets = 336 target-items.
+- policy test only; final release 아님.
+- proposed distribution:
+  - positive 35
+  - negative 189
+  - insufficient 46
+  - not_mentioned 66
+  - uncertain 0
+- supervised 224 / masked 112.
+
+### 다음 gate
+
+- report-only 4,349 전체 A/B blind multilingual independent read.
+- Gold/V4/pilot decisions를 reader에게 노출하지 않음.
+- exact evidence/report SHA validation.
+- agreement candidates / adjudication queue 분리.
+- release 전 target별 state distribution, mask coverage, positive prevalence, A/B agreement/adjudication, language/script, duplicate consistency audit.
+- final class weights는 released report-only labels의 N_pos/N_neg에서만 계산한다.
