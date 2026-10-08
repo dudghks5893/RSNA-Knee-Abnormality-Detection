@@ -1,3 +1,23 @@
+## 2026-10-08 — R3D-13V4-DDP2 replacement delivered (NOT YET RUN)
+
+**This supersedes earlier single-GPU / Series Microbatch 2 / E5 R3D-13V4 Notebook for new execution.** The user preferred the project-proven batching scale and full use of Kaggle T4×2. Do NOT resume legacy single-GPU checkpoint as if it were an equivalent DDP continuation.
+
+- Notebook: `R3D-13V4_DDP2_B4_E10_EarlyStop.ipynb` (self-contained, writes embedded worker script).
+- Package: `R3D-13V4_DDP2_Notebook_and_Guide.zip`; SHA256 `9a191e6824be5a927d90ba64834f605bbb917746a79dcd001af0f34228770287`.
+- Runtime: Kaggle **GPU T4×2**, Internet OFF, **Save & Run All**, **one synchronized Main model (not folds)**.
+- Two torchrun NCCL DDP ranks, each: Study batch 1, Series Microbatch 4, Gradient Accumulation 2. Thus effective Study batch = 4 globally, 1,088 optimizer updates per 4,349-study epoch. Remainder 1 study is loss-corrected via zero-loss dummy process, not a duplicate supervised record.
+- Maximum **10 full epochs**; minimum **5**; patience **3** measured using Gold58 Macro AUROC primary / Macro AUPRC tie break. Epoch-cosine scheduler uses max 10 from the start. Seed remains 20261013, FP32, R34 full finetune, BN stats frozen, GLOB/Transformer shared CLS, original V4 soft/conf weighted BCE and other LR/WD unchanged.
+- Per-rank actual forward+backward smoke on maximum Series count before training; no claimed GPU memory/speed until Kaggle run.
+- Progress log about every 100 unique Studies; last.pt recovery checkpoint ~1,000 studies and every full epoch; best.pt only after a completed Gold58 epoch; training metrics and ZIP (no .pt) preserved.
+- Wall stop 9.5h and 30 min margin yields `NEEDS_RESUME`, never false PASS.
+- Old single-GPU run should be stopped/archived before starting a new DDP run. Prior standalone model training status does not establish this replacement's completion.
+- CPU local tests: two-process Gloo gradient math exact vs serial for group size 1,2,3,4,5; 4,349 UID group coverage in 1,088 steps; Notebook nbformat, code AST, embedded worker exact parity, archive CRC and SHA PASS. **Actual NCCL T4 ×2 Kaggle test is pending.**
+- Four required Add Inputs identical to the already PASSED R3D-12V4DATA CPU contract.
+
+Next: start **revised DDP Notebook**, send actual GPU smoke output, epoch logs and `R3D-13V4-DDP_results.zip`. Gold58 is reused/non-independent; standalone LB after training.
+
+---
+
 ## 2026-10-08 — R3D-12V4DATA Kaggle CPU preflight ACTUAL PASS
 
 User-provided `R3D-12V4DATA_audit.zip` and full Kaggle Run All console log checked. This is a **completed, executed** CPU preflight, not a projected PASS.
