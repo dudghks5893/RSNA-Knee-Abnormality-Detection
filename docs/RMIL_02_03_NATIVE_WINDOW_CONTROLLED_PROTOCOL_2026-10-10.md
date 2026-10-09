@@ -9,6 +9,21 @@ Updated **2026-10-10**. **APPROVED STUDY DESIGN; NO NEW RMIL-02/03 KAGGLE RESULT
 - Never attribute an effect to K alone when pixel normalization, geometry sorting, cropping or sampling policy also changes. Keep separate `K4_legacy`, `K4_rebuilt` parity controls. If pixel parity fails, resolve before GPU ablation and DO NOT claim causal K effect.
 - **RMIL-03 after RMIL-02:** one K/policy selected using pre-registered, conservative Gold58 development criteria; compare **shared Window ATTN → disease-specific Window ATTN → disease-specific Window+Series ATTN**, plus matched MEAN baseline. Twelve explicit target outputs, same source windows, same encoder and training budget, log extra parameters/inference cost. If shared ATTN is poor, keep it as an ablation control, not mandatory deployment architecture. Check any target/window attention alignment without cherry-picking Gold58 label-specific routing.
 
+## 2026-10-10 — Selection policy fix BEFORE K ablations: nested additions, not independently resampled K
+
+**Independent audit of RMIL-02A `native_k_candidates.jsonl`:** source Notebook's `uniform_spaced_valid_centers_v1` calls `np.rint(np.linspace(...,k))` separately for K4, K16, K24 and K32. Thus a K16→K24 comparison **does not purely add 8 windows**: it also changes some selected center positions. Preserve the RMIL-02A JSONL as completed **feasibility evidence only**, and do NOT blindly use those columns as the finalized GPU ablation selector.
+
+**Pre-registered RMIL-02B selector v2 = NESTED LEGACY-ANCHORED FARTHEST-POINT:**
+
+1. Physically sorted real Slice center candidates are integers `1..N−2` (actual neighbor triplets exist); decode/ROI parity must establish original physical order direction first.
+2. Freeze **legacy K4 anchors** from historical `series_centers`, now confirmed on all 2006 Series to equal `np.rint(np.linspace(.1*(N−1), .9*(N−1), 4))`; require four unique valid indices, deterministic ascending order.
+3. To add a window without moving any prior window, repeatedly choose the as-yet-unselected valid center maximizing its integer index distance to its closest already selected center, ties broken by **lowest physical index**. Continue until `min(32,N−2)` unique candidates. Compute `K4`, `K16`, `K24`, `K32` as prefixes of this **one shared ranking** (while sorting those selected indices into physical order only for image assembly). This guarantees nested `set(K4) ⊆ set(K16) ⊆ set(K24) ⊆ set(K32)`; use valid count/masks, never padding treated as real.
+4. At fixed K, **MEAN vs SHARED ATTN must consume bit-identical pixels, Series and selected center sets**. K16 Mean vs K24 Mean comparison now adds evidence while holding every old center; resulting global patient information/count and optimization dynamics still change naturally and require small-Gold caveats.
+5. If pixel parity reveals historical physical ordering is reversed relative to RMIL-02A, map original K4 anchors to physical positions first and update an explicit versioned policy; do not silently reverse under the same manifest SHA.
+
+**Recommendation from actual K feasibility:** compare **K16 Mean vs K24 Mean** first, K32 conditionally. RMIL-02A recorded 1924/2006 K16 full vs 1513/2006 K24 full vs only 516/2006 K32 full. `native_k_candidates.jsonl` sizes are still valuable for planning; its independent-uniform indices are **not** adopted as the nested v2 training policy.
+
+
 ## 2026-10-10 — RMIL-02A ACTUAL RESULTS VERIFIED (supersedes previous 'unexecuted 02A' below)
 
 **COMPLETED/PASS_METADATA_PREFLIGHT.** Actual user-supplied `RMIL-02A_results_for_review.zip` independently CRC+all 9 declared file SHA PASS; received ZIP SHA256 `fbabf2840be680d62c636f86af5e4bb1cc87a3c6c2619fe875d0dfca6008520f`. Kaggle CPU preflight on frozen **358 Studies/2006 Series/66430 native Slices**, **0 issues**, DICOM sample decode PASS, ~11.254min header survey. Actual K full Series: 4 **2006**, 16 **1924**, 24 **1513**, 32 **516**. Real unique windows K4 **8024**, K16 **31838**, K24 **45472**, K32 **53532**. **Recommended first mean-only K16 vs K24**, K32 conditional: 1490/2006 Series cannot fill K32. Verified legacy K4 centers exactly fit **`round(linspace(.1*(N-1),.9*(N-1),4))` for all 2006 Series** (metadata indices only; orientation/pixel parity still NOT verified).
