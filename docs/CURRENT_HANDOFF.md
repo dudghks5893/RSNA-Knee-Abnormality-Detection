@@ -1,6 +1,28 @@
 # RSNA Knee — Current Handoff / New Chat Cold Start
 
-최종 업데이트: **2026-10-09**
+
+## 2026-10-10 — LATEST COLD-START / OVERRIDES PRIOR HANDOFF ITEMS BELOW
+
+**New project lane: RMIL (new numbering, `EXP-01` already used).** The next job is the **UNEXECUTED** `RMIL-01` ResNet34 2.5D **MEAN vs learned Window Attention** controlled test. Detailed order, all three *unselected* final model candidates and exact Kaggle inputs: [RMIL_FINAL_ARCHITECTURE_AND_EXPERIMENT_PLAN.md](RMIL_FINAL_ARCHITECTURE_AND_EXPERIMENT_PLAN.md).
+
+**Current final-model alternatives:** C1 single 2.5D target-aware CNN+MIL, C2 2D+2.5D, C3 2D+2.5D+3D only if 3D adds independent gain. Do not implement 10+ member ensemble by default. 3/5-Fold and Exp57 blend are **DEFERRED decisions**; Exp57 Public LB 0.918 is historical best. LABEL-V6 separate workflow still requires full QA/adjudication prior to release.
+
+**Newly audited older runs:** [11-model R2D/RDINO/R3D-15 completed evidence](R2D_RDINO_R3D15_COMPLETED_AUDIT_2026-10-10.md) — R2D-SHARED A/B 2D and 2.5D, RDINO Small/Base 2D/2.5D, R3D-15 B0/A/B all completed, original ZIP SHA entries PASS. Best pilot **R34 2.5D Gold58 0.57637**. All 11 are **Gold58 Train300 development checks**, *not* scored submissions. Previous R3D-13V4 full4349 Gold58 0.68023 and user-reported R3D-14V4 Public LB 0.689, below Exp57 Public LB 0.918.
+
+**Exact RMIL-01 setup:**
+- Kaggle A Account, T4×2, Internet OFF, Save & Run All, name `RMIL-01 R34 25D Mean vs WindowAttn` (<60).
+- GPU0 MEAN baseline; GPU1 shared scalar 4-window softmax attention, 2.5D both, same pretrained R34, same seed LR/epochs/full fine-tune.
+- Shared cache `rsna-knee-wide224-persistent-cache-v1` at `/kaggle/input/rsna-knee-wide224-persistent-cache-v1/R2D_SHARED224_V1`.
+- Original pretrained `rsna-knee-r3d-medicalnet-pretrained-v1`, exact file `/kaggle/input/datasets/yhlucas/rsna-knee-r3d-medicalnet-pretrained-v1/resnet_34.pth`.
+- Notebook and guide were delivered as downloadable artifacts in the chat; confirm uploaded notebook path rather than inventing a Git path. Expected `RMIL-01_results_for_review.zip`.
+- Read notebook first Markdown and [Kaggle rules](AI_AGENT_KAGGLE_NOTEBOOK_RULES.md). No Kaggle session executed as of handoff. If actual result ZIPs are supplied, audit them, THEN decide RMIL-02.
+- Gold58 is repeatedly used development set; never use 11 target winners to hard-code fusion or claim independent validation.
+
+**SUPERSESSION:** Earlier entries in this handoff that refer to R3D-11, R3D-12, R3D-13 or R3D-14 as next to execute are historical. The new RMIL plan is current.
+
+---
+
+최종 업데이트: **2026-10-10**
 
 이 문서는 새 ChatGPT 채팅에서 **현재 프로젝트를 잘못된 과거 상태로 되돌리지 않고 즉시 이어가기 위한 최우선 인수인계 문서**다.
 
