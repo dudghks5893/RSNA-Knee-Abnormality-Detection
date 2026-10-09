@@ -1,6 +1,12 @@
 # RSNA Knee — Current Experiment State & Roadmap
 
 
+## 2026-10-10 — MANDATORY RMIL-02 20GB output guard
+
+**RMIL-02A CPU metadata preflight notebook revised with disk budget evaluation:** `RMIL-02A_Native_Slice_Preflight_DiskSafe_CPU.ipynb` SHA256 `1516660b1d413aa384a193122593aad21d057832c4405a64be9d9e9e973204dd`; **not executed**. `disk_budget.json` estimates cache size and checks `/kaggle/working` effective space. Kaggle documents **20GB** saved Notebook output; project caps ALL saved working files at **14.0GB decimal**, reserves free disk margin, stores one channel/native slice, targets 256–512MB atomic shards and metadata-only ZIP, rejects/splits cache when estimated or actual bytes exceed budget. Details in [RMIL-02/03 protocol](RMIL_02_03_NATIVE_WINDOW_CONTROLLED_PROTOCOL_2026-10-10.md). RMIL-01 remains completed.
+
+---
+
 ## 2026-10-10 — UPDATED RMIL-02/03 K-VS-ATTENTION PROTOCOL (SUPERSEDES PRIOR NEXT BELOW)
 
 **NEXT = RMIL-02A CPU metadata/geometry/asset preflight ONLY** (prepared Notebook, not run), then **RMIL-02B** native Slice cache creation after K4 parity validation, then **RMIL-02C** K-Mean count test and same-K Mean-vs-shared-ATTN test. DICOM input mount must be confirmed; no new high-res full Slice cache already verified. Old `R2D_SHARED224_V1` contains only 4 windows/Series; existing R3D caches are D24×96, and Exp16B full-MRI feature cache does not store source pixels. Use exact competition path candidates and source asset checks, never global `/kaggle/input` recursive search. **[Full approved plan and uncertainty/QA gates](RMIL_02_03_NATIVE_WINDOW_CONTROLLED_PROTOCOL_2026-10-10.md).**
