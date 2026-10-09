@@ -1,6 +1,6 @@
 # RSNA Knee — Experiment History
 
-최종 업데이트: **2026-10-08**
+최종 업데이트: **2026-10-09**
 
 이 문서는 **완료된 실험과 그 결과만 기록하는 기준 문서**다.
 진행 예정 작업과 현재 계획은 [3D_RESNET_EXPERIMENT_PLAN.md](3D_RESNET_EXPERIMENT_PLAN.md)를 따른다.
@@ -12,6 +12,28 @@ Kaggle Notebook 작성 규칙은 [AI_AGENT_KAGGLE_NOTEBOOK_RULES.md](AI_AGENT_KA
 > 현재 상태와 NEXT는 [CURRENT_HANDOFF.md](CURRENT_HANDOFF.md)와 [CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md](CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md)를 우선한다.
 
 ---
+
+## 2026-10-09 — R3D-13V4-DDP Full4349 V4 Broad — ACTUAL KAGGLE TRAINING PASS
+
+**Source:** User-shared complete Kaggle Save & Run All console log and rendered final summary, 2026-10-09. Results ZIP and checkpoint bytes NOT YET independently inspected.
+
+- **Status:** `PASS_EARLY_STOP`; **10/10 epochs completed**; E10 is also the configured maximum. The no-improvement count reached patience 3 at E10; do not imply it ended before max epoch.
+- Model: **ONE synchronized 2-GPU DDP Main**, not a fold ensemble. MedicalNet pretrained ResNet34 (>99% float param-matching; logged 0.9972338), ALL usable series, Crop130 interpolated D24x96x96, GLOB+metadata, Transformer512/2L/8H shared CLS, 12 logits, full-finetune FP32 and BN running stats frozen.
+- Data contract PASS: report-only train **4,349** exact unique studies × 10 full epochs; Gold58 validation excluded from train; **24,371** series / **160** volume shards; V4 routed broad soft targets, 12 confidences.
+- GPU T4×2 DDP smoke PASS on rank0=14 and rank1=13 Series, both forward+backward, 2.42s; GPU0 train peak ~1.86–1.87 GiB allocated. GPU/device availability and DDP path verified, **GPU speedup vs single card not measured**.
+- Each rank Study batch=1, Series Microbatch=4, gradient accumulation=2; **global effective study batch=4**, 1,088 optimizer updates/full epoch.
+- Seed=20261013; backbone LR=1e-5, head LR=5e-5; AdamW WD=1e-4, epoch-cosine over 10, min5/patience3 with Gold58 Macro AUROC primary and AUPRC tiebreak.
+- Best **Epoch 7** Gold58 **Macro AUROC=0.6802269985218738**, **Macro AUPRC=0.5521237805823017**. Best-epoch train loss 0.3628905204438045, validation BCE 0.6109719957257139. Last E10: train loss 0.3596814218287524, val loss 0.6062338331650043, AUROC 0.6778965414937929, AUPRC 0.5490332533918086. Selection therefore uses E7 best.pt, not E10 last.pt.
+- End-to-end model worker reported runtime **125.708 min**, torchrun wall 125.98 min.
+- Rank0 best-epoch per-target Gold58 ROC-AUC: ACL .645833; MCL **.419501**; Medial Meniscus .649038; Lateral Meniscus .775155; Medial OA .730233; Lateral OA .804642; PF OA .709138; Effusion **.911801**; Synovitis .683393; Baker's .652174; Contusion .623482; Fracture **.558333**.
+- With threshold 0.5, **zero sensitivity** for ACL, MCL, Lateral Meniscus, Lateral OA, Contusion, Fracture in Gold58. Ranking AUROC and threshold behavior are different: do not conflate these, do not calibrate on reused Gold58 and claim independence.
+- Log attests `best.pt`, `last.pt`, `training_history.csv`, `gold58_metrics_best.csv`, `gold58_predictions_best.csv`, `R3D-13V4-DDP_results.zip`; path `/kaggle/working/R3D-13V4-DDP/`. **The ZIP intentionally omits .pt files.** Actual checkpoint binary has not yet been supplied or hashed independently.
+- Run config SHA256: `78a258125c3fd20fddee55253cd1d3c8be065e48bb4f5071a5020dd6f8b896f5`.
+- **Assessment:** Training pipeline completed as designed, but Gold58 (already used for development and V4 reader routing) is a non-independent checkpoint selection set. Best project Public LB remains Exp57 **0.918**. R3D-13V4 standalone Public LB is **UNKNOWN**; the 0.68023 Gold AUROC is NOT comparable directly to 0.918 leaderboard AUROC.
+- **Next:** preserve **E7 best.pt** and results ZIP, inspect artifact/checkpoint content, implement **R3D-14V4 standalone hidden-test inferencing/submission** (same MRI preprocessing and metadata path), record actual Kaggle LB. LABEL-V6 independent reader/review remains ongoing. No immediate hyperparam re-run.
+
+---
+
 
 ## 1. 현재 프로젝트 기준점
 
