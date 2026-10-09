@@ -1,6 +1,16 @@
 # RSNA Knee — Current Experiment State & Roadmap
 
 
+## 2026-10-10 — CURRENT ACTIVE WORK: RMIL-02 CPU coverage preflight (overrides old RMIL-01 NEXT below)
+
+**RMIL-01 COMPLETED / AUDITED:** [actual received ZIP/target metrics audit](RMIL-01_COMPLETED_AUDIT_2026-10-10.md). GPU0 MEAN Gold58 AUROC **0.5763704369**, AUPRC **0.4507296488**, best E4; GPU1 shared 4-window ATTN AUROC **0.5442963023**, AUPRC **0.4158921311**, best E3. Differences **−0.0320741346 AUROC**, **−0.0348375177 AUPRC** (ATTN minus MEAN); 4/12 target AUROC improvements, 8/12 declines. Both workers PASS; review ZIP 43 entries, all 38 declared artifact hashes PASS, source ZIP SHA recorded. Checkpoint bytes/Gold58 label manifest absent from ZIP; this is non-independent Gold development validation only. **MEAN retained as comparator**, shared ATTN not promoted.
+
+**NEXT, UNEXECUTED RMIL-02:** CPU-only actual-Slice 16/24/32 windows-per-Series candidate cache design/preflight, geometry sorting, adjacency, deduplication, window coverage, SHA and persistent storage/runtime budget. Separate window count from selection policy, preserve Train300/Gold58 split and controlled MEAN model optimization for subsequent GPU ablation. Do not launch GPU for raw DICOM decoding; do not falsely claim dataset prepared.
+
+**Unchanged:** RMIL-03 target-specific Window/Series MIL later; RMIL-04 full4349 after pilots; optional RMIL-05 2D and RMIL-06 3D only with repeatable added value. C1/C2/C3 all undecided. No 3/5-Fold or Exp57 automatic blend. Best verified project Public LB Exp57 **0.918**, unchanged. Old 'RMIL-01 immediate next' below superseded.
+
+---
+
 ## 2026-10-10 — CURRENT ACTIVE WORK: RMIL-01 Window Pooling (supersedes all older future tasks below)
 
 **Immediate next:** `RMIL-01`, controlled **2.5D R34 MEAN vs learned Window Attention**, Train300/Gold58, frozen shared 224×224 cache, T4×2, Internet OFF. Notebook prepared, **no Kaggle results yet**. Existing `EXP-01` name already occupied. GPU0=MEAN / GPU1=ATTN. Zero-init attention = initial Mean; only pooled feature selection changes. Read [RMIL experiment contract & architecture candidates](RMIL_FINAL_ARCHITECTURE_AND_EXPERIMENT_PLAN.md) FIRST.
