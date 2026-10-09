@@ -1,0 +1,57 @@
+# RMIL-02 / RMIL-03 — Native Window Coverage, Controlled Attention Ablation
+
+Updated **2026-10-10**. **APPROVED STUDY DESIGN; NO NEW RMIL-02/03 KAGGLE RESULTS.** `RMIL-01` is already completed and must not be rerun by default. Exact preflight Notebook: `RMIL-02A_Native_Slice_Asset_and_Geometry_Preflight_CPU.ipynb` (downloaded notebook artifact; not assumed committed in repository).
+
+## Scientific questions (isolate effects)
+
+- **H1 window information / count:** Under fixed MedicalNet-deflated R34 2.5D, Train300 V4, Gold58 development split, loss/optimizer/seed/epochs/224px/130mm/metadata Transformer, compare MEAN at **K4 → K16 → K24 → K32**, holding selection policy fixed (deterministic, label-blind, same per-Series definition and no per-target priors). K4 original control and K4 rebuilt control first.
+- **H2 window attention:** At the **same actual K and same cached pixels, UID, Series, order, effective-window masks**, GPU0 MEAN vs GPU1 shared scalar softmax Window Attention (zero-init). Only pooling is changed. This must be tested on an expanded K, not extrapolated from RMIL-01 K4.
+- Never attribute an effect to K alone when pixel normalization, geometry sorting, cropping or sampling policy also changes. Keep separate `K4_legacy`, `K4_rebuilt` parity controls. If pixel parity fails, resolve before GPU ablation and DO NOT claim causal K effect.
+- **RMIL-03 after RMIL-02:** one K/policy selected using pre-registered, conservative Gold58 development criteria; compare **shared Window ATTN → disease-specific Window ATTN → disease-specific Window+Series ATTN**, plus matched MEAN baseline. Twelve explicit target outputs, same source windows, same encoder and training budget, log extra parameters/inference cost. If shared ATTN is poor, keep it as an ablation control, not mandatory deployment architecture. Check any target/window attention alignment without cherry-picking Gold58 label-specific routing.
+
+## Verified asset lineage (GitHub documents, NOT independent Kaggle mount inspection)
+
+- Original full/native image source: competition `RSNA Knee Abnormality Detection`; files `train_series.csv`, `train_series/<StudyInstanceUID>/<SeriesInstanceUID>/<SOPInstanceUID>.dcm`, and `train.csv`. Competition root documented alternatives: `/kaggle/input/competitions/rsna-knee-abnormality-detection` or `/kaggle/input/rsna-knee-abnormality-detection`. **Check existence under these exact roots**; do not recursively scan all `/kaggle/input`. Official train.csv SHA `8ca2203c0e9d61c080c7a314c7cdb51c1b03a1d9eb4770819f7f34af53ef4e33` (older verified mount).
+- K4 anchor: dataset `rsna-knee-wide224-persistent-cache-v1`, `/kaggle/input/rsna-knee-wide224-persistent-cache-v1/R2D_SHARED224_V1`; `cache_contract.json`, `cache_index_sha256.csv`, `allseries4/<UID>.json`, `allseries4/<UID>.npy`, `frozen_manifests/train300_manifest.csv`, `gold58_manifest.csv`; index SHA `664b9b6ef3889e2d1d9694b0fd0424afa32ce8785ea99ddfdfbb53d85e87495e`. Previous Kaggle run verified 358 Studies, 2006 Series, 4 3-Slice 224px windows/Series and pixel file SHA, but **source preprocessing function is not in this GitHub repository**.
+- R3D-06A full-series cache `r3d06a_all_series_d24_96_v1` (4407 studies, 24371 Series / 819078 slices source count) and R3D-12CACHE `r3d12cache_full` contain **downsampled 96px/D24** volumes, not recoverable 224px native slices. Useful metadata/UID checks only, not interchangeable input pixels.
+- Exp16B-1 Full-MRI Feature Cache and Exp16B-2 hierarchical MIL were used by S00-3 localization; **DINO features/attention ranks are NOT raw image files**. S00-3 logged 520 positive Lateral Meniscus studies, 101883 full windows, 3051 Series; S00-4 found label-blind conservative plane intervals with 0.921925 mean historical Lateral Meniscus attention retention on that **training-positive subset**. These exploratory results are not clinical ground truth or proof of 12-target selection gain.
+- Specialist Top-K raw window persistent cache planned/used for selected windows; do not assume it contains every Series or every native slice; no confirmed mount contract for reusing it as universal RMIL-02 source.
+
+## Native Slice / geometry preflight — RMIL-02A
+
+**CPU-only, Kaggle Internet OFF, Save & Run All**:
+1. Assert pinned K4 cache + immutable Train300 and Gold58 manifests, no overlap; assert official competition series metadata; enumerate **only** the 2006 frozen K4 Series (not 4407-study full decode).
+2. Verify StudyInstanceUID, SeriesInstanceUID and stable metadata (plane, fluid, fat) against original train_series.csv. Read DICOM **headers only** (`stop_before_pixels=True`) to survey study/Series counts, projected physical slice location and orientation, missing tags, duplicates, inconsistent stacks, effective valid center count `max(N-2,0)`. Do not use filename ordering as a surrogate for physical ordering.
+3. Physical slice order should be projection of `ImagePositionPatient` onto slice normal from `ImageOrientationPatient`, with consistent orientation, tolerance and duplicate detection. Require patient/Series UID matching; missing/ambiguous geometry = BLOCKED, never quietly fallback to `InstanceNumber`.
+4. For each Series compute feasible K in {4,16,24,32}, unique candidate center coverage and quantile bins. Keep **legacy K4 center indices from manifest** distinct from new sampling policies. Store selected center indices, neighbor triplets and valid_count/masks rather than duplicating 3-channel pixels. No zero padding counted as real evidence.
+5. Estimate per-study/per-series disk/time before deciding to materialize; log headers elapsed seconds and extrapolation caveats. Pinned JSON+CSV+SHA+ZIP output. If raw competition images are missing or a frozen UID is absent, **fail fast**; do not fake asset availability or claim RMIL-02 cache has been generated.
+6. **Preprocessing parity gate for RMIL-02B:** the legacy contract identifies `RAW_DICOM_CROP130MM_PCT005_995_ZSCORE_CLAMP5_224_UINT8`, but exact implementation/order and old `series_centers` semantics need inspection from executed original cache-builder Notebook. Without it, image equality cannot be guaranteed. Decode a stratified sample, reconstruct exact legacy 3-slice triplets at old center indices, byte-compare against original `allseries4` on every tested Window, report mismatches. A documented tolerated pixel error criterion must be frozen *before* training, not relaxed after seeing metrics. Otherwise BLOCKED.
+
+## Intended persistent cache design (RMIL-02B, gated)
+
+- Prefer **single-channel uint8 224×224 per physically ordered source Slice**, with UID/Series grouping and manifest center indices, not separate triple copies for each K. At GPU read time assemble real neighboring `[center-1,center,center+1]` 2.5D 3-channel inputs and validity masks. This avoids 16/24/32 redundant windows and permits all K ablations to use same pixel bytes. Save per-Series preprocessing metadata, physical coordinates, orientation, dimensions, source DICOM fingerprints; respect source competition rules when publishing/reusing.
+- **Do not use raw DICOM decode in a reserved T4 session**. CPU preprocessing, artifact freeze/publish, then GPU training-only. Preserve train/val exclusion. Test users may get a separate inference cache with identical pipeline if model advances.
+- Initial **proposed** count policy: deterministic per-Series evenly spaced *valid centers* with K-limited unique picks; retain K4 legacy anchors as one explicit control rather than claim even sampling matches legacy. Optionally anchored nested center sets for K16/24/32 if K4 indices have trustworthy physical rank meaning. Selection policy is labeled policy-v1 and is fixed *before* Gold58 learning curves.
+- Avoid forcing K32 in Series with fewer than 32 valid centers; log `effective_k`, unique centers, fraction of short Series, plane-specific coverage and mask. No duplicate-padding to K. If train-vs-Gold geometry issues differ, report explicitly.
+
+## Preliminary budget — upper bound, not measured
+
+For 2006 Series, uncompressed 3-channel 224×224 uint8 **K32** is **9.00 GiB**; K24 **6.75 GiB**, K16 **4.50 GiB**, K4 **1.13 GiB** (assuming every Series has K valid windows; actual ≤ these). Separate K caches duplicate bytes. A one-channel 224×224 cache holding **30 slices per Series** would be approx **2.81 GiB**; true size depends on real slice counts (some >30), disk formats, compression and batch metadata. At average 35 slices per Series: approx **3.28 GiB**. CPU metadata survey must replace these estimates with measured Series and slice counts/bytes before full cache build. Source ~570 GB entire DICOM tree is **NOT** being duplicated for only Train300/Gold58.
+
+## Efficient GPU design AFTER RMIL-02B parity passes
+
+- **Phase 1:** K4_legacy ↔ K4_rebuilt for exact preprocessing/parity; reuse previously completed RMIL-01 results if pixels/semantics are exact; no blind K4 retraining.
+- **Phase 2 (window count):** GPU0 K16 MEAN / GPU1 K32 MEAN, same initialized model and K policy, while K24 deferred pending CPU effective-K distribution and cost. Prior original K4 MEAN 0.576370 is a comparator **only if parity passes**. If no difference or VRAM/runtime limit, select K16 first. Repeat at K24 only when information/cost curve warrants.
+- **Phase 3 (pooling):** GPU0 chosen K MEAN vs GPU1 same K shared ATTN, equal seed/samples/schedule, valid masks. Prefer cached encoder feature-only diagnostics **for QA**, not a replacement for full fine-tuning; single-channel pixel cache is used for full train. Isolate window attention from other changes.
+- Report all 12 AUROCs, AUPRCs, Gold58 positives/negatives, best epoch, per-epoch train/val loss, runtime, peak VRAM, valid windows/Series/study distributions, trained attention weights and selection concentration diagnostics. Paired UID predictions, confidence uncertainty, no independent-validation claims.
+
+## Historical lessons
+
+- **Exp57 Public LB 0.918**: task-tuned DINOv2-Base, full Series/Window hierarchical MIL feature processing, attention-selected Top24 actual raw windows with end-to-end fine-tuning, and a complementary **Full-MRI Direct** branch; 3-fold means per branch / 70:30 blend. **This is an integrated, multi-variable result**; it does not isolate attention or Top24 alone.
+- **SS05**: shared hierarchical MIL used as a selector with per-disease attention ranks; **SS08 pure 12-specialist Public LB 0.876**, despite optimistic pseudo-label Fixed Val target-best mean 0.9341, without Exp57 folds/direct branch. Do not interpret any one omitted component as the isolated causal factor.
+- **R3D-15B target attention** Gold58 0.529881 vs R3D-15B0 0.527801 on distinct low-res 3D pipeline: no compelling standalone gain; input/architecture differ and N is small. This is not RMIL-03's 2.5D K-expanded ablation.
+- **RMIL-01 K4:** MEAN 0.5763704369 > shared ATTN 0.5442963023 Gold58. Shared ATTN K4 is **not promoted**; K-expanded ATTENTION deserves controlled retest, not assumption of rescue.
+
+## Architecture decisions locked as OPEN
+
+C1 one 2.5D model first; C2 2D+2.5D only with repeatable complementarity; C3 add 3D only with independent complementary gain. No 3-/5-fold or Exp57 blending decision. Practical inference latency/checkpoint count matter. Gold58 is repeatedly used development validation and cannot support confident target-wise oracle routing.
