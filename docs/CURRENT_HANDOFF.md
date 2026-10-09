@@ -1,6 +1,22 @@
 # RSNA Knee — Current Handoff / New Chat Cold Start
 
 
+## 2026-10-10 — LATEST VERIFIED RMIL-02A / NEXT RMIL-02B0 PIXEL PARITY
+
+## 2026-10-10 — RMIL-02A ACTUAL RESULTS VERIFIED (supersedes previous 'unexecuted 02A' below)
+
+**COMPLETED/PASS_METADATA_PREFLIGHT.** Actual user-supplied `RMIL-02A_results_for_review.zip` independently CRC+all 9 declared file SHA PASS; received ZIP SHA256 `fbabf2840be680d62c636f86af5e4bb1cc87a3c6c2619fe875d0dfca6008520f`. Kaggle CPU preflight on frozen **358 Studies/2006 Series/66430 native Slices**, **0 issues**, DICOM sample decode PASS, ~11.254min header survey. Actual K full Series: 4 **2006**, 16 **1924**, 24 **1513**, 32 **516**. Real unique windows K4 **8024**, K16 **31838**, K24 **45472**, K32 **53532**. **Recommended first mean-only K16 vs K24**, K32 conditional: 1490/2006 Series cannot fill K32. Verified legacy K4 centers exactly fit **`round(linspace(.1*(N-1),.9*(N-1),4))` for all 2006 Series** (metadata indices only; orientation/pixel parity still NOT verified).
+
+**Disk:** 66430×224² uint8 single-channel = **3.104277GiB** pixel bytes; projected *future cache peak* **4.633149184GB decimal**, safely under project **14.0GB all-working-files cap** (runtime effective remaining **13.983781468GB**). This is a budget eligibility projection, not actual generated image-cache bytes. **No new pixel cache created; no new GPU/Gold AUROC results.** The original K4 image transform parity is a HARD GATE.
+
+**NEXT = RMIL-02B0 (prepared, not executed),** `RMIL-02B0_K4_Pixel_Parity_Probe_CPU.ipynb`, local SHA256 `0bf941097a3bdd5db04b4093f6dfe7e853127b5704011db5cbe98251a209804c`: same two Kaggle inputs, CPU only, diagnostic sample comparison for physical order, Crop130, percentiles, normalization and quantization. Only after the actual original R2D-CACHE-01 implementation (preferable) / strict K4 parity is verified may RMIL-02B **358-Study native pixel shards** be built. RMIL-01 is completed and immutable; RMIL-03 after higher K data+shared Attention ablation. Details: [RMIL-02A completed metadata and K feasibility audit](RMIL-02A_COMPLETED_METADATA_AUDIT_2026-10-10.md).
+
+---
+
+**Current user choice:** for the modest 358-study run, keep original **fresh native pixel cache** plan; **do not complicate RMIL-02B with old DINO/EXP cache reuse**. Historical reuse discussion below is superseded by this direct new-cache approach.
+
+---
+
 ## 2026-10-10 — DINO 2.5D historical-cache REUSE PRIORITY before RMIL-02B
 
 The user identified many past DINO EXP 2.5D cache artifacts. **Do not rebuild every pixel blindly.** [Asset-level reuse criteria and SSHAs](RMIL_02_03_NATIVE_WINDOW_CONTROLLED_PROTOCOL_2026-10-10.md): Exp16B/Exp59 full-MRI DINO **features** are not image pixels, but previously discussed Exp61 Top24/Tail8 raw 3-slice uint8 224px **image** caches may exist (current mounted slugs/files/checksums NOT YET independently verified). SS01 completed full 819078-train-Slice DICOM inventory, full Study/Series metadata; reuse SS01 manifest (pinned `315e6443bb2c58d29981b17f92086f35b48a2dfb8bc6ee53bc65000a69bdd1eb`) if available rather than rerun global 66-minute CPU header audit. SS07 Uniform K96 HDF5 is selected single-Slice, not necessarily actual triplets for all Series.
