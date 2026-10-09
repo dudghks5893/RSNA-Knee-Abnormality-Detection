@@ -1,6 +1,6 @@
 # RSNA Knee — Current Handoff / New Chat Cold Start
 
-최종 업데이트: **2026-10-08**
+최종 업데이트: **2026-10-09**
 
 이 문서는 새 ChatGPT 채팅에서 **현재 프로젝트를 잘못된 과거 상태로 되돌리지 않고 즉시 이어가기 위한 최우선 인수인계 문서**다.
 
@@ -32,6 +32,20 @@ README와 Specialist / 구 5-Fold 문서의 오래된 "현재", "NEXT", "진행 
 
 
 ---
+
+## 2026-10-09 — R3D-13V4-DDP 학습 완료/PASS; NEXT R3D-14V4 standalone
+
+**Current R3D lane status supersedes previous pending R3D-13V4 text below.** User provided full Kaggle actual GPU log and results summary. `PASS_EARLY_STOP` **after max 10/10 completed epochs** (patience3 also reached at E10); not an early truncation. 2 T4 GPUs truly ran NCCL DDP, global study batch4, per-GPU series microbatch4, accumulation2. Full 4,349 report-only study train split, Gold58 held out for validation; 1,088 optimizer updates/epoch.
+
+- **Best E7** Gold58 Macro AUROC **0.6802269985**, AUPRC **0.5521237806**; **125.7 minutes** total worker wall. E10 Macro AUROC **0.6778965415**. Best saved `best.pt` from E7; E10 is `last.pt`.
+- Best Gold58 per-target: Effusion .9118, Lateral OA .8046, Lateral Meniscus .7752; **MCL .4195**, Fracture .5583. At fixed 0.5 threshold six targets have sensitivity 0: ACL/MCL/Lateral Meniscus/Lateral OA/Contusion/Fracture. Don't equate score ranking with binary threshold; Gold58 is **not independent**.
+- Input SHA and data checks passed in Kaggle; output log reported best.pt, last.pt and `R3D-13V4-DDP_results.zip` at `/kaggle/working/R3D-13V4-DDP/`; **ZIP excludes .pt**; checkpoint bytes/ZIP have not yet been supplied for independent audit.
+- Run config SHA `78a258125c3fd20fddee55253cd1d3c8be065e48bb4f5071a5020dd6f8b896f5`.
+- **NEXT: R3D-14V4 standalone hidden-test Kaggle submission.** First preserve model E7 checkpoint; verify ZIP + checkpoint or notebook published output; build matching ALL/Crop130/D24x96x96 full MRI hidden-test preprocess + 12-target predict + submission.csv. Submit standalone and compare external LB to Exp57=0.918. Do not start a further V4 tuning cycle or infer LB from Gold58. LABEL-V6 remains an independent concurrent workflow, not finalized in this R3D lane.
+- Historical pending text lower in this handoff reflects status at the time; this update takes precedence.
+
+---
+
 
 # 1. 지금 무엇을 하고 있는가
 
