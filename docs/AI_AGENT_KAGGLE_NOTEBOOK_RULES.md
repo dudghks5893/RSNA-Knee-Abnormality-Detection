@@ -901,3 +901,15 @@ README에 current status가 있으면
 - For controlled trials, separate **MEAN K variation** from **MEAN vs shared Attention at the same K**; only after that, separate shared Attention vs disease-specific Window Attention vs disease-specific Window+Series Attention. Use common train300/Gold58 source manifests (Gold development only), pretraining SHA, seed/budget, and target metrics.
 - CPU only for DICOM extraction/cache building; GPU T4×2 only for model training on released, auditable persisted cache. If preprocessing/runtime data are not verifiable, fail-fast or explicitly mark `BLOCKED`; do not claim completion.
 - Approved detailed procedure: [RMIL-02/03 native Window protocol](RMIL_02_03_NATIVE_WINDOW_CONTROLLED_PROTOCOL_2026-10-10.md).
+
+---
+
+# 29. Kaggle saved Output 20GB limit and RMIL cache safety (2026-10-10)
+
+- Kaggle docs: `/kaggle/working` **up to 20GB preserved output**. Project rule: do not let the **sum of all files in `/kaggle/working` exceed 14.0GB decimal**. The remaining ~6GB is safety margin; it is NOT permitted unused scratch from which to save additional multi-GB data.
+- Count existing output before preprocessing/training; check physical free space independently with at least 2GB reserve. Use the minimum of both budgets. File system `disk_usage.free` alone is insufficient to enforce Kaggle output quota.
+- Estimate actual Slice count × 224×224 uint8 × 1 channel, add +30% overhead and 300MB for staging/metadata. Do not rely on compression to fit. If estimate exceeds capacity, fail early and split output across separately versioned notebook outputs / datasets (respecting Kaggle dataset version/mount rules) or reduce representation.
+- Cache in 256–512MB independent validated shards; **recheck available output bytes immediately before every shard**; write temp, SHA-check, atomically rename. Preserve completed shards and a useful status manifest if write must stop.
+- Do not create K16/K24/K32 duplicate pixel caches or copy a large cache into a results ZIP in the same `/kaggle/working`. Save metadata-only review ZIP; persist canonical compressed or uncompressed shards directly with manifest/SHA. `/kaggle/tmp` is ephemeral; output intended for reuse must be under persistent output or a registered input Dataset.
+- RMIL-02A records `disk_budget.json` and **does not construct new 224px image pixels**. Prepared disk-safe `RMIL-02A_Native_Slice_Preflight_DiskSafe_CPU.ipynb`, SHA256 `1516660b1d413aa384a193122593aad21d057832c4405a64be9d9e9e973204dd`; Kaggle runtime verification pending.
+- Detailed [RMIL-02/03 disk/output policy](RMIL_02_03_NATIVE_WINDOW_CONTROLLED_PROTOCOL_2026-10-10.md).
