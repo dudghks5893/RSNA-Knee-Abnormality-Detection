@@ -1,6 +1,16 @@
 # RSNA Knee — Current Handoff / New Chat Cold Start
 
 
+## 2026-10-10 — LATEST RMIL-01 COMPLETION / NEXT = RMIL-02 (SUPERSEDES OLDER RMIL-01 INSTRUCTIONS BELOW)
+
+**State:** RMIL-01 completed Kaggle Account A T4×2: GPU0 MEAN 0.5763704369 Gold58 macro AUROC / 0.4507296488 AUPRC (best E4, 7 epochs); GPU1 shared window ATTN 0.5442963023 / 0.4158921311 (best E3, 6 epochs). Attn−Mean **−0.0320741346 AUROC**, 4/12 target improvements, 8/12 losses; especially MCL −0.263039 (only 9 Gold positives). Both worker logs report zero return code and Kaggle smoke PASS; received review ZIP **43 entries, 38 artifact SHA verified, CRC PASS**, ZIP SHA256 `0642f2363003031a9e88c5f5c3e759bb16e95a45eb278d740f0ed204cf26449f`. Checkpoint binary and Gold label source absent, so no independent checkpoint-byte/ground-truth score recomputation. [Detailed audit/target table](RMIL-01_COMPLETED_AUDIT_2026-10-10.md).
+
+**DECISION:** keep 4-window MEAN as controlled baseline. This shared attention experiment is not promoted. **IMMEDIATE NEXT: RMIL-02 (PLANNED, NOT RUN)**: CPU-only expanded actual Slice candidate cache (16/24/32 per Series) with QA, geometry/coverage and persistent artifact budget. Compare window count separately from selection policy; subsequent paired GPU ablations only once cache contract is verified. **RMIL-03** disease-specific MIL separately later. No Gold58 target-winner oracle policy.
+
+**Locked constraints:** Train300/Gold58 reused development, Exp57 Public LB **0.918** unchanged. Final C1 2.5D / C2 2D+2.5D / C3 2D+2.5D+3D are still unselected; 3/5-Fold and Exp57 blending deferred. LABEL-V6 candidate not canonical until release QA. The older RMIL-01 'UNEXECUTED' below is historical and explicitly superseded by this section. Rules: [RMIL plan](RMIL_FINAL_ARCHITECTURE_AND_EXPERIMENT_PLAN.md), [Notebook rules](AI_AGENT_KAGGLE_NOTEBOOK_RULES.md).
+
+---
+
 ## 2026-10-10 — LATEST COLD-START / OVERRIDES PRIOR HANDOFF ITEMS BELOW
 
 **New project lane: RMIL (new numbering, `EXP-01` already used).** The next job is the **UNEXECUTED** `RMIL-01` ResNet34 2.5D **MEAN vs learned Window Attention** controlled test. Detailed order, all three *unselected* final model candidates and exact Kaggle inputs: [RMIL_FINAL_ARCHITECTURE_AND_EXPERIMENT_PLAN.md](RMIL_FINAL_ARCHITECTURE_AND_EXPERIMENT_PLAN.md).
