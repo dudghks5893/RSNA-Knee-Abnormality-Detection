@@ -1,5 +1,15 @@
 # RSNA Knee Abnormality Detection — Experiment Log
 
+## 2026-10-10 — Latest: RMIL-01 completed, RMIL-02 CPU preflight NEXT
+
+**RMIL-01 actual received Kaggle artifacts AUDITED:** GPU0 MEAN Gold58 macro AUROC **0.57637044** / AUPRC **0.45072965**; GPU1 4-window shared ATTN **0.54429630** / **0.41589213**. Both workers PASS; review ZIP CRC and all 38 declared artifact SHA values verified. Attention − Mean **−0.03207413 AUROC**; MEAN is maintained as the controlled baseline. **Gold58 is reused development validation, not Public LB**. Details: [RMIL-01 completed audit](docs/RMIL-01_COMPLETED_AUDIT_2026-10-10.md).
+
+**CURRENT NEXT (planned, unexecuted):** RMIL-02 CPU-only actual Slice / window coverage 16/24/32 candidate cache preprocessing+SHA preflight. Separate count and selection-policy ablations; hold backbone/splits/training constant in later GPU work. RMIL-03 target-specific attention separately later. [Architecture/experiment plan](docs/RMIL_FINAL_ARCHITECTURE_AND_EXPERIMENT_PLAN.md).
+
+**Final architecture still OPEN:** C1 2.5D / C2 2D+2.5D / C3 2D+2.5D+3D. 3/5-Fold and Exp57 blend DEFERRED; project-best Public LB remains **Exp57 0.918**. Historical RMIL-01 next instructions below are superseded.
+
+---
+
 ## 2026-10-10 — Current active RMIL lane (supersedes older NEXT sections below)
 
 **Project-best Public LB remains Exp57 = 0.918**, 3-Fold B3A + 3-Fold Full-MRI Direct 70:30. Completed standalone R3D-14V4 = user-reported Public LB 0.689; 11 recent R3D/R2D/RDINO Train300 Gold58 pilots have **no Public LB**.
