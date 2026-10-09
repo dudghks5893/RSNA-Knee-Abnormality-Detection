@@ -1,6 +1,12 @@
 # RMIL — High-Score Architecture Candidates & Next Experiments
 
-Updated: **2026-10-10**. **Status: PLAN / NOT YET SELECTED.** This is the new forward-looking imaging-model plan. Existing numbering `EXP-01` is occupied; use **RMIL-01..06**. This does not rename or invalidate previous R2D, RDINO, R3D, SS, Exp57 histories.
+Updated: **2026-10-10**. **Status: C1/C2/C3 NOT YET SELECTED; RMIL-01 COMPLETED; RMIL-02 NEXT (PLANNED).** This is the new forward-looking imaging-model plan. Existing numbering `EXP-01` is occupied; use **RMIL-01..06**. This does not rename or invalidate previous R2D, RDINO, R3D, SS, Exp57 histories.
+
+## 2026-10-10 — RMIL-01 actual result (supersedes original execution instructions below)
+
+**COMPLETED/AUDITED.** [RMIL-01 artifact audit and 12-target comparison](RMIL-01_COMPLETED_AUDIT_2026-10-10.md): MEAN Gold58 macro AUROC **0.5763704369**, macro AUPRC **0.4507296488**, best epoch4/7 total; shared 4-window ATTN AUROC **0.5442963023**, AUPRC **0.4158921311**, best epoch3/6 total. ATTN − MEAN **−0.0320741346 AUROC**, **−0.0348375177 AUPRC**, 4/12 targets up, 8/12 down. Received review ZIP CRC and all **38 declared internal SHA-256 entries verified**; ZIP SHA `0642f2363003031a9e88c5f5c3e759bb16e95a45eb278d740f0ed204cf26449f`. No binary checkpoints or raw Gold labels inside review ZIP. This is reused development Gold58, not Public LB.
+
+**Decision:** preserve 4-window uniform MEAN as comparator; reject promotion of this *shared scalar* ATTN under current conditions, without claiming target-specific attention cannot work. **RMIL-02 is NEXT, not yet executed**; CPU-first high-coverage actual Slice cache experiment, keep number of candidate windows and selection policy as separate axes. RMIL-03 still unexecuted. C1/C2/C3, 3-/5-Fold, Exp57 blend remain undecided/deferred. Exp57 best Public LB remains 0.918.
 
 ## Absolute anchors and honesty
 
@@ -35,9 +41,9 @@ Updated: **2026-10-10**. **Status: PLAN / NOT YET SELECTED.** This is the new fo
 | **RMIL-05** | Does 2D add complementarity to 2.5D? | Add **2D only** to strong 2.5D, analyze target OOF and prediction/error correlations, conservative late fusion before learned gating. | OOF gain reproducible and inference benefit sufficient |
 | **RMIL-06** | Is 3D worth its cost? | Only run if unresolved targets and clean evidence; standalone 3D target-specific complementarity + inference budget. | Repeated net gain; else discard 3D |
  
-Do **not** mark RMIL-01 completed until actual Kaggle Save & Run All results and output ZIPs are audited. Notebook is a prepared artifact only.
+**RMIL-01 IS COMPLETED** following actual Kaggle Save & Run All and received artifact ZIP audit on 2026-10-10. The original notebook is an executed artifact; only RMIL-02+ remain proposed.
 
-## RMIL-01 actual Kaggle execution contract
+## RMIL-01 executed Kaggle contract (historical reproduction information)
 
 - Notebook: `RMIL-01_R34_25D_Mean_vs_WindowAttention_T4x2.ipynb` (delivered as user artifact, not necessarily Git committed).
 - **A account**, accelerator **T4 x2**, Internet **OFF**, **Save & Run All**. GPU0 MEAN, GPU1 ATTN (both identical 2.5D).
@@ -60,5 +66,5 @@ Do **not** mark RMIL-01 completed until actual Kaggle Save & Run All results and
 
 1. Read **this document** for future architecture / RMIL next action.
 2. Read [completed pilot evidence](R2D_RDINO_R3D15_COMPLETED_AUDIT_2026-10-10.md), [Experiment History](EXPERIMENT_HISTORY.md), [Agent Rules](AI_AGENT_KAGGLE_NOTEBOOK_RULES.md), and the historical [Current Handoff](CURRENT_HANDOFF.md).
-3. If RMIL-01 has not been actually run, execute the provided Notebook on A Kaggle T4×2 and review result ZIP; do not invent completed metrics.
-4. Continue RMIL-02 only after RMIL-01 findings; do not start 3/5-Fold or Exp57 ensemble by default.
+3. RMIL-01 has already completed. Read [RMIL-01 completed audit](RMIL-01_COMPLETED_AUDIT_2026-10-10.md); do NOT rerun it by default.
+4. Proceed to RMIL-02 CPU-only candidate-cache design/preflight; do not assume dataset exists or training has run. Do not start 3/5-Fold or Exp57 ensemble by default.
