@@ -1,6 +1,21 @@
 # RSNA Knee — Experiment History
 
 
+## 2026-10-10 — RMIL-01 MEAN vs shared Window ATTN: COMPLETED / AUDITED
+
+**Evidence:** actual user-supplied Kaggle output `RMIL-01_results_for_review.zip` (SHA256 `0642f2363003031a9e88c5f5c3e759bb16e95a45eb278d740f0ed204cf26449f`), copied Kaggle execution log. Archive CRC PASS, 43 entries, **38 listed SHA-256 artifacts recomputed PASS**; both workers show GPU smoke PASS and returncode 0. Gold58 and original checkpoints are not included in the ZIP; reported checkpoint digests are log-based rather than independently hashed. All reported epoch macro scores are internally consistent with 12-target metric rows. No public submission for either arm.
+
+| Variant | Gold58 macro AUROC | Gold58 macro AUPRC | Best epoch | Completed epochs | Worker train minutes | Decision |
+|---|---:|---:|---:|---:|---:|---|
+| RMIL-01-MEAN (GPU0) | **0.5763704369** | **0.4507296488** | 4 | 7 | 9.2375 | RETAIN as comparator |
+| RMIL-01-ATTN (GPU1) | 0.5442963023 | 0.4158921311 | 3 | 6 | 8.0111 | NOT PROMOTED |
+
+**ATTN − MEAN:** AUROC **−0.0320741346**, AUPRC **−0.0348375177**; 4 of 12 target AUROCs improved and 8 worsened. MCL −0.263039 (9 positives); Lateral OA +0.119923 (11 positives). No robust target-wise policy may be inferred from reused Gold58. Shared scalar attention weights changed from zero-init (best E3 weight norm ~0.016846), which does not prove clinically useful attention. Mean reproduces earlier R2D-SHARED-A-25D to quoted precision. This comparison varied pooling only on the same cache and pretrained backbone.
+
+**Next experiment planned (not completed):** RMIL-02 CPU-only higher-coverage 16/24/32 actual Slice candidate cache audit, then controlled number-of-windows/sampling ablations with MEAN comparator. RMIL-03 target-wise Window/Series attention remains separate. C1/C2/C3 unselected; 3/5-Fold + Exp57 fusion deferred. Full [RMIL-01 audit and 12 target breakdown](RMIL-01_COMPLETED_AUDIT_2026-10-10.md); [current plan](RMIL_FINAL_ARCHITECTURE_AND_EXPERIMENT_PLAN.md).
+
+---
+
 ## 2026-10-10 — R2D-SHARED / RDINO-01 / R3D-15 11 Train300 pilots: ALL COMPLETED AND AUDITED
 
 **Data:** User-provided 11 original review ZIPs, all recorded file SHA-256 verified and 12 target metrics present. **Gold58 development AUROC, not Public LB**; full checkpoints not included in review ZIPs. See [exact 11-model audit, best Epoch, target-wise evidence and input contracts](R2D_RDINO_R3D15_COMPLETED_AUDIT_2026-10-10.md).
@@ -21,7 +36,7 @@
 
 **Important limitations:** Input Series volume/resolution is different between 3D and 2.5D; Gold58 was reused; target-wise cherry-picking can overfit. The recent pilots strongly suggest evaluating denser windows and window pooling but do not establish that 2.5D universally wins. DINOv2 Large/Giant scaling not justified by this pilot. Two RDINO V1 notebooks encountered a pre-training `scale` NameError; **RDINO V2 completed successfully** and is recorded here.
 
-**RMIL-01 is a NEW, UNEXECUTED proposal**, not yet part of completed Experiment History. Detailed future plan is [RMIL architecture candidates](RMIL_FINAL_ARCHITECTURE_AND_EXPERIMENT_PLAN.md).
+**Update after the 11-pilot audit:** RMIL-01 was subsequently executed, received and audited on 2026-10-10. See the new RMIL-01 completion entry above and [completed audit](RMIL-01_COMPLETED_AUDIT_2026-10-10.md).
 
 ---
 
