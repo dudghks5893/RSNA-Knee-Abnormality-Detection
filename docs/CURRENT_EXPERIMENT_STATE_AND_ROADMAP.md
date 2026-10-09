@@ -1,6 +1,19 @@
 # RSNA Knee — Current Experiment State & Roadmap
 
-최종 업데이트: **2026-10-08**
+
+## 2026-10-10 — CURRENT ACTIVE WORK: RMIL-01 Window Pooling (supersedes all older future tasks below)
+
+**Immediate next:** `RMIL-01`, controlled **2.5D R34 MEAN vs learned Window Attention**, Train300/Gold58, frozen shared 224×224 cache, T4×2, Internet OFF. Notebook prepared, **no Kaggle results yet**. Existing `EXP-01` name already occupied. GPU0=MEAN / GPU1=ATTN. Zero-init attention = initial Mean; only pooled feature selection changes. Read [RMIL experiment contract & architecture candidates](RMIL_FINAL_ARCHITECTURE_AND_EXPERIMENT_PLAN.md) FIRST.
+
+**New active research order:** RMIL-01 pooling → RMIL-02 high-coverage actual Slice cache → RMIL-03 target-specific Window+Series Attention → RMIL-04 full4349 single expert and standalone LB → RMIL-05 optional 2D complementary expert → RMIL-06 optional 3D complementary expert.
+
+**Three UNDECIDED final configurations:** C1 **one 2.5D target-aware MIL CNN**, C2 **2D+2.5D**, C3 **2D+2.5D+3D** (3D contingent on independent gain). **No committed 3/5-Fold or Exp57 ensemble**, since >10 models could be inefficient. Exp57 **Public LB 0.918** preserved as benchmark, not mandatory part of final. V6 label candidate not canonical until audited.
+
+**Recently completed and now logged:** R2D-SHARED 4, RDINO-01 4, R3D-15 3 (11 actual results); see [full 11 ZIP SHA audit and metrics](R2D_RDINO_R3D15_COMPLETED_AUDIT_2026-10-10.md). Most favorable Train300/Gold58 score R2D-SHARED-A-25D AUROC **0.57637044**, not comparable to Exp57 Public LB 0.918. R3D-14V4 standalone user-reported Public LB **0.689** also completed; earlier below-text describing R3D-12/R3D-14 as 'NEXT' is historical and superseded.
+
+---
+
+최종 업데이트: **2026-10-10**
 
 이 문서는 **현재 상태와 다음 작업만 기록하는 기준 문서**다.
 오래된 계획/상태를 아래에 누적하지 않는다.
