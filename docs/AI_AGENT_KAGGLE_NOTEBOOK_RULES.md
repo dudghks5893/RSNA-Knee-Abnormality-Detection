@@ -1,6 +1,6 @@
 # AI Agent Rules — Kaggle Notebook Delivery
 
-최종 업데이트: **2026-10-08**
+최종 업데이트: **2026-10-10**
 
 이 문서는 RSNA Knee 프로젝트에서 AI Agent가 사용자에게 Kaggle Notebook을 설계/작성/수정해서 전달할 때 반드시 따라야 하는 규칙이다.
 
