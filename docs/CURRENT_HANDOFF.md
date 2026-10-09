@@ -1,6 +1,12 @@
 # RSNA Knee — Current Handoff / New Chat Cold Start
 
 
+## 2026-10-10 — Nested selector freeze BEFORE K training
+
+**Important correction:** RMIL-02A individual uniform K4/K16/K24/K32 center arrays are *not nested*; they are for feasibility/geometry audit, not a clean pure-addition K experiment. Use new `NESTED_LEGACY_ANCHORED_FARTHEST_POINT_V2`: old K4 anchor centers + deterministic furthest-center additions, K16 prefix retained in K24, K24 retained in K32. Preserve valid center masks; compare same-K pooled variants on bit-identical arrays; first audit original K4 physical ordering/pixel parity. See [source experiment protocol](RMIL_02_03_NATIVE_WINDOW_CONTROLLED_PROTOCOL_2026-10-10.md).
+
+---
+
 ## 2026-10-10 — LATEST VERIFIED RMIL-02A / NEXT RMIL-02B0 PIXEL PARITY
 
 ## 2026-10-10 — RMIL-02A ACTUAL RESULTS VERIFIED (supersedes previous 'unexecuted 02A' below)
