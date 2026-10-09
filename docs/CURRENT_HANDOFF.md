@@ -1,6 +1,14 @@
 # RSNA Knee — Current Handoff / New Chat Cold Start
 
 
+## 2026-10-10 — DINO 2.5D historical-cache REUSE PRIORITY before RMIL-02B
+
+The user identified many past DINO EXP 2.5D cache artifacts. **Do not rebuild every pixel blindly.** [Asset-level reuse criteria and SSHAs](RMIL_02_03_NATIVE_WINDOW_CONTROLLED_PROTOCOL_2026-10-10.md): Exp16B/Exp59 full-MRI DINO **features** are not image pixels, but previously discussed Exp61 Top24/Tail8 raw 3-slice uint8 224px **image** caches may exist (current mounted slugs/files/checksums NOT YET independently verified). SS01 completed full 819078-train-Slice DICOM inventory, full Study/Series metadata; reuse SS01 manifest (pinned `315e6443bb2c58d29981b17f92086f35b48a2dfb8bc6ee53bc65000a69bdd1eb`) if available rather than rerun global 66-minute CPU header audit. SS07 Uniform K96 HDF5 is selected single-Slice, not necessarily actual triplets for all Series.
+
+Top24 **per Study** cannot replace K16/24/32 **per Series**; legacy DINO preprocessing normalization/laterality and RMIL K4 pixel values need exact parity tests. Preferred workflow: reuse inventory + verified matching source windows, build only missing frozen 358-Study native slices in disk-capped single-channel shards. Rough uncompressed estimate from full-train average ~3.11GiB, not actual subset measure. RMIL-02A disk-safe metadata preflight still next; RMIL-02B blocked pending K4 pixel parity and available physical output. No new experiment result.
+
+---
+
 ## 2026-10-10 — RMIL-02 disk quota guard / NEW CPU notebook revision
 
 **Before RMIL-02B cache generation:** Official Kaggle Notebook saved output `/kaggle/working` limit documented **20GB**. Strict project cap **14.0GB decimal across ALL working files** (not per-shard), with physical disk free-space reserve ≥2GB and lower effective budget if runtime reports less. Precompute actual native 224px Slice×1channel bytes plus 30% overhead+300MB; reject/split over-budget jobs. Store one-channel slices once; avoid K16/24/32 copies or whole-cache ZIP. Limit shard size ~256–512MB and recheck saved-output + physical free budget immediately before EACH shard, temporary write+SHA+atomic rename. Larger `/kaggle/tmp` scratch is **not persistent**. RMIL-02A revised notebook **`RMIL-02A_Native_Slice_Preflight_DiskSafe_CPU.ipynb`** SHA256 `1516660b1d413aa384a193122593aad21d057832c4405a64be9d9e9e973204dd`, adds `disk_budget.json`, syntax/nbformat valid, **NOT YET run**; prior notebook revision superseded. See [detailed quota rules](RMIL_02_03_NATIVE_WINDOW_CONTROLLED_PROTOCOL_2026-10-10.md).
