@@ -33,6 +33,19 @@ README와 Specialist / 구 5-Fold 문서의 오래된 "현재", "NEXT", "진행 
 
 ---
 
+## 2026-10-09 — R3D-14V4 USER-REPORTED PUBLIC LB 0.689; prioritize diagnosis and LABEL-V6
+
+User reports actual scored standalone R3D-14V4 submission **Public LB=0.689** (leaderboard record not independently queried). E7 Gold58 Macro AUROC **0.6802269985**, delta **+0.008773**; Exp57 **Public LB=0.918** remains project-best, delta **-0.229**. Do not confuse Gold score and LB populations or imply close values prove perfect generalization.
+
+This is an underperforming **completed baseline**, not a case for immediate 3/5fold or LR/batch optimization. R3D was single Main MedicalNet R34, ALL Series, Crop130, interpolated D24×96×96, GLOB token per Series + metadata → CLS Transformer →12, V4 routed broad soft/conf labels; Gold58 non-independent reused validation. Most plausible **testable** contributors are full-Series spatial/depth compression and global token information loss (especially tiny tears/fractures), V4 label-severity mismatch and pseudo noise, and controlled-model-vs-Exp57 multiple differences (DINO/3slice windows + Top24 + Direct branches + 3fold). Do **not** assert causal diagnosis without ablation. Logged Gold AUC targets: Effusion .9118, MCL .4195, Fracture .5583. Six targets had 0 sensitivity at 0.5 threshold, which is not same as 0 AUROC.
+
+**Next diagnostic:** get `R3D-13V4-DDP_results.zip` / `gold58_predictions_best.csv` / metrics, `R3D-14V4/submission_audit.json`, Kaggle scoring outcome; verify raw Gold58 DICOM→current submission V2 preprocessing→checkpoint predictions agree with cached training Gold58 predictions, target and UID order; audit V4 class proxies / report evidence by target; check MedicalNet R34 missing pretrained keys. No need to rerun full model or cache.
+
+**Parallel:** finish 87 LABEL-V6 chunks, independent Astra review, freeze release. Controlled **single** R3D-13V6 replay after release may isolate *label-change effect*, but structural bottleneck would remain. For top LB prefer planning LABEL-V6 on established Exp57 DINO/MIL path, with fair split and Gold leakage controls. Keep R3D weights/results for reproducibility and possible future targeted complementary study; do not promise that V6 or blend restores 0.918.
+
+---
+
+
 ## 2026-10-09 — R3D-13V4-DDP 학습 완료/PASS; NEXT R3D-14V4 standalone
 
 **Current R3D lane status supersedes previous pending R3D-13V4 text below.** User provided full Kaggle actual GPU log and results summary. `PASS_EARLY_STOP` **after max 10/10 completed epochs** (patience3 also reached at E10); not an early truncation. 2 T4 GPUs truly ran NCCL DDP, global study batch4, per-GPU series microbatch4, accumulation2. Full 4,349 report-only study train split, Gold58 held out for validation; 1,088 optimizer updates/epoch.
