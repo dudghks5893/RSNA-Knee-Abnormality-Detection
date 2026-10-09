@@ -1,6 +1,31 @@
 # RSNA Knee — Experiment History
 
-최종 업데이트: **2026-10-09**
+
+## 2026-10-10 — R2D-SHARED / RDINO-01 / R3D-15 11 Train300 pilots: ALL COMPLETED AND AUDITED
+
+**Data:** User-provided 11 original review ZIPs, all recorded file SHA-256 verified and 12 target metrics present. **Gold58 development AUROC, not Public LB**; full checkpoints not included in review ZIPs. See [exact 11-model audit, best Epoch, target-wise evidence and input contracts](R2D_RDINO_R3D15_COMPLETED_AUDIT_2026-10-10.md).
+
+| Experiment | Model/input | Gold58 AUROC | AUPRC | Best Epoch |
+|---|---|---:|---:|---:|
+| R2D-SHARED-A-25D | MedicalNet-deflated ResNet34 2.5D | **0.57637044** | 0.45072965 | 4 |
+| R2D-SHARED-A-2D | same R34 2D | 0.56675919 | 0.42439995 | 7 |
+| R2D-SHARED-B-2D | RadImageNet ResNet50 2D | 0.56401818 | 0.42959922 | 10 |
+| R2D-SHARED-B-25D | same R50 2.5D | 0.54585481 | 0.41233657 | 10 |
+| A_RDINO-01-small-25D | DINOv2 Small 2.5D | 0.53745700 | 0.42160187 | 3 |
+| B_RDINO-01-base-25D | DINOv2 Base 2.5D | 0.53659501 | 0.39696317 | 2 |
+| B_RDINO-01-base-2D | DINOv2 Base 2D | 0.53208528 | 0.40460075 | 4 |
+| R3D-15A | 3D R34 local-feature | 0.53149877 | 0.39425334 | 4 |
+| R3D-15B | 3D R34 target-aware | 0.52988099 | 0.40433116 | 5 |
+| A_RDINO-01-small-2D | DINOv2 Small 2D | 0.52820586 | 0.40932126 | 6 |
+| R3D-15B0 | 3D R34 baseline | 0.52780057 | 0.39747513 | 5 |
+
+**Important limitations:** Input Series volume/resolution is different between 3D and 2.5D; Gold58 was reused; target-wise cherry-picking can overfit. The recent pilots strongly suggest evaluating denser windows and window pooling but do not establish that 2.5D universally wins. DINOv2 Large/Giant scaling not justified by this pilot. Two RDINO V1 notebooks encountered a pre-training `scale` NameError; **RDINO V2 completed successfully** and is recorded here.
+
+**RMIL-01 is a NEW, UNEXECUTED proposal**, not yet part of completed Experiment History. Detailed future plan is [RMIL architecture candidates](RMIL_FINAL_ARCHITECTURE_AND_EXPERIMENT_PLAN.md).
+
+---
+
+최종 업데이트: **2026-10-10**
 
 이 문서는 **완료된 실험과 그 결과만 기록하는 기준 문서**다.
 진행 예정 작업과 현재 계획은 [3D_RESNET_EXPERIMENT_PLAN.md](3D_RESNET_EXPERIMENT_PLAN.md)를 따른다.
