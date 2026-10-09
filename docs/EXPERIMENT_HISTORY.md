@@ -1,6 +1,8 @@
 # RSNA Knee — Experiment History
 
 
+> **2026-10-10 research planning note (NOT a completed experiment):** [RMIL-02/03 expanded native-Slice protocol](RMIL_02_03_NATIVE_WINDOW_CONTROLLED_PROTOCOL_2026-10-10.md) approved. RMIL-02A CPU preflight Notebook is prepared but has not run; RMIL-02B cache and any higher-K AUROC are unknown. Historical RMIL-01 results below are immutable. This log otherwise records completed runs.
+
 ## 2026-10-10 — RMIL-01 MEAN vs shared Window ATTN: COMPLETED / AUDITED
 
 **Evidence:** actual user-supplied Kaggle output `RMIL-01_results_for_review.zip` (SHA256 `0642f2363003031a9e88c5f5c3e759bb16e95a45eb278d740f0ed204cf26449f`), copied Kaggle execution log. Archive CRC PASS, 43 entries, **38 listed SHA-256 artifacts recomputed PASS**; both workers show GPU smoke PASS and returncode 0. Gold58 and original checkpoints are not included in the ZIP; reported checkpoint digests are log-based rather than independently hashed. All reported epoch macro scores are internally consistent with 12-target metric rows. No public submission for either arm.
