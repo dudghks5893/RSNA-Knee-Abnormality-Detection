@@ -1,6 +1,14 @@
 # RSNA Knee — Current Experiment State & Roadmap
 
 
+## 2026-10-10 — UPDATED RMIL-02/03 K-VS-ATTENTION PROTOCOL (SUPERSEDES PRIOR NEXT BELOW)
+
+**NEXT = RMIL-02A CPU metadata/geometry/asset preflight ONLY** (prepared Notebook, not run), then **RMIL-02B** native Slice cache creation after K4 parity validation, then **RMIL-02C** K-Mean count test and same-K Mean-vs-shared-ATTN test. DICOM input mount must be confirmed; no new high-res full Slice cache already verified. Old `R2D_SHARED224_V1` contains only 4 windows/Series; existing R3D caches are D24×96, and Exp16B full-MRI feature cache does not store source pixels. Use exact competition path candidates and source asset checks, never global `/kaggle/input` recursive search. **[Full approved plan and uncertainty/QA gates](RMIL_02_03_NATIVE_WINDOW_CONTROLLED_PROTOCOL_2026-10-10.md).**
+
+**Two isolated hypotheses:** K effect from K4/16/24/32 with MEAN constant, and Attention effect in matched *same K* MEAN-vs-shared-ATTN (K24/32 conditional on CPU audit). Preserve K4 legacy input parity. No RMIL-01 rerun. RMIL-03 separate target-window then target-window+Series comparison at chosen K; no unseen results claimed. All C1/C2/C3, fold/blend decisions remain pending; best Public LB Exp57 0.918. Older stale NEXT text below is archived.
+
+---
+
 ## 2026-10-10 — CURRENT ACTIVE WORK: RMIL-02 CPU coverage preflight (overrides old RMIL-01 NEXT below)
 
 **RMIL-01 COMPLETED / AUDITED:** [actual received ZIP/target metrics audit](RMIL-01_COMPLETED_AUDIT_2026-10-10.md). GPU0 MEAN Gold58 AUROC **0.5763704369**, AUPRC **0.4507296488**, best E4; GPU1 shared 4-window ATTN AUROC **0.5442963023**, AUPRC **0.4158921311**, best E3. Differences **−0.0320741346 AUROC**, **−0.0348375177 AUPRC** (ATTN minus MEAN); 4/12 target AUROC improvements, 8/12 declines. Both workers PASS; review ZIP 43 entries, all 38 declared artifact hashes PASS, source ZIP SHA recorded. Checkpoint bytes/Gold58 label manifest absent from ZIP; this is non-independent Gold development validation only. **MEAN retained as comparator**, shared ATTN not promoted.
