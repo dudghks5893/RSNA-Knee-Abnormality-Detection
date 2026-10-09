@@ -886,3 +886,18 @@ CUDA_VISIBLE_DEVICES=1
 
 README에 current status가 있으면
 그 상단 status도 같이 최신화한다.
+
+
+---
+
+# 28. RMIL-02/03 native-Slice CPU→GPU QA extension (2026-10-10)
+
+- RMIL-01 is completed; do not rerun to fill or guess missing results. RMIL-02A `CPU` metadata-only preflight is a separately numbered **planned** step; RMIL-02B image-cache construction must not silently masquerade as completed.
+- K4 historical cache with Series×4 windows is **not a full-native-Slice cache**. Existing resized 3D D24×96 volumes and DINO feature embeddings are not reconstructible 224px source pixels. The new cached pixel source must be independently identified and verified.
+- Exact Kaggle display names and `train_series.csv` and `train_series/<Study>/<Series>/*.dcm` under named competition source must be stated. Check known candidate competition roots with `Path.exists()` only. Do not invent a source Dataset slug, do not search entire Kaggle Input recursively.
+- CPU preflight: physically sort original DICOM geometry; verify Slice orientation, duplicate position, Series UID/Study UID mapping, valid non-padding window counts; distinguish **expected** from **verified** mount and stored image bytes.
+- **Hard K4 parity gate:** retain original selected Slice center-index mapping, physical cropping, clipping/normalization ordering and 224px resizing; require old cache-builder code/contract for byte-level comparison. Rebuilding K4 with a different normalization is not a fair K effect.
+- For K16/24/32 store actual unique usable valid centers and mask; do not mark repeated / padded positions as native Window evidence. Track short Series, plane/position coverage and source provenance.
+- For controlled trials, separate **MEAN K variation** from **MEAN vs shared Attention at the same K**; only after that, separate shared Attention vs disease-specific Window Attention vs disease-specific Window+Series Attention. Use common train300/Gold58 source manifests (Gold development only), pretraining SHA, seed/budget, and target metrics.
+- CPU only for DICOM extraction/cache building; GPU T4×2 only for model training on released, auditable persisted cache. If preprocessing/runtime data are not verifiable, fail-fast or explicitly mark `BLOCKED`; do not claim completion.
+- Approved detailed procedure: [RMIL-02/03 native Window protocol](RMIL_02_03_NATIVE_WINDOW_CONTROLLED_PROTOCOL_2026-10-10.md).
