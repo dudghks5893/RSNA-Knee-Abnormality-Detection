@@ -62,3 +62,9 @@ User approved retesting learned shared Window Attention **at larger native-Slice
 4. **Final C1/C2/C3 architecture still UNDECIDED.** Project best Exp57 **Public LB 0.918** remains unchanged.
 
 See [active RMIL plan](RMIL_FINAL_ARCHITECTURE_AND_EXPERIMENT_PLAN.md), [Experiment History](EXPERIMENT_HISTORY.md), [current handoff](CURRENT_HANDOFF.md).
+
+---
+
+## 2026-10-10 RMIL-02A follow-up status (no change to RMIL-01 results)
+
+RMIL-02A completed CPU metadata survey with 358 studies, 2006 Series, 66430 physically sorted source Slices; no issues. Full K16 1924 Series, full K24 1513, full K32 only 516. Legacy K4 center index formula reproduced for all Series, but pixel preprocessing parity remains unverified. Next diagnostic RMIL-02B0 CPU only before full native pixel cache. [Completed RMIL-02A audit](RMIL-02A_COMPLETED_METADATA_AUDIT_2026-10-10.md). RMIL-01 AUROC comparisons and archives remain unchanged.
