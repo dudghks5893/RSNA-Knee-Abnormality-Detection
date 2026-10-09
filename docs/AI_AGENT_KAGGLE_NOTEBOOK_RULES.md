@@ -913,3 +913,14 @@ README에 current status가 있으면
 - Do not create K16/K24/K32 duplicate pixel caches or copy a large cache into a results ZIP in the same `/kaggle/working`. Save metadata-only review ZIP; persist canonical compressed or uncompressed shards directly with manifest/SHA. `/kaggle/tmp` is ephemeral; output intended for reuse must be under persistent output or a registered input Dataset.
 - RMIL-02A records `disk_budget.json` and **does not construct new 224px image pixels**. Prepared disk-safe `RMIL-02A_Native_Slice_Preflight_DiskSafe_CPU.ipynb`, SHA256 `1516660b1d413aa384a193122593aad21d057832c4405a64be9d9e9e973204dd`; Kaggle runtime verification pending.
 - Detailed [RMIL-02/03 disk/output policy](RMIL_02_03_NATIVE_WINDOW_CONTROLLED_PROTOCOL_2026-10-10.md).
+
+---
+
+# 30. RMIL-02A verified geometry / legacy K4 pixel parity blocker (2026-10-10)
+
+- RMIL-02A actually completed CPU metadata preflight, verified 358 Studies / 2006 Series / 66430 DICOM Slices, zero geometry errors; [full audit](RMIL-02A_COMPLETED_METADATA_AUDIT_2026-10-10.md).
+- Old K4 `series_centers` index formula was independently reproduced across all 2006: `np.rint(np.linspace(.1*(N-1),.9*(N-1),4)).astype(int)`; **do not equate numeric centers with pixel and orientation parity**. New RMIL-02A `uniform_spaced_valid_centers_v1` is a separate policy and cannot substitute for original K4 without an explicit control.
+- RMIL-02B0 CPU **K4 pixel parity diagnostic Notebook** prepared, not executed: `RMIL-02B0_K4_Pixel_Parity_Probe_CPU.ipynb`, SHA256 `0bf941097a3bdd5db04b4093f6dfe7e853127b5704011db5cbe98251a209804c`. It only analyzes plausible interpolation/crop/normalization combinations on a few Series; even full matching on this set does NOT release the entire 358-study cache.
+- The preferred next source is the original R2D-CACHE-01 cache-builder Python/Notebook, if obtainable; require comprehensive K4 byte parity to the SHA-pinned `R2D_SHARED224_V1`, not just sample MAE. If missing, keep the pixel pipeline blocked/diagnostic; never invent a PASS.
+- RMIL-02B new pixel cache must be built from 358-study **original DICOM**, without reusing unrelated old DINO/EXP image caches (user preference). Actual output feasibility: 3.104277GiB raw single-channel data plus overhead estimated peak 4.633149184GB decimal < 14GB safety cap, but recompute per shard before write.
+- At controlled GPU stage compare K16 vs K24 **Mean** first (high K full coverage 95.91% vs 75.42%), then same-K shared Window ATTENTION. K32 optional conditional; K32 full coverage only 25.72%, not automatic. RMIL-03 target-specific later.
