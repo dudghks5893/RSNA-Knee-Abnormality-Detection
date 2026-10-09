@@ -924,3 +924,11 @@ README에 current status가 있으면
 - The preferred next source is the original R2D-CACHE-01 cache-builder Python/Notebook, if obtainable; require comprehensive K4 byte parity to the SHA-pinned `R2D_SHARED224_V1`, not just sample MAE. If missing, keep the pixel pipeline blocked/diagnostic; never invent a PASS.
 - RMIL-02B new pixel cache must be built from 358-study **original DICOM**, without reusing unrelated old DINO/EXP image caches (user preference). Actual output feasibility: 3.104277GiB raw single-channel data plus overhead estimated peak 4.633149184GB decimal < 14GB safety cap, but recompute per shard before write.
 - At controlled GPU stage compare K16 vs K24 **Mean** first (high K full coverage 95.91% vs 75.42%), then same-K shared Window ATTENTION. K32 optional conditional; K32 full coverage only 25.72%, not automatic. RMIL-03 target-specific later.
+
+---
+
+# 31. RMIL-02 K size comparisons require nested center policy
+
+- RMIL-02A `native_k_candidates.jsonl` generated K4/16/24/32 by *independent* uniform linspace; **these lists are nonnested** and therefore not a clean count-only comparison.
+- Before GPU experiments, emit a versioned nested policy `NESTED_LEGACY_ANCHORED_FARTHEST_POINT_V2`: four original K4 indices (subject to physical/pixel parity gate) then successively append valid center furthest from existing centers, lowest-index tie break, and take K prefixes. Freeze SHA, unique center count, Study/Series UIDs, no synthetic padding. Compare K16 Mean vs K24 Mean on exactly nested indices, then same-K Mean vs Attention.
+- If old K4 physical orientation/pixel equality cannot be proven, explicitly STOP rather than claiming a controlled K effect.
