@@ -1,3 +1,5 @@
+> **2026-10-10 ARCHIVED/REFERENCE for R3D-specific plans.** R3D-13V4 full4349 was completed, standalone R3D-14V4 yielded user-reported Public LB 0.689. R3D-15 B0/A/B Train300 were completed and audited. **Current new execution lane is `RMIL-01` Window Mean vs Attention.** Read [RMIL current plan](RMIL_FINAL_ARCHITECTURE_AND_EXPERIMENT_PLAN.md) and [audited pilot results](R2D_RDINO_R3D15_COMPLETED_AUDIT_2026-10-10.md). Do not treat older numbered R3D-15 'future ensemble' sections as active: R3D-15 has already been used for B0/A/B experiments. 3/5-Fold/Exp57 ensemble are deferred, not agreed final architecture.
+
 # RSNA Knee — 3D ResNet Experiment Plan
 
 최종 업데이트: **2026-10-08**
