@@ -1,6 +1,12 @@
 # RSNA Knee — Current Handoff / New Chat Cold Start
 
 
+## 2026-10-10 — RMIL-02 disk quota guard / NEW CPU notebook revision
+
+**Before RMIL-02B cache generation:** Official Kaggle Notebook saved output `/kaggle/working` limit documented **20GB**. Strict project cap **14.0GB decimal across ALL working files** (not per-shard), with physical disk free-space reserve ≥2GB and lower effective budget if runtime reports less. Precompute actual native 224px Slice×1channel bytes plus 30% overhead+300MB; reject/split over-budget jobs. Store one-channel slices once; avoid K16/24/32 copies or whole-cache ZIP. Limit shard size ~256–512MB and recheck saved-output + physical free budget immediately before EACH shard, temporary write+SHA+atomic rename. Larger `/kaggle/tmp` scratch is **not persistent**. RMIL-02A revised notebook **`RMIL-02A_Native_Slice_Preflight_DiskSafe_CPU.ipynb`** SHA256 `1516660b1d413aa384a193122593aad21d057832c4405a64be9d9e9e973204dd`, adds `disk_budget.json`, syntax/nbformat valid, **NOT YET run**; prior notebook revision superseded. See [detailed quota rules](RMIL_02_03_NATIVE_WINDOW_CONTROLLED_PROTOCOL_2026-10-10.md).
+
+---
+
 ## 2026-10-10 — MOST RECENT RESEARCH DECISION: RMIL-02/03 ISOLATED K/ATTN EXPERIMENTS
 
 **APPROVED next workflow; NONE of these future K-expanded experiments has been run.** Full [RMIL-02/03 protocol](RMIL_02_03_NATIVE_WINDOW_CONTROLLED_PROTOCOL_2026-10-10.md). RMIL-01 completed, no rerun. K4 shared ATTN −0.032074 macro AUROC relative to Mean on Gold58; lack of pathology-bearing slices remains a **hypothesis**. RMIL-02A: CPU-only DICOM geometry and source/mount audit; frozen Train300/Gold58/K4 manifest. Cache audit records 358 Studies/2006 Series; 4-window cache cannot recreate 16/24/32. R3D native source counts were 4407 studies, 24371 Series, 819078 raw slices, but existing R3D caches resample to D24×96. Exp16B Full-MRI caches encode **DINO features**, not 224px pixels; specialist TopK windows cannot establish complete native coverage. Official original `train_series/<Study>/<Series>/<SOP>.dcm` is preferred source, after exact root checks.
