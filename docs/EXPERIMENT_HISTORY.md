@@ -13,6 +13,23 @@ Kaggle Notebook 작성 규칙은 [AI_AGENT_KAGGLE_NOTEBOOK_RULES.md](AI_AGENT_KA
 
 ---
 
+## 2026-10-09 — R3D-14V4 E7 Standalone Kaggle Public LB = 0.689
+
+**Evidence:** user-reported official Kaggle submission score, 2026-10-09. No scoreboard screenshot or scorer logs independently inspected. Mark as user-reported, not an independently verified leaderboard fetch.
+
+- Standalone single Main R3D-13V4-DDP E7 best.pt (MedicalNet R34 GLOB+metadata Transformer, 12 outputs, ALL Series, Crop130, interpolated D24×96×96, V4 routed broad soft/conf pseudo labels). No Exp57 blend, no 3/5fold inference.
+- **Public LB = 0.689**. E7 Gold58 model-selection Macro AUROC **0.6802269985**. Absolute difference **+0.0087730015**. Comparable metric definition but different and non-independent evaluation populations; this numerical proximity does not prove no overfit, nor rule out inference parity defects.
+- Best project Public LB remains **Exp57 0.918** (3-Fold B3A+3-Fold Full MRI Direct 70:30); R3D deficit **0.229** absolute. SS08 pure 12-Specialist submission LB **0.876**.
+- V4 best Gold target AUROCs: Effusion **0.911801** strong; Lateral OA **0.804642**; Lateral Meniscus **0.775155**; MCL **0.419501** poor; Fracture **0.558333**, Contusion **0.623482**, ACL **0.645833**. Zero sensitivity at 0.5 threshold for ACL, MCL, Lateral Meniscus, Lateral OA, Contusion, Fracture; threshold behavior is not ROC-AUC.
+- Hypothesis, not confirmed cause: input/architecture bottleneck from resampling a full Series to D24×96×96, 3D conv spatial downsampling followed by global average feature per Series, versus Exp57 high-resolution 3-slice windows + selected Top24 + Full MRI Direct; V4 report-derived pseudo label reliability/competition-severity mismatch; Gold58 repeated small selection reference; fold ensemble/branch differences. One comparison changes **multiple** variables; do not attribute gap to ResNet architecture alone.
+- Counterpoint: training-side validated input/counts and loss scaling plus T4×2 DDP; full 10 epochs with decreasing train loss, Gold AUC plateau E7, public score near Gold. No established catastrophic model-loading or submission-scoring bug. Still audit actual train-cache versus raw reconstruction Gold58 prediction parity before ruling preprocessing out.
+- **Decision:** do not launch R3D 3/5fold, extra epochs, batch-size/LR grid, or blind Exp57+weak-R3D blend. First conduct CPU/short-GPU diagnostics: read saved gold58_metrics/predictions/labels/history, per-target positive vs negative distributions/constant outputs; compare V4 pseudo distributions and independent report evidence to official criterion without treating Gold as untapped test; verify frozen E7 preprocessing on a few Gold studies from raw DICOM matches training cached outputs and Gold58 predictions; inspect actual MedicalNet pretrained loaded/missing keys.
+- Finish LABEL-V6 report-only candidate, independent Astra adjudication, freeze canonical SHA. If scientifically valuing V4→V6 label comparison, conduct **one locked-budget R3D-13V6 replay** (same architecture/seed/crop/epochs/checkpoint selection; only necessary label loss/mask changes) then one standalone LB. V6 may not rescue architectural information loss. If aim is maximizing LB, prioritize applying canonical V6 labels to proven Exp57 DINO/MIL path, preserving fold/Gold leakage boundaries, and test with a planned controlled experiment before other architectural search.
+- Need capture user-provided Kaggle saved version identifier/log or score screenshot and final submission_audit for provenance; no per-target hidden test breakdown is available.
+
+---
+
+
 ## 2026-10-09 — R3D-13V4-DDP Full4349 V4 Broad — ACTUAL KAGGLE TRAINING PASS
 
 **Source:** User-shared complete Kaggle Save & Run All console log and rendered final summary, 2026-10-09. Results ZIP and checkpoint bytes NOT YET independently inspected.
