@@ -1,6 +1,16 @@
 # RSNA Knee — Current Handoff / New Chat Cold Start
 
 
+## 2026-10-10 — MOST RECENT RESEARCH DECISION: RMIL-02/03 ISOLATED K/ATTN EXPERIMENTS
+
+**APPROVED next workflow; NONE of these future K-expanded experiments has been run.** Full [RMIL-02/03 protocol](RMIL_02_03_NATIVE_WINDOW_CONTROLLED_PROTOCOL_2026-10-10.md). RMIL-01 completed, no rerun. K4 shared ATTN −0.032074 macro AUROC relative to Mean on Gold58; lack of pathology-bearing slices remains a **hypothesis**. RMIL-02A: CPU-only DICOM geometry and source/mount audit; frozen Train300/Gold58/K4 manifest. Cache audit records 358 Studies/2006 Series; 4-window cache cannot recreate 16/24/32. R3D native source counts were 4407 studies, 24371 Series, 819078 raw slices, but existing R3D caches resample to D24×96. Exp16B Full-MRI caches encode **DINO features**, not 224px pixels; specialist TopK windows cannot establish complete native coverage. Official original `train_series/<Study>/<Series>/<SOP>.dcm` is preferred source, after exact root checks.
+
+**RMIL-02B gate:** old raw DICOM crop130mm/pct005_995/zscore/clamp5/224 preprocessing exact implementation is absent from GitHub, so pixel-perfect K4 reconstruction is not yet proven. CPU preflight Notebook prepared, not executed; separate full image cache should NOT be claimed built. After preflight/verified parity, materialize single-channel ordered native Slice cache (one pixel slice stored once) and build K4/K16/K24/K32 index + valid masks. First test Mean K, then same-K shared Attention; use T4×2 for isolated GPU lanes ONLY after cache release. K24/32 may be pruned based on measured effective-K/storage/cost.
+
+**RMIL-03:** chosen expanded K: shared Window ATTN → 12-target Window ATTN → 12-target Window + Series ATTN, each comparison isolate a single new attention dimension. Exp57 hierarchical MIL/Top24 and SS05 learned ranks are prior architecture ideas, not accepted proof. Final C1/C2/C3 unselected; 3/5-fold/Exp57 fusion deferred; Gold58 repeatedly used development set. No model selection oracle from 12 Gold target winners.
+
+---
+
 ## 2026-10-10 — LATEST RMIL-01 COMPLETION / NEXT = RMIL-02 (SUPERSEDES OLDER RMIL-01 INSTRUCTIONS BELOW)
 
 **State:** RMIL-01 completed Kaggle Account A T4×2: GPU0 MEAN 0.5763704369 Gold58 macro AUROC / 0.4507296488 AUPRC (best E4, 7 epochs); GPU1 shared window ATTN 0.5442963023 / 0.4158921311 (best E3, 6 epochs). Attn−Mean **−0.0320741346 AUROC**, 4/12 target improvements, 8/12 losses; especially MCL −0.263039 (only 9 Gold positives). Both worker logs report zero return code and Kaggle smoke PASS; received review ZIP **43 entries, 38 artifact SHA verified, CRC PASS**, ZIP SHA256 `0642f2363003031a9e88c5f5c3e759bb16e95a45eb278d740f0ed204cf26449f`. Checkpoint binary and Gold label source absent, so no independent checkpoint-byte/ground-truth score recomputation. [Detailed audit/target table](RMIL-01_COMPLETED_AUDIT_2026-10-10.md).
