@@ -33,6 +33,22 @@ README와 Specialist / 구 5-Fold 문서의 오래된 "현재", "NEXT", "진행 
 
 ---
 
+## 2026-10-09 — NEW CHAT R3D-15 TRAIN300 LOCAL / TARGET ATTENTION — ACTIVE HANDOFF
+
+**Next new chat: read [R3D_15_LOCAL_TARGET_ATTENTION_HANDOFF.md](R3D_15_LOCAL_TARGET_ATTENTION_HANDOFF.md) FIRST.** User-approved rapid controlled **ONE single-model per variant**, **Train=300 V4 Broad report-only pseudo studies**, **Val=all 58 official Gold**, ALL Series, crop130 D24x96x96, MedicalNet R34, no new cache, no 3-/5fold/ensemble. Run **CPU manifest selection audit** first to guarantee all 12 targets have pseudo-positive/pseudo-negative coverage and zero Gold train overlap. Then fair same-300 GLOB baseline B0, local-intermediate-feature A, disease-specific residual attention B, combined C only if worthwhile. Later full4349 for winner prior to standalone LB.
+
+**Actual previously Kaggle-verified inputs:**
+- R3D-12CACHE: `/kaggle/input/rsna-knee-wide224-persistent-cache-v1/r3d12cache_full`
+- V4 Broad: `/kaggle/input/datasets/yhlucas/rsna-knee-v4-consensus-dataset/rsna_knee_pseudolabels_v4_routed_broad.csv`
+- MedicalNet R34: `/kaggle/input/datasets/yhlucas/rsna-knee-r3d-medicalnet-pretrained-v1/resnet_34.pth`
+- Official competition `train.csv`: resolve actual Kaggle competition mount and assert SHA; path variants documented in new handoff.
+- Optional original E7 `best.pt` diagnostic: `/kaggle/input/datasets/yhlucas/rsna-knee-r3d13v4-ddp-best-e7/R3D-13V4-DDP/best.pt`.
+
+R3D-14V4 user-reported standalone Public LB=**0.689**, Gold58 best=**0.6802269985**. Older paragraphs below about R3D-12 cache mount or R3D-13/14 still pending are historical and superseded by actual completed Kaggle records. New active R3D-15 naming supersedes an older **unexecuted** plan that had reserved R3D-15 for ensemble. Source code for original successful R3D-13V4 notebook may require user to attach it in new chat; do not invent an identical model/loss.
+
+---
+
+
 ## 2026-10-09 — R3D-14V4 USER-REPORTED PUBLIC LB 0.689; prioritize diagnosis and LABEL-V6
 
 User reports actual scored standalone R3D-14V4 submission **Public LB=0.689** (leaderboard record not independently queried). E7 Gold58 Macro AUROC **0.6802269985**, delta **+0.008773**; Exp57 **Public LB=0.918** remains project-best, delta **-0.229**. Do not confuse Gold score and LB populations or imply close values prove perfect generalization.
