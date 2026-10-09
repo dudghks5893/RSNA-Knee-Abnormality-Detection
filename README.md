@@ -1,10 +1,16 @@
 # RSNA Knee Abnormality Detection — Experiment Log
 
+## 2026-10-10 — RMIL-02B persistent-output disk budget FIXED
+
+Kaggle Notebook `/kaggle/working` saved-output limit **20GB** (per Kaggle docs); **project strict cap 14.0GB decimal total files**, ≥6GB reserved nominal margin and ≥2GB physical free reserve. RMIL-02A CPU Notebook revision `RMIL-02A_Native_Slice_Preflight_DiskSafe_CPU.ipynb` SHA256 `1516660b1d413aa384a193122593aad21d057832c4405a64be9d9e9e973204dd` now records `disk_budget.json`, compares source Slice storage estimate (+30% overhead +300MB) against budget, and flags impossible single-run builds. RMIL-02B will need independent 256–512MB SHA-checked atomic shards, per-shard byte checks, no repeated K caches and no second full ZIP. **Only metadata preflight Notebook was prepared; no new image cache has been executed/generated.** [Full policy](docs/RMIL_02_03_NATIVE_WINDOW_CONTROLLED_PROTOCOL_2026-10-10.md).
+
+---
+
 ## 2026-10-10 — Active RMIL-02/03 native Window count and Attention protocol
 
 **Confirmed study design**: test MEAN across K4/K16/K24/K32 (K24/32 conditional on CPU feasibility), then at a fixed expanded K compare MEAN vs shared Window Attention; next RMIL-03 sequential target-specific Window and Window+Series Attention. Exp57 Full-MRI hierarchical MIL / selected Top24 / Full-MRI Direct and SS05 disease attention are historical references, not proof of isolated gains.
 
-**Immediate deliverable**: `RMIL-02A_Native_Slice_Asset_and_Geometry_Preflight_CPU.ipynb` created as chat download, JSON/syntax checked, **not executed or uploaded to GitHub**; SHA256 `82fbed65388174bda71ad6c63cf9ac1303cb2a144ae3e91ef3e167d70a29f2d3`. CPU-only original DICOM geometry/count/storage preflight on pinned Train300/Gold58, requiring competition and canonical old K4 dataset. No new high-res Slice cache has been generated. Physical image and original K4 preproc parity are mandatory gates before CPU RMIL-02B and T4×2 training. Original full-native source images cannot be recreated from old D24×96 R3D or Exp16B DINO feature caches.
+**Immediate deliverable**: `RMIL-02A_Native_Slice_Preflight_DiskSafe_CPU.ipynb` created as chat download, JSON/syntax checked, **not executed or uploaded to GitHub**; SHA256 `1516660b1d413aa384a193122593aad21d057832c4405a64be9d9e9e973204dd`. CPU-only original DICOM geometry/count/storage preflight on pinned Train300/Gold58, requiring competition and canonical old K4 dataset. No new high-res Slice cache has been generated. Physical image and original K4 preproc parity are mandatory gates before CPU RMIL-02B and T4×2 training. Original full-native source images cannot be recreated from old D24×96 R3D or Exp16B DINO feature caches.
 
 [Full RMIL-02/03 experimental and source-audit protocol](docs/RMIL_02_03_NATIVE_WINDOW_CONTROLLED_PROTOCOL_2026-10-10.md). **RMIL-01 remains completed**, Gold58 small/reused, Exp57 best Public LB **0.918**. Final C1/C2/C3 unselected, folds/Exp57 blend deferred.
 
