@@ -5,9 +5,9 @@
 **V1 failure:** `FileNotFoundError: <competition>/train_series/<TestStudyUID>/<TestSeriesUID>`. The R3D-12CACHE training function had been copied verbatim with its **training dataset root**; this was an assistant-introduced inference bug. Both workers exited [1,1], no submission.csv. Not a checkpoint, GPU, or DDP failure; no retraining needed.
 
 **V2 fix (rerun pending):**
-- User notebook `R3D-14V4_R34_E7_2GPU_Standalone_Submission_V2.ipynb`, SHA256 `ef7babe2eeb810ec18a8ff194e6d52684491ce01b3e3aded39f3ff4e553973e5`.
+- User notebook `R3D-14V4_R34_E7_2GPU_Standalone_Submission_V2.ipynb`, SHA256 `dc96ca26106be36ffce3d09bbebc75c675890af490af3059e839cc2d2fc614b5`.
 - Worker `R3D-14V4_infer_worker_V2.py`, SHA256 `e90916aec32add9e6582b964ea6d4975b167563f13a5224731855d0537bef6c9`.
-- Package `R3D-14V4_Standalone_Submission_V2_Package.zip`, SHA256 `b824c1d762a248cefa60029476613c02584a64cb655a142d1009bfe02b666f96`.
+- Package `R3D-14V4_Standalone_Submission_V2_Package.zip`, SHA256 `9ddb3d9ca7813195e0e53331ad995c6e8f0a6986116cd5ea8ac81e81359b766e`.
 - **Worker only changed path** `COMP_ROOT/'train_series'/uid/sid` to `COMP_ROOT/'test_series'/uid/sid`. Old/new worker source parity verified otherwise byte-for-byte.
 - Preflight now prefers exact user-provided private checkpoint path. Bounded fallback scan for other account mounts preserved. Added first/last real test-series folder and file presence assertions before starting GPU workers.
 - Model and preprocessing frozen exactly: MedicalNet R34 Main + Transformer / 0.5–99.5 percentile / 130mm crop / float16 D24×96×96; no training, label, model weight, series ordering, score formatting, or 2GPU worker split changes.
