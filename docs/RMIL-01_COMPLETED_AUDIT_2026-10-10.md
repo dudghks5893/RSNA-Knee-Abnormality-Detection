@@ -50,6 +50,10 @@ The MEAN best Macro AUROC reproduces prior `R2D-SHARED-A-25D` 0.57637044 to quot
 
 ATTN improves **4/12** targets (notably Lateral OA) and worsens **8/12**, especially MCL, Effusion and ACL; target-wise cherry-picking on reused Gold58 would be unstable, especially MCL **9 positive** and Lateral OA **11 positive**. AUPRC: 0.450730→0.415892 macro decline; individual deltas are available in the original `RMIL-01_target_delta.csv`.
 
+## Follow-up decision on 2026-10-10 — do not overread four-Window result
+
+User approved retesting learned shared Window Attention **at larger native-Slice candidate counts**; the hypothesis that K4 concealed important pathology-bearing Slices or prevented useful attention discrimination is **plausible but untested**. This does not change RMIL-01 result, completion or numerical audit. RMIL-02 tests **K effect under Mean** then **pooling effect at fixed larger K**; RMIL-03 isolates disease-aware Window then Window+Series attention. K4 pixel parity before K expansion is mandatory. See [approved RMIL-02/03 protocol](RMIL_02_03_NATIVE_WINDOW_CONTROLLED_PROTOCOL_2026-10-10.md).
+
 ## Decision and next step
 
 1. **RMIL-01 CLOSED:** fixed 4-window shared learned ATTN is **not promoted**; MEAN retained as the stronger controlled comparator. Do not claim universal failure of Attention or superiority of uniform pooling for denser / target-specific inputs.
