@@ -53,10 +53,10 @@ Do not choose experts based on these winners: 11 models × 12 targets were inspe
 - **Exp57 Public LB 0.918**, 3-Fold Top24 B3A + Full-MRI Direct 70:30 (strongest available public leaderboard baseline).
 - **SS08 12-specialist-only Public LB 0.876**; pseudo FixedVal 0.9341 did not generalize to hidden test and removing Exp57 Full branch/folds confounds mechanism.
 - **R3D-13V4 full4349 Gold58 0.680227 / Public LB 0.689 (R3D-14V4)**; low resolution and different representation may be bottlenecks; cannot infer causality from one comparison.
-- No recorded RMIL-01 results yet; new experiment is prepared, not run.
+- **Later development note (2026-10-10):** RMIL-01 did subsequently complete; Gold58 K4 MEAN 0.57637044 vs shared ATTN 0.54429630. Details in [RMIL-01 completed audit](RMIL-01_COMPLETED_AUDIT_2026-10-10.md). The older eleven-run table above remains unchanged. Follow-on native K/Attention ablations are PLANNED, see [RMIL-02/03 approved protocol](RMIL_02_03_NATIVE_WINDOW_CONTROLLED_PROTOCOL_2026-10-10.md).
 
 ## Audit details and provenance
 
 Inspected user-provided ZIPs: `R2D-SHARED-A-2D_results.zip`, `R2D-SHARED-A-25D_results.zip`, `R2D-SHARED-B-2D_results.zip`, `R2D-SHARED-B-25D_results.zip`, `A_RDINO-01-small-2D_results.zip`, `A_RDINO-01-small-25D_results.zip`, `B_RDINO-01-base-2D_results.zip`, `B_RDINO-01-base-25D_results.zip`, `R3D-15B0_results.zip`, `R3D-15A_results.zip`, `R3D-15B_results.zip`. For all 11 ZIPs, all recorded file SHA-256 digests matched ZIP entries, and 12 per-target metrics were present. Existing audits confirm 58 unique UIDs, probability validity; full binary checkpoints were not in ZIPs and so were not independently reloaded. No hidden-test Public LB for these 11 pilots.
 
-Recommended next: **[RMIL architecture & roadmap](RMIL_FINAL_ARCHITECTURE_AND_EXPERIMENT_PLAN.md)**.
+Recommended next: **[RMIL-02/03 native Window experiment protocol](RMIL_02_03_NATIVE_WINDOW_CONTROLLED_PROTOCOL_2026-10-10.md)** and **[RMIL architecture & roadmap](RMIL_FINAL_ARCHITECTURE_AND_EXPERIMENT_PLAN.md)**.
