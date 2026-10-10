@@ -945,8 +945,28 @@ README에 current status가 있으면
 
 ---
 
-# 32. Crop physical FOV < 130mm — RMIL-02B V3 requirement
+---
 
-- Actual V2 `RMIL-02B_Native224_SharedCache_CPU.ipynb` Kaggle run FAILED on centered crop assertion `hh<=h and ww<=w` after 358/2006/66430 source audit passed. No verified completed HDF5 shard shown. **V2 must not be marked PASS**. [Audit / V3 handoff](RMIL-02B_V2_FAILED_CROP130_V3_FOV_SAFE_2026-10-10.md).
-- V3 `RMIL-02B_V3_Native224_FOVSafe_SharedCache_CPU.ipynb` SHA256 `0089f337ff1a8bffb8a58169f6915b7b706a45ebd4875fd48a1ee68689cf6ebf`. Run All on Kaggle still pending. Keep **physical 130mm crop FOV**; source-image-absent margins get constant normalized -5 padding BEFORE resize, not reflected anatomy; statistics computed from real pixels, not padding. Every Series needs `fov_crop_audit.csv` and pad fraction; warn >=20%.
-- New V3 pixel SHA/preprocessing lineage means new on-cache K4 comparator mandatory. Confirm all Shard and metadata manifests before GPU training. Existing V2 partial files are invalid.
+# 32. 실험 문서 및 Notebook 언어·기록 원칙 (2026-10-10)
+
+## 32.1 한글 우선 작성
+
+- **기술 문서, Notebook Markdown 설명, Python 주석, 출력 안내문, 결과 요약은 한글을 기본 언어**로 작성한다.
+- 필요한 기술 명칭(Kaggle, DICOM, HDF5, K4/K16/K24, Attention 등), 코드 식별자, 파일명, 경로, 외부 API 이름은 원래 표기를 유지한다.
+- 제목, 실험 목적, 입력 데이터 설정, 변경 변수, 고정 조건, 단계별 작업 설명, 검증 결과, 위험과 후속 절차를 한글로 이해하기 쉽게 작성한다.
+- 개발자가 읽기 위한 코드 변수명과 제어 흐름, 데이터 계약 키 이름은 변경하지 않아 실행 호환성을 유지한다.
+
+## 32.2 기록 범위
+
+- **단순 코드 버그, 임시 실행 오류, AssertionError, 코드 수정 과정은 별도의 GitHub 실험 이력·오류 보고서로 기록하지 않는다.**
+- 오류는 해당 채팅에서 원인을 분석하고 Notebook을 수정한 뒤, 사용자가 실행할 최신 버전만 전달한다.
+- GitHub에는 **실제로 완료된 실험 결과, 과학적 판단에 영향을 주는 발견, 확정된 실험 조건, 현재 진행 상태, 다음 단계**를 간결하게 기록한다.
+- 안전성·무결성·데이터 오염·평가 신뢰성에 영향을 주는 문제는 필요 시 최종 상태와 검증 조건 중심으로 정리하되, 사소한 코드 디버깅 연대기를 남기지 않는다.
+- 사용자가 별도로 요청하지 않는 한 개별 디버깅 보고서를 새로 만들지 않는다.
+
+## 32.3 RMIL-02B 현재 설정
+
+- 현재 사용하는 CPU 캐시 Notebook: `RMIL-02B_V3_Native224_FOVSafe_SharedCache_CPU.ipynb`.
+- 전체 대상은 Train300 + Gold58 = 358명, 2,006 Series, 66,430 Slice.
+- 130mm 기준 영상 처리와 부족한 바깥 영역 처리, 동일한 정규화, 공통 단일 채널 Slice 캐시, K4 ⊆ K16 ⊆ K24 선택 정책을 유지한다.
+- Kaggle 최종 실행·SHA·전체 샤드 검증 전에는 캐시 생성이 완료됐다고 주장하지 않는다.
