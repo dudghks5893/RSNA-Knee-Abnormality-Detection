@@ -1,3 +1,21 @@
+## 2026-10-10 — RMIL-02D K16 Mean vs Shared Window Attention 준비 완료
+
+**현재 단계:** RMIL-02C의 K4/K16/K24 Mean 학습·검증은 모두 완료. K16이 Gold58 Macro AUROC **0.577856**, AUPRC **0.432300**으로 상대적 최고이나 K4 대비 증가는 **+0.003437**이며 개발 검증 Gold58 재사용에 주의.
+
+**다음 RMIL-02D — 실행 전 준비 완료:** 한글 Kaggle Notebook `RMIL-02D_K16_Mean_vs_SharedWindowAttention_T4x2_KO.ipynb` SHA-256 `64e6a086bb4d24c1a449b24c0d3e07a16b0e4db9d8de3eddce073cf604e96d06`. **GPU 학습·검증 결과는 아직 없음**. 새 Mean(K16)과 새 Shared Window Attention(K16)을 **T4×2의 GPU0/GPU1에서 병렬 학습**해 Pooling 효과만 비교. 기존 RMIL-02C K16 체크포인트의 성능은 참고하고 공정한 Pair의 Mean을 이번 실험에서 새로 학습함. Attention은 **Series 내 Window마다 공유 스칼라 Linear→Softmax 가중 평균, 0 초기화**(학습 시작 시 Mean 동일)이며 질환별 Attention이 아님.
+
+**고정 조건:** 새 RMIL-02B V3 이미지 캐시, Train300 V4 soft/conf weighted BCE, Gold58, 동일 K16 선택(전체 31,838 Window), 전체 2,006 Series, MedicalNet3D→ResNet34 deflation Option-A, 512차원/2층/8헤드 메타데이터 Transformer, Backbone full FT, Seed20261013, AdamW, cosine LR, 10 Epoch/최소5/patience3, Window microbatch4, Study accumulation4. 양쪽의 **공통 초기 State SHA**와 16개 HDF5 샤드 SHA/데이터 분리·동일 학습 설정 확인을 강제.
+
+**Kaggle Add Input 3개:** (1) `rmil-02b-native224-v3` → `/kaggle/input/datasets/yhlucas/rmil-02b-native224-v3/RMIL-02B_NATIVE224_V3`; (2) `rsna-knee-wide224-persistent-cache-v1` → `/kaggle/input/rsna-knee-wide224-persistent-cache-v1/R2D_SHARED224_V1`; (3) `rsna-knee-r3d-medicalnet-pretrained-v1` → `/kaggle/input/datasets/yhlucas/rsna-knee-r3d-medicalnet-pretrained-v1/resnet_34.pth`. **T4×2, Internet OFF, Run All**, Save Version `RMIL-02D K16 Mean vs SharedAttn T4x2`. 예상 소요 55~110분(실측 전).
+
+**출력:** `RMIL-02D-K16-MEAN/`와 `RMIL-02D-K16-ATTN/`의 별도 `best.pt`, 학습곡선·질환별 AUROC/AUPRC·Gold58 예측, Attention 최고 Epoch의 Series별 최대 가중치·엔트로피·실효 K 등 진단. `RMIL-02D_results_for_review.zip`는 메타데이터·로그만 보존, 모델은 Kaggle Output에 유지. Attention 가중치 자체를 병변 위치의 증거로 해석하지 않음.
+
+**Notebook 사전 검사:** nbformat 및 각 코드 셀/내장 Worker 문법 PASS, CPU 합성 네트워크에서 가변 Window 수의 초기 Mean/Attention 출력 일치·초기 공통 가중치 동등·Attention/Encoder 역전파 PASS. 이것은 실제 Kaggle 결과가 아님.
+
+**이후:** RMIL-02D 결과 검증 → 개선이 있더라도 재현성/시간비용 검토 → 필요 시 RMIL-03 질환별 Attention 테스트. 이전 실험 결과를 재판정하거나 수정하지 않으며 단순 코드 오류 이력도 GitHub에 별도 작성하지 않음.
+
+---
+
 ## 2026-10-10 — 최신 결과: RMIL-02B 공통 영상 캐시 생성 완료
 
 **실험 결과:** RMIL-02B V3 Kaggle CPU 전체 실행 **완료** (`PASS_NEW_PREPROCESS_V3`). Train300 + Gold58 **358명**, **2,006 Series**, **66,430 Slice**의 원본 MRI로 공통 224×224 `uint8` 캐시를 생성했습니다. HDF5 **16개 샤드**, 전체 파일 크기 **3,341,400,768 bytes(약 3.34GB)**, 실제 실행 시간 **23.41분**. 개별 샤드는 Kaggle 실행 과정에서 저장 후 읽기·SHA 검증을 수행했습니다.
