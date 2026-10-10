@@ -1,3 +1,21 @@
+## 2026-10-10 — RMIL-02D 완료·독립 검증: K16 Shared Attention < K16 Mean
+
+**최신 확정 단계: RMIL-02D 두 모델 Kaggle Save & Run All 완료/PASS.** `RMIL-02D_results_for_review.zip` SHA256 `67badca393c11ab7664ca2e8f120e5e93181209a8e96f784bb9bc020377373c8`; ZIP 57파일 CRC PASS, 선언된 **49개 산출물 SHA256 일치**, 58×12 예측·매크로·최적 Epoch·336 GOLD Series Attention 진단 및 공통 초기 가중치 SHA 검증 PASS. K16 Mean의 58×12 예측은 RMIL-02C K16 Mean과 **파일 SHA까지 동일**(정확히 재현).
+
+| V3 동일 캐시·동일 K16 | Macro AUROC | Macro AUPRC(최적 AUROC Epoch) | Best Epoch | 전체 Epoch |
+|---|---:|---:|---:|---:|
+| **Mean** | **0.577856** | **0.432300** | 5 | 8 |
+| Shared Window Attention | 0.564698 | 0.415525 | 9 | 10 |
+| Attention − Mean | **−0.013158** | **−0.016775** | | |
+
+Attention은 개선 AUROC 5/12 질환, 악화 7/12. 가장 크게 악화한 Effusion **−0.13416**, 개선한 Fracture **+0.07222**, Lateral OA **+0.07544**, Medial OA **+0.05736**. 실효 Window 평균 **12.888개**, 가중치 엔트로피 **0.94243**, top1 평균 **0.10395**(균등 **0.06367**); Attention은 실제로 학습했으나 전체 성능을 높이지 못함. **일괄 Shared Scalar Attention 승격 보류**.
+
+**다음 실험:** RMIL-03 (K16 V3 동일 조건, 질환별 Window Attention → 질환별 Window+Series Attention) 순차 검증; 개선 효과가 불확실하므로 재현성·샘플 크기 점검. 이후 RMIL-04 전체4,349명 학습 및 Standalone 제출. RMIL-05 2D/MIL 및 RMIL-06 3D 결합은 실제 보완 증거가 있을 때만. 고해상도 320/384/original-varying은 Attention 실험과 분리된 선택적 변수.
+
+**전체 7개 RMIL-01/02C/02D 모델 성능 및 12개 질환별 상세:** [RMIL-02D 완료 통합 보고서](RMIL-02D_K16_MEAN_VS_SHARED_ATTENTION_COMPLETED_2026-10-10.md). **RMIL-01 K4는 다른 픽셀 전처리이므로 V3 순위에 직접 포함 금지.** Gold58 반복 개발 검증으로 통계적 일반화, Public LB 점수 주장 금지. 코드 디버깅 이력은 작성하지 않음.
+
+---
+
 ## 2026-10-10 — RMIL-02C 완료: K4·K16·K24 Mean 통제 비교
 
 **완료 상태:** T4×2에서 K4·K16·K24 3개 Mean 모델 모두 정상 학습·Gold58 평가·ZIP 산출 완료. 수령 ZIP 70개 항목 CRC 및 60개 산출물 SHA-256 **독립 검증 통과**. 캐시 `rmil-02b-native224-v3`의 HDF5 **16개 실제 SHA-256 Kaggle 재검사 PASS**. 358명(Train300/Gold58), 2,006 Series, 66,430 Slice, seed20261013, MedicalNet-deflated R34 2.5D+Transformer, 동일 학습 설정. 이전 RMIL-01 K4 값은 픽셀 전처리가 달라 직접 비교하지 않음.
