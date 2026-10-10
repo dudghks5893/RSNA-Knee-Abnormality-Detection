@@ -1,3 +1,15 @@
+## 2026-10-10 — RMIL-04A 전체 데이터·영상 캐시 5파트 사전 검증 Notebook 준비 (Kaggle 미실행)
+
+사용자는 **Train300만 대상으로 하는 class/SoftLabel/confidence 분포 재분석은 진행하지 말고**, 향후 LABEL-V6 완료를 앞두고 **전체 4,349명 Full-data 학습 RMIL-04** 단계로 이동하도록 결정함. RMIL-03 네 모델 완료/동결, 현재 기준 모델 RMIL-02D V3 K16 Mean Gold58 0.577856 유지. RMIL-03B는 탐색 후보, 미검증 대규모 채택 금지.
+
+**사용자 다운로드용으로 작성된 CPU Notebook:** `RMIL-04A_Full4407_5Pack_Source_Label_Preflight_CPU_KO.ipynb`; SHA256 `987807dd589440493fafed9d231c3196526b6117d44d0193ae35a01e748acf32`. Notebook nbformat 및 각 코드 셀 AST 검증 PASS, **실제 Kaggle Save & Run All 미실행**. 입력 공식 Competition `train.csv`/`train_series.csv`/`train_series/<UID>/<Series>/*.dcm`, 검증 Gold58 dataset `rsna-knee-wide224-persistent-cache-v1`, V4 full dataset `rsna-knee-v4-consensus-dataset` **옵션: UI Mount 실제 검증 전**. GPU 없음, Internet OFF, Seed20261013, Save Version `RMIL-04A Full4407 Cache Partition Preflight CPU`. 전역 /kaggle/input 재귀 탐색 금지, 원본 CSV에 나온 Series 폴더에서만 Slice 파일 개수 검사.
+
+**전체 영상량:** 역사 SS01 기록 4,407 Studies, 24,371 Series, 819,078 DICOM Slices. Raw V3 uint8 224×224 전체 캐시 추정 **41,098,057,728B≈41.10GB**이며 Kaggle Project 저장 cap **14GB**를 넘음. RMIL-04A는 Study 단위 누수없는 **5파트 용량 균형 분할** + `1.3×raw+300MB` 파트별 게이트, V4 라벨의 UID 커버리지 구조적 검증만 수행하고 영상 캐시·GPU 학습은 생성하지 않음. **Train4349/Gold58 분리**. Gold58 반복 개발 데이터, 독립 테스트 아님. V6 후보 `CANDIDATE_NOT_RELEASED` 유지, 원본 영상 캐시는 V4/V6 라벨 변경과 무관하게 재사용 계획.
+
+**다음 실제 단계:** A CPU ZIP 수령·검사 → RMIL-04B 5파트 네이티브224 V3 전처리/358명 픽셀 parity 게이트/sha Dataset 저장 → 라벨 승인 후 RMIL-04C Full4,349 Train (K16 Mean 원형 우선, 필요 시 03B 별도 통제), Gold58 Dev 및 standalone Public LB. 자세한 [RMIL-04 프로토콜](RMIL-04_FULL_DATA_EXECUTION_PROTOCOL_2026-10-10.md). **RMIL-04A/04B/04C 미실행을 완료라고 기록 금지.**
+
+---
+
 ## 2026-10-10 — RMIL-03 A/B 2×2 학습 네 모델 완료, 최종 셀 오류 복구 분석 완료
 
 **현재 상태:** A계정 03A/03B, B계정 03D/03C **4개 모델 학습 전부 GPU 종료코드 0**, 각 최고 Epoch `best.pt` Kaggle Output 로그에 저장. 사용자가 직접 ZIP 묶어서 제공. **최종 Notebook 비교 셀 오류:** 동일 초기 SHA에도 최초 `initial_forward_logits`가 FP32로 최대 1.78814e-7 차이인데 `==` 정밀 비교하여 `AssertionError ('설정 불일치','initial_forward_logits')`; **학습 무효 아님**. 후속 코드에서 이 설정 필드 제외 후 `np.allclose(...,atol=2e-5,rtol=0)`로 별도 검사. 학습 재실행 불필요.
