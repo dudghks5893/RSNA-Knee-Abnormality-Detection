@@ -1,3 +1,20 @@
+## 2026-10-10 — RMIL-02C 완료: K4·K16·K24 Mean 통제 비교
+
+**완료 상태:** T4×2에서 K4·K16·K24 3개 Mean 모델 모두 정상 학습·Gold58 평가·ZIP 산출 완료. 수령 ZIP 70개 항목 CRC 및 60개 산출물 SHA-256 **독립 검증 통과**. 캐시 `rmil-02b-native224-v3`의 HDF5 **16개 실제 SHA-256 Kaggle 재검사 PASS**. 358명(Train300/Gold58), 2,006 Series, 66,430 Slice, seed20261013, MedicalNet-deflated R34 2.5D+Transformer, 동일 학습 설정. 이전 RMIL-01 K4 값은 픽셀 전처리가 달라 직접 비교하지 않음.
+
+| 지표 | K4 | K16 | K24 |
+|---|---:|---:|---:|
+| Gold58 Macro AUROC | 0.574420 | **0.577856** | 0.577402 |
+| Gold58 Macro AUPRC(최적 AUROC Epoch에서) | 0.428417 | **0.432300** | 0.425870 |
+| 최고 AUROC Epoch / 전체 Epoch | 4/7 | 5/8 | 3/6 |
+| 학습 시간(분) | 20.92 | 54.53 | 55.51 |
+
+K16은 K4보다 AUROC +0.003437, K24보다 +0.000454; K16/24 Window 증가로 큰 전체 성능 개선은 관찰되지 않음. 질환별 최고 AUROC는 K4·K16·K24 각각 4/12개. K16 Effusion +0.052, K24 Medial OA +0.093(모두 K4 대비); Lateral Meniscus와 Fracture는 큰 K에서 약화. **AUPRC의 단독 최고 Epoch는 AUROC 최적 Epoch와 다르므로 지표별 서로 다른 Epoch 점수를 결합하지 않음**. Gold58 반복 소규모 개발 검증으로 유의성·일반화 증명 불가.
+
+**다음:** RMIL-02D는 우선 **K16 Mean vs K16 Shared Window Attention**으로 같은 V3 공통 캐시/윈도우/모델 계약에서 pooling 효과를 격리. K24의 질환별 이점은 탐색적으로 보존하되 전면 채택하지 않음. 실제 GPU 실행 전 Notebook 필요. [질환별 AUROC/AUPRC·Epoch·자원·무결성 전체 결과](RMIL-02C_K4_K16_K24_MEAN_COMPLETED_2026-10-10.md).
+
+---
+
 **RMIL-02C 캐시 입력 경로 확정 (2026-10-10):** 사용자가 Kaggle Dataset `yhlucas/rmil-02b-native224-v3`로 등록했으며 정확한 하위 폴더는 `/kaggle/input/datasets/yhlucas/rmil-02b-native224-v3/RMIL-02B_NATIVE224_V3`입니다. 후속 K4·K16·K24 학습은 **이 경로 하나만 사용**하고 그 안의 `shards/shard_000.h5`~`shard_015.h5`, `series_index.csv`, `k_selection.jsonl`, `cache_contract.json`, `shard_sha256.csv`를 실행 전에 검사합니다. 경로를 고정한 한글 Notebook은 `RMIL-02C_K4_K16_K24_Mean_T4x2_경로확정.ipynb` (SHA-256 `44c92cac63126c5b477ed0a1864c473587df14a0fc19dce56374930e68898e4d`); 코드 문법 검증 PASS, **Kaggle GPU 실행은 아직 미검증**입니다.
 
 ## 2026-10-10 — 최신 결과: RMIL-02B 공통 영상 캐시 생성 완료
