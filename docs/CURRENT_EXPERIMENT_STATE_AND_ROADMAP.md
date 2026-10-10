@@ -1,3 +1,25 @@
+## 2026-10-10 — RMIL-03 A/B 계정 동시 병렬 Notebook 준비 (GPU 실제 학습 전)
+
+사용자가 **Kaggle 팀원 1명 추가로 두 계정(A/B), 계정당 T4×2 = 총 4GPU 동시 학습**이 가능하다고 확인함. A/B에 서로 다른 독립 Notebook 두 개 준비. **모든 기존 RMIL-01~02D 결과 동결.**
+
+| Kaggle 계정 | 물리 GPU0 | 물리 GPU1 | Pair 내부 Seed | 독립 검증 질문 |
+|---|---|---|---|---|
+| **A** | `RMIL-03A-K16-MEAN`: 질환별 Head, Window Mean/Series Mean | `RMIL-03B-K16-TARGET_ATTN-seed13`: 질환별 Window Attention / Series Mean | **20261013** | Window Attention만 바꾸는 효과 |
+| **B** | `RMIL-03B-K16-TARGET_ATTN-seed14`: 질환별 Window Attention / Series Mean | `RMIL-03C-K16-WINDOW_SERIES_ATTN`: 질환별 Window **+** 질환별 Series Attention | **20261014** | Window 구조 고정 후 Series Attention만 추가하는 효과 |
+
+- A `RMIL-03_A_K16_Attention_T4x2_Parallel_KO.ipynb`, SHA-256 `91920eb52b194ab1462f06285370714395881c8c927d64c90c3c5fe3372d76c4`.
+- B `RMIL-03_B_K16_Attention_T4x2_Parallel_KO.ipynb`, SHA-256 `9e4805b98fee62c5c7c81168cc6d0287e93e19e47be736854950a8af40573bb0`.
+- **A와 B Notebook은 동일 Worker 코드** SHA-256 `a10ec735ee85cf64cebea90c846fd8324d07664ddf04e0f7b8757e6352e94a3d`. 동일 512-d ResNet34+공유 CLS Transformer+12질환 Head, 비교 Pair 안에서는 전체 초기 State SHA/첫 Study 출력 일치 검사. 모든 모델에 `nn.Linear(512,12)` 질환별 Window Attention과 `[12,512]` 질환별 Series Attention 매개변수를 동일하게 0으로 등록하되, 실험마다 필요한 Softmax 경로만 활성화. **A 계정 03A↔03B는 동일 Seed; B 계정 03B↔03C는 동일 Seed. 다른 Seed의 A03B↔B03C를 paired 비교하지 말 것.**
+- **실행 전 검증:** Notebook nbformat / 전 코드 셀 AST / 내장 Worker AST / 공통 SHA 검사 통과, CPU 합성 실제 `StudyModel` Forward/Backward 3종(MEAN/TARGET_ATTN/TARGET_WINDOW_SERIES_ATTN), 12개 logit, 초기 3종 출력 일치, Window/Series/Encoder gradient, Attention Softmax 합 1 확인 통과. **실제 Kaggle T4 동작, 데이터셋 접근권 및 학습 완료는 미확인**.
+- **입력 3개:** `yhlucas/rmil-02b-native224-v3` (고정 root `/kaggle/input/datasets/yhlucas/rmil-02b-native224-v3/RMIL-02B_NATIVE224_V3`), `rsna-knee-wide224-persistent-cache-v1/R2D_SHARED224_V1`, `yhlucas/rsna-knee-r3d-medicalnet-pretrained-v1/resnet_34.pth`. **B 계정에서 yhlucas 소유 Dataset을 실제 Add Input으로 읽을 수 있는지 필수 확인**. 비공개 개인 Dataset은 Notebook 팀원 권한과 다를 수 있음. 16 HDF5 shard/manifest/weight SHA 실제 검증.
+- **공통:** V3 224px K16 (Train300 V4 soft/conf BCE, Gold58), ResNet34 Full FT, AdamW/Cosine/FP32, Epoch≤10/min5/patience3, T4×2, Internet OFF, Save & Run All. 예상 계정당 65~140분(**미측정**); 동시 가동은 Kaggle GPU 할당량/세션 정책 조건. `LABEL-V6` 후보 데이터 **사용 금지(CANDIDATE_NOT_RELEASED)**.
+- **산출:** A `RMIL-03-A_results_for_review.zip`, B `RMIL-03-B_results_for_review.zip`. 4개 `best.pt`는 각 Kaggle Notebook Output에 보존하고 리뷰 ZIP에 미포함. Pair별 12질환 AUROC/AUPRC, 58×12 예측·출력 SHA/Bootstrap/Attention 진단·worker 로그, 03C에는 Series Attention Study×Target 진단 추가.
+- 과거 공유한 단일 A 전용 `RMIL-03B_K16_TargetWindowAttention_vs_MatchedMean_T4x2_KO.ipynb`보다 **이번 A/B 공동 Worker 버전을 우선 사용**. 사용자에게 **둘 다 교체된 최종 A/B Notebook으로 실행**하도록 안내.
+
+**후속:** A/B 두 ZIP 및 로그를 함께 받아 무결성/비교 → 조건부 해상도/Full-data 실험. Gold58 반복 개발 검증으로 일반화/임상 위치 입증 아님.
+
+---
+
 ## 2026-10-10 — RMIL-03B 질환별 Window Attention Notebook 준비 완료 (GPU 미실행)
 
 **파일:** `RMIL-03B_K16_TargetWindowAttention_vs_MatchedMean_T4x2_KO.ipynb`; SHA-256 `29e4a6b0cebb31ae957d9dcb01718a6503aeaf51478401ed9424b1249a315f60`. **Notebook/Worker 문법, CPU 합성 12질환 Forward·초기 Mean 동등·Encoder/Attention 역전파 테스트 통과. Kaggle GPU 학습 결과는 아직 없음.**
