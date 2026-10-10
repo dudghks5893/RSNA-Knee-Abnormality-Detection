@@ -1,5 +1,15 @@
 # RSNA Knee Abnormality Detection — Experiment Log
 
+## 2026-10-10 — RMIL-02B 현재 진행 상황
+
+원본 무릎 MRI **358명(Train300 + Gold58), 2,006개 Series, 66,430개 Slice**를 224×224 공통 이미지 캐시로 생성하는 단계입니다. 최신 실행용 한글 설명 Notebook: `RMIL-02B_V3_Native224_FOVSafe_SharedCache_CPU_KO.ipynb` (SHA-256 `3c73cda26e664eb0fbcbd71c9041c7eea658028c896878e03ffb437e30de7753`, 채팅에서 제공한 산출물, Kaggle 실행 결과 아직 미검증).
+
+전처리는 원본 DICOM의 물리적 순서·130mm 영역·영상 범위 밖 패딩·Series 단위 정규화로 통일합니다. 생성한 공통 캐시를 이용해 **K4·K16·K24를 동일한 모델 조건에서 비교**한 뒤 같은 K에서 Mean과 Attention을 비교합니다. 공통 이미지 캐시 예상 용량은 약 3.33GB, 전체 Notebook Output 내부 운영 상한은 14GB입니다.
+
+앞으로 실험 문서와 Notebook 설명은 **한글을 우선 사용**하며, 임시 코드 오류나 수정 과정은 별도 실험 기록으로 남기지 않습니다. [현재 진행 상태](docs/CURRENT_HANDOFF.md) · [작성 규칙](docs/AI_AGENT_KAGGLE_NOTEBOOK_RULES.md).
+
+---
+
 ## 2026-10-10 — RMIL-02B0 COMPLETED; RMIL-02B New V2 cache prepared (OVERRIDES older K4 parity hard gate)
 
 **Actual artifact audit PASS**, but **K4 image parity FAIL**: ZIP SHA256 `3f7ee4b7a12db3b0297ed3d11eebce31133d4bc87adeb08687df4ece33c06a27`, CRC PASS, all 5 declared output SHA pass. Diagnostic 9 Series across 3 Studies / 144 candidate pixel transformations, ZERO exact entire-Series matches, best mean MAE 8.476386 and byte match fraction ~0.153%. No cache pixel output, no GPU; existing RMIL-01 score unchanged. **[Detailed completed RMIL-02B0 audit](RMIL-02B0_COMPLETED_PARITY_AUDIT_2026-10-10.md).**
