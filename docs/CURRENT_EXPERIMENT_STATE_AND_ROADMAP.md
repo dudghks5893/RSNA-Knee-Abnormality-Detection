@@ -1,3 +1,13 @@
+## 2026-10-10 — RMIL-04A PASS / RMIL-04B 5개 CPU Pack Notebook 준비 (GPU 미실행)
+
+**RMIL-04A 실제 Kaggle 실행 결과 검증 완료**: 사용자 ZIP SHA256 `121145c51525862672f630d0c6b650602046964151ceb36e53b981a071be3614`, CRC+내부 6개 메타 SHA PASS. 공식 원본 **4,407 Studies /24,371 Series /819,078 Slices**, 누락·중복 0, frozen **Train4,349/Gold58** 분리. V4 broad pseudo-label `rsna_knee_pseudolabels_v4_routed_broad.csv` 전체 4,349 UID 및 12 target+12 confidence 열 커버 PASS; **아직 Full GPU label release 아님**(`UID_COVERAGE_PASS_NEEDS_12_TARGET_CONTRACT`). Train300 분포 재분석 사용자 요청으로 하지 않음.
+
+**RMIL-04B 다음**: 5개 독립 Kaggle CPU Notebook 준비 완료, **실제 픽셀 캐시 미생성**. 04A Study/Series 파트 동결본을 각 Notebook에 해시 고정 압축 내장해 별도 04A Kaggle Dataset 불필요. 전체 224px uint8 원시 저장 41.098GB (14GB/project Output cap), 각 Part ~8.2GB. Pack별 기존 V3 픽셀 SHA 비교 Series: **00:406, 01:419, 02:453, 03:394, 04:334 = 2,006 Series 전체**. RMIL-02B V3 동일 `preprocess_series` 코드 재사용. CPU 합성 padding/no-padding, K 중첩/Notebook nbformat·AST 통과. **Pack00 먼저 CPU Save & Run All을 실행하여 기존 V3 픽셀 SHA 동일 확인 후, Pack01~04 A/B 계정 CPU 병렬**. GPU 없음, Internet OFF, Seed20261013. 세 입력: competition, `yhlucas/rmil-02b-native224-v3`, `rsna-knee-wide224-persistent-cache-v1`. 저장한 8.2GB HDF5 폴더 전체를 각 Kaggle Dataset으로 별도 등록하고 review ZIP만 공유.
+
+**다운로드 전달**: `RMIL-04B_FivePack_CPU_Notebooks_and_Handoff.zip` SHA `3d12212fcd8e467935728452ec91442ce805720317b0a5e69e01f8bdae25c2c3` (노트북 5개 + QA 보고서). 상세 [RMIL-04A 검증·RMIL-04B 실행 준비](RMIL-04A_VERIFIED_RMIL-04B_FIVEPACK_PREPARED_2026-10-10.md). **LABEL-V6 CANDIDATE_NOT_RELEASED**; RMIL-04C 4,349 GPU 학습은 5파트 HDF5 실제 생성/UID·SHA 통합 및 라벨 승인 후에만. 현재 모델 구조는 기존 RMIL-02D K16 Mean이 우선 대조군; Gold58은 반복 사용 개발 검증.
+
+---
+
 ## 2026-10-10 — RMIL-04A 전체 데이터·영상 캐시 5파트 사전 검증 Notebook 준비 (Kaggle 미실행)
 
 사용자는 **Train300만 대상으로 하는 class/SoftLabel/confidence 분포 재분석은 진행하지 말고**, 향후 LABEL-V6 완료를 앞두고 **전체 4,349명 Full-data 학습 RMIL-04** 단계로 이동하도록 결정함. RMIL-03 네 모델 완료/동결, 현재 기준 모델 RMIL-02D V3 K16 Mean Gold58 0.577856 유지. RMIL-03B는 탐색 후보, 미검증 대규모 채택 금지.
