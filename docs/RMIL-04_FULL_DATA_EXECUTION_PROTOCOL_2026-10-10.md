@@ -11,7 +11,7 @@
 ## RMIL-04A — 지금 실행 가능한 CPU 자산·분할 검증
 
 **Notebook**: `RMIL-04A_Full4407_5Pack_Source_Label_Preflight_CPU_KO.ipynb`
-**SHA-256**: `987807dd589440493fafed9d231c3196526b6117d44d0193ae35a01e748acf32`
+**SHA-256**: `40720e63afea06bff06b4ec6fa79b51e5c425ee2269ee781dce18c642ae6d24d`
 **설정**: CPU/Internet OFF/Save & Run All/Seed 20261013; Save Version `RMIL-04A Full4407 Cache Partition Preflight CPU`.
 
 **필요한 Kaggle Add Input**
