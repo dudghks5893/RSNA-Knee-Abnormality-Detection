@@ -1,3 +1,22 @@
+## 2026-10-10 — RMIL-03 A/B 2×2 학습 네 모델 완료, 최종 셀 오류 복구 분석 완료
+
+**현재 상태:** A계정 03A/03B, B계정 03D/03C **4개 모델 학습 전부 GPU 종료코드 0**, 각 최고 Epoch `best.pt` Kaggle Output 로그에 저장. 사용자가 직접 ZIP 묶어서 제공. **최종 Notebook 비교 셀 오류:** 동일 초기 SHA에도 최초 `initial_forward_logits`가 FP32로 최대 1.78814e-7 차이인데 `==` 정밀 비교하여 `AssertionError ('설정 불일치','initial_forward_logits')`; **학습 무효 아님**. 후속 코드에서 이 설정 필드 제외 후 `np.allclose(...,atol=2e-5,rtol=0)`로 별도 검사. 학습 재실행 불필요.
+
+| 모델 | Window | Series | Macro AUROC | Macro AUPRC |
+|---|---|---|---:|---:|
+| RMIL-03A | Mean | Mean | 0.560367 | 0.418299 |
+| **RMIL-03B** | Target Window Attn | Mean | **0.562446** | **0.426945** |
+| RMIL-03D | Mean | Target Series Attn | 0.550656 | 0.419531 |
+| RMIL-03C | Target Window Attn | Target Series Attn | 0.560299 | 0.420671 |
+
+**2×2 비교:** B−A Window 단독 **+0.002079 AUROC/+0.008646 AUPRC**; D−A Series 단독 **−0.009710 AUROC/+0.001232 AUPRC**; C−B Series 추가 **−0.002147 AUROC/−0.006274 AUPRC**; C−D Window 추가 **+0.009643 AUROC/+0.001140 AUPRC**. 03B가 RMIL-03 내부 최고이나 **기존 V3 K16 Mean 02C/02D 0.577856 AUROC/0.432300 AUPRC**는 못 넘었음. 02C/02D와 03은 예측 Head 구조가 달라 인과적 Attention 효과는 **03 내부 Pair로 비교**. 향후 최종 후보는 02D K16 Mean 우선 보존.
+
+**독립 파일 QA:** A/B 수동 ZIP CRC PASS, 네 모델 `artifact_sha256.json` 선언 **총 78개 파일 SHA 일치**, 예측 58×12·12타깃 지표/최적 Epoch/공통 Worker SHA/Seed20261013/전체 초기 State SHA 검증 PASS. 단 Gold58 정답 Manifest와 네 실제 `best.pt`는 ZIP에 없어 원본 정답 대비 재계산 또는 체크포인트 바이트 검증 불가. 자동 Bootstrap CI 및 최종 ZIP은 마지막 셀 실패로 미생성; 보고서에 허위 CI 추가 금지. LABEL-V6 CANDIDATE_NOT_RELEASED 유지.
+
+**상세 보고서:** [RMIL-03 4구조 완료 및 오류 복구 감사](RMIL-03_2X2_ATTENTION_COMPLETED_2026-10-10.md). **후속:** RMIL-03 구조 탐색 동결, 반복 Gold58 모델 선택 중단 또는 축소, 라벨 품질·학습 표본 규모·독립 검증 및 RMIL-04 전체 학습 계획 검토. 원본 픽셀 해상도 시험은 별도 축.
+
+---
+
 ## 2026-10-10 — RMIL-02D 완료·독립 검증: K16 Shared Attention < K16 Mean
 
 **최신 확정 단계: RMIL-02D 두 모델 Kaggle Save & Run All 완료/PASS.** `RMIL-02D_results_for_review.zip` SHA256 `67badca393c11ab7664ca2e8f120e5e93181209a8e96f784bb9bc020377373c8`; ZIP 57파일 CRC PASS, 선언된 **49개 산출물 SHA256 일치**, 58×12 예측·매크로·최적 Epoch·336 GOLD Series Attention 진단 및 공통 초기 가중치 SHA 검증 PASS. K16 Mean의 58×12 예측은 RMIL-02C K16 Mean과 **파일 SHA까지 동일**(정확히 재현).
