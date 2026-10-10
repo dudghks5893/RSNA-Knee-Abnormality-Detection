@@ -1,6 +1,6 @@
 ## 2026-10-10 — RMIL-02B 현재 진행 상태
 
-**진행 단계:** 358명(Train300 + Gold58), 2,006개 Series, 66,430개 Slice를 대상으로 **공통 224×224 단일 채널 캐시**를 생성하는 단계입니다. 현재 사용할 Notebook은 `RMIL-02B_V3_Native224_FOVSafe_SharedCache_CPU.ipynb`이며, **Kaggle 최종 실행 결과는 아직 검증되지 않았습니다.**
+**진행 단계:** 358명(Train300 + Gold58), 2,006개 Series, 66,430개 Slice를 대상으로 **공통 224×224 단일 채널 캐시**를 생성하는 단계입니다. 현재 사용할 한글 설명판 Notebook은 `RMIL-02B_V3_Native224_FOVSafe_SharedCache_CPU_KO.ipynb` (SHA-256 `3c73cda26e664eb0fbcbd71c9041c7eea658028c896878e03ffb437e30de7753`)이며, **Kaggle 최종 실행 결과는 아직 검증되지 않았습니다.**
 
 **데이터 처리 조건:** 원본 DICOM의 물리적 Slice 순서, 130mm 기준 Crop과 영상 바깥 영역 패딩, Series 단위 정규화, K4 ⊆ K16 ⊆ K24 선택을 동일하게 적용합니다. 생성 파일은 14GB 내부 출력 한도 이내에서 HDF5 샤드로 관리합니다.
 
