@@ -1,10 +1,10 @@
-## 2026-10-10 — LATEST RMIL-02B actual V2 Kaggle failure and prepared V3 fix
+## 2026-10-10 — RMIL-02B 현재 진행 상태
 
-**V2 FAILED** after complete metadata checks: exactly 358 Studies, 2006 Series, 66430 Slices, 16 proposed shards, predicted 4.633GB peak < 14GB cap. First real image preprocessing hit `AssertionError` at `hh<=h and ww<=w` because some MRI field of view is smaller than centered 130mm physical crop. **No finished verified HDF5 shards in supplied log**, no final ZIP. This is **NOT** a Kaggle disk overflow; actual affected Series count remains unknown until V3.
+**진행 단계:** 358명(Train300 + Gold58), 2,006개 Series, 66,430개 Slice를 대상으로 **공통 224×224 단일 채널 캐시**를 생성하는 단계입니다. 현재 사용할 Notebook은 `RMIL-02B_V3_Native224_FOVSafe_SharedCache_CPU.ipynb`이며, **Kaggle 최종 실행 결과는 아직 검증되지 않았습니다.**
 
-**NEXT RMIL-02B-V3 CPU (PREPARED, NOT YET RUN):** `RMIL-02B_V3_Native224_FOVSafe_SharedCache_CPU.ipynb`, local SHA256 `0089f337ff1a8bffb8a58169f6915b7b706a45ebd4875fd48a1ee68689cf6ebf`. Keep 130mm physical frame; if source MRI FOV smaller, crop only real pixels and constant-pad missing border at normalized z=-5 **before 224px resize**; no reflected/repeated anatomy, no full-frame resize shortcut. Determine Series percentile and global mean/std from real pixels only. Audit entire source geometry/padding before writing shards; emit `fov_crop_audit.csv` and high-padding counts. Store one-channel native 224px per Slice in checksum-verified ~220MB HDF5 shards, enforce 14GB total working file cap. Output path `RMIL-02B_NATIVE224_V3/`, small `RMIL-02B_V3_results_for_review.zip` **metadata only**. Save Version `RMIL-02B-V3 Native224 FOVSafe CPU`, Accelerator None, Internet OFF, two previous inputs.
+**데이터 처리 조건:** 원본 DICOM의 물리적 Slice 순서, 130mm 기준 Crop과 영상 바깥 영역 패딩, Series 단위 정규화, K4 ⊆ K16 ⊆ K24 선택을 동일하게 적용합니다. 생성 파일은 14GB 내부 출력 한도 이내에서 HDF5 샤드로 관리합니다.
 
-V3 Notebook JSON/Python syntax PASS, local synthetic FOV-size tests PASS (not actual Kaggle). Fresh Run All required; don't reuse incomplete V2 files. Only once actual cache & audit pass: NEW same-pixel K4/K16/K24 Mean baselines then matched-K Attention. No old RMIL-01 K4 direct baseline reuse, no old DINO cache mixing. Full notes: [RMIL-02B V2 failure and V3 FOV-safe handoff](RMIL-02B_V2_FAILED_CROP130_V3_FOV_SAFE_2026-10-10.md).
+**다음 단계:** 캐시 실행 로그 및 검증용 결과 ZIP 확인 → 새로운 공통 전처리 기준의 K4·K16·K24 Mean 학습 → 동일 K에서 Mean·Attention 비교. 과거 RMIL-01의 K4 점수를 새로운 전처리의 비교 기준으로 사용하지 않습니다.
 
 ---
 
