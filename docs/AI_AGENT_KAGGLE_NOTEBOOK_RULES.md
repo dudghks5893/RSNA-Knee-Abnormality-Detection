@@ -966,7 +966,7 @@ README에 current status가 있으면
 
 ## 32.3 RMIL-02B 현재 설정
 
-- 현재 사용하는 CPU 캐시 Notebook: `RMIL-02B_V3_Native224_FOVSafe_SharedCache_CPU.ipynb`.
+- 현재 사용하는 **한글 설명판** CPU 캐시 Notebook: `RMIL-02B_V3_Native224_FOVSafe_SharedCache_CPU_KO.ipynb` (SHA-256 `3c73cda26e664eb0fbcbd71c9041c7eea658028c896878e03ffb437e30de7753`). 이전 설명판과 실행 로직은 동일하며, Markdown·주석·설명용 문구만 한글화했다. Notebook 파일은 채팅 산출물이다.
 - 전체 대상은 Train300 + Gold58 = 358명, 2,006 Series, 66,430 Slice.
 - 130mm 기준 영상 처리와 부족한 바깥 영역 처리, 동일한 정규화, 공통 단일 채널 Slice 캐시, K4 ⊆ K16 ⊆ K24 선택 정책을 유지한다.
 - Kaggle 최종 실행·SHA·전체 샤드 검증 전에는 캐시 생성이 완료됐다고 주장하지 않는다.
