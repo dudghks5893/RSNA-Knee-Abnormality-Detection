@@ -1,3 +1,24 @@
+## 2026-10-10 — RMIL-03 2×2 통제 실험으로 A/B Notebook 교체 준비 (GPU 미실행)
+
+**설계 변경 이유:** 과거 계정 B의 두 번째 `RMIL-03B Seed20261014` 반복은 재현성 검증에는 유용하지만, GPU4개를 한 번에 쓸 수 있는 상황에서 **새로운 RMIL-03D = Window Mean + 12질환별 Series Attention**을 탐색하는 편이 메커니즘 분리에 더 많은 정보를 줌. 기존 반복형 A/B Notebook **미실행 상태라면 새 2×2 A/B Notebook을 사용**. 이미 실행 중인 학습은 변경된 것처럼 표시하지 말고 그 결과를 별도로 보존.
+
+| 계정/T4 | GPU0 | GPU1 | Seed |
+|---|---|---|---|
+| A | RMIL-03A: Window Mean / Series Mean | RMIL-03B: Target Window Attn / Series Mean | **20261013** |
+| B | **RMIL-03D: Window Mean / Target Series Attn** | RMIL-03C: Target Window Attn / Target Series Attn | **20261013** |
+
+**새 Notebook들 (독립 Kaggle GPU 실행 전; 기존 Notebook과 혼동 금지):**
+- A: `RMIL-03_2x2_A_K16_Attention_T4x2_KO.ipynb`, SHA256 `4e87a2a5a4dd9c5827965b15727668ec191d04b08ce78302f99505735aae8556`
+- B: `RMIL-03_2x2_B_K16_Attention_T4x2_KO.ipynb`, SHA256 `e768935cdfb8be785302f301c1a77cd5ffee07c2bd4f4b0ea6075b4d504ced0c`
+- 두 Notebook 내 **동일한 Worker 소스 SHA256** `f0ec2d32c7d6170041e6de1a62ddcdde98aa721a400f98a6a989c04338502c03`, 동일 Seed/모델 초기 전체 State SHA 및 초기 Forward 동등 검사. 다른 Kaggle 세션 간 비트-동일 최종 재현은 보장하지 않지만 A/B 통제 조건 확인 후 교차 비교.
+- Notebook nbformat / 모든 코드 셀 + Worker AST **PASS**, **CPU 합성 모델 테스트:** 4종(03A/03B/03D/03C) 초기 Model 전체 State 동등, Window/Series Attention Softmax 합 1, 12-logit 초기 출력 일치, 03D Series-only 및 03C 이중 Attention 기울기와 Encoder 기울기 전부 PASS. **실제 Kaggle 실험 결과 아직 미수령**.
+- **Four-cell factorial:** Window 효과 03B−03A (Series Mean), 03C−03D (Series Attn); Series 효과 03D−03A (Window Mean), 03C−03B (Window Attn). 상호작용 `(03C−03D)−(03B−03A)`. 개발 검증 Gold58을 반복 사용하므로 작은 차이와 변수 선택편향 주의.
+- V3 native224 K16 31,838 Windows / Train300 V4 soft-label confidence BCE / Gold58 / 2,006 Series·358명, full FT MedicalNet R34·CLS Transformer 동일. 입력 dataset 3개(캐시 / frozen manifest / pretrained) 모두 고정 경로, **/kaggle/input 전체 재귀 탐색 없음**. T4×2·Internet OFF·Save & Run All를 A/B 각 계정에서 수행. B 계정의 yhlucas 데이터셋 권한 확인. 운영상 Kaggle 계정별 GPU 용량/할당량 제약 확인.
+- Save Version A `RMIL-03 2x2 A Window Effect T4x2`, B `RMIL-03 2x2 B Combined Effect T4x2`; 계정당 예상 65–140분 **미측정**. 각 계정 `RMIL-03-A_results_for_review.zip` / `RMIL-03-B_results_for_review.zip` + 실제 독립 `best.pt` 보존. **최종 계정 간 4-way 통합 지표/interaction/Bootstrap은 두 ZIP을 모두 받은 뒤 계산**.
+- 기존 RMIL-03 2계정 `Seed 13/14` 반복형 버전은 **2×2 버전이 우선**이며, 두 실행 결과가 혼합되면 강력한 Pair 통제 비교로 주장하지 않음. LABEL-V6 미사용(`CANDIDATE_NOT_RELEASED`), Gold58 독립 테스트 아님.
+
+---
+
 ## 2026-10-10 — RMIL-03 A/B 계정 동시 병렬 Notebook 준비 (GPU 실제 학습 전)
 
 사용자가 **Kaggle 팀원 1명 추가로 두 계정(A/B), 계정당 T4×2 = 총 4GPU 동시 학습**이 가능하다고 확인함. A/B에 서로 다른 독립 Notebook 두 개 준비. **모든 기존 RMIL-01~02D 결과 동결.**
