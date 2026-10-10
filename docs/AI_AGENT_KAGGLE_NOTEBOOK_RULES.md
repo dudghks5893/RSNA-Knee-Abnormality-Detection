@@ -942,3 +942,11 @@ README에 current status가 있으면
 - **V2 branch overrides the old obligatory pixel-perfect comparison to RMIL-01** for within-V2 count/attention tests ONLY. Do not say it reproduces the historical K4. Historical K4 parity requirement still applies if asserting numerical reproducibility of RMIL-01 specifically.
 - Prepared CPU notebook `RMIL-02B_Native224_SharedCache_CPU.ipynb`, SHA256 `097c72a070114caa53603180f9813ec16c3edf15ab7dc1ff84c30a279cbc080b`, syntactically validated and nested K selector tested against Slice-length N=11..320; **NOT YET run on Kaggle**. Accelerator None, Internet OFF, Save & Run All; use original competition + pinned K4 study manifest Input, no old DINO cache reuse; preserve all HDF5 shards, manifest and metadata-only review ZIP. Project saved output cap 14.0GB, ≥2GB physical reserve, per-shard SHA and atomic replacement.
 - Require user-supplied Kaggle full-run log and `RMIL-02B_results_for_review.zip` artifact SHA validation before treating V2 cache as completed. Do not train GPU until cache dataset is persisted and manifest confirmed.
+
+---
+
+# 32. Crop physical FOV < 130mm — RMIL-02B V3 requirement
+
+- Actual V2 `RMIL-02B_Native224_SharedCache_CPU.ipynb` Kaggle run FAILED on centered crop assertion `hh<=h and ww<=w` after 358/2006/66430 source audit passed. No verified completed HDF5 shard shown. **V2 must not be marked PASS**. [Audit / V3 handoff](RMIL-02B_V2_FAILED_CROP130_V3_FOV_SAFE_2026-10-10.md).
+- V3 `RMIL-02B_V3_Native224_FOVSafe_SharedCache_CPU.ipynb` SHA256 `0089f337ff1a8bffb8a58169f6915b7b706a45ebd4875fd48a1ee68689cf6ebf`. Run All on Kaggle still pending. Keep **physical 130mm crop FOV**; source-image-absent margins get constant normalized -5 padding BEFORE resize, not reflected anatomy; statistics computed from real pixels, not padding. Every Series needs `fov_crop_audit.csv` and pad fraction; warn >=20%.
+- New V3 pixel SHA/preprocessing lineage means new on-cache K4 comparator mandatory. Confirm all Shard and metadata manifests before GPU training. Existing V2 partial files are invalid.
