@@ -1,3 +1,13 @@
+## 2026-10-10 — LATEST RMIL-02B actual V2 Kaggle failure and prepared V3 fix
+
+**V2 FAILED** after complete metadata checks: exactly 358 Studies, 2006 Series, 66430 Slices, 16 proposed shards, predicted 4.633GB peak < 14GB cap. First real image preprocessing hit `AssertionError` at `hh<=h and ww<=w` because some MRI field of view is smaller than centered 130mm physical crop. **No finished verified HDF5 shards in supplied log**, no final ZIP. This is **NOT** a Kaggle disk overflow; actual affected Series count remains unknown until V3.
+
+**NEXT RMIL-02B-V3 CPU (PREPARED, NOT YET RUN):** `RMIL-02B_V3_Native224_FOVSafe_SharedCache_CPU.ipynb`, local SHA256 `0089f337ff1a8bffb8a58169f6915b7b706a45ebd4875fd48a1ee68689cf6ebf`. Keep 130mm physical frame; if source MRI FOV smaller, crop only real pixels and constant-pad missing border at normalized z=-5 **before 224px resize**; no reflected/repeated anatomy, no full-frame resize shortcut. Determine Series percentile and global mean/std from real pixels only. Audit entire source geometry/padding before writing shards; emit `fov_crop_audit.csv` and high-padding counts. Store one-channel native 224px per Slice in checksum-verified ~220MB HDF5 shards, enforce 14GB total working file cap. Output path `RMIL-02B_NATIVE224_V3/`, small `RMIL-02B_V3_results_for_review.zip` **metadata only**. Save Version `RMIL-02B-V3 Native224 FOVSafe CPU`, Accelerator None, Internet OFF, two previous inputs.
+
+V3 Notebook JSON/Python syntax PASS, local synthetic FOV-size tests PASS (not actual Kaggle). Fresh Run All required; don't reuse incomplete V2 files. Only once actual cache & audit pass: NEW same-pixel K4/K16/K24 Mean baselines then matched-K Attention. No old RMIL-01 K4 direct baseline reuse, no old DINO cache mixing. Full notes: [RMIL-02B V2 failure and V3 FOV-safe handoff](RMIL-02B_V2_FAILED_CROP130_V3_FOV_SAFE_2026-10-10.md).
+
+---
+
 # RSNA Knee — Current Experiment State & Roadmap
 
 
