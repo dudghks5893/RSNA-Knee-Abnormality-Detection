@@ -1,3 +1,17 @@
+## 2026-10-10 — RMIL-03B 질환별 Window Attention Notebook 준비 완료 (GPU 미실행)
+
+**파일:** `RMIL-03B_K16_TargetWindowAttention_vs_MatchedMean_T4x2_KO.ipynb`; SHA-256 `29e4a6b0cebb31ae957d9dcb01718a6503aeaf51478401ed9424b1249a315f60`. **Notebook/Worker 문법, CPU 합성 12질환 Forward·초기 Mean 동등·Encoder/Attention 역전파 테스트 통과. Kaggle GPU 학습 결과는 아직 없음.**
+
+**단계:** RMIL-02D 완료 후 **RMIL-03B (질환별 Window Attention)**를 먼저 검증; **RMIL-03C (질환별 Series Attention)**는 다른 변수를 바꾸지 않는 별도 후속 실험으로 분리. GPU0=`RMIL-03A-K16-MEAN` **신규 matched Mean**, GPU1=`RMIL-03B-K16-TARGET_ATTN` **12개 질환별 Window Attention**. 양쪽에 **동일한 질환별 Target Projection/12개 Head**, **동일한 공유 Series CLS Transformer**, **동일한 균등 Series 집계**, 초기 Attention Linear(512→12) 가중치 전부 0, 전체 모델 초기 State SHA 및 첫 환자 초기 Logit 동등 검사. Attention의 12개 출력은 Window 축에서 별도 softmax되며 모든 질환의 Backbone은 하나로 공유. **과거 RMIL-02C/02D K16 Mean 0.577856은 아키텍처·Head 구성이 달라 1차 통제군으로 사용하지 않음.**
+
+**입력/학습 고정:** 358명(Train300 V4/Gold58), 2006 Series, 66430 원본 Slice, `RMIL-02B-NATIVE224-V3` **공통 224px 캐시**, K16 총 31838 인접 3-Slice Window, MedicalNet-deflated R34 전체 FT, Seed20261013, AdamW cosine LR backbone1e-5/head5e-5, WD1e-4, Epoch≤10,min5,patience3, 4 Window microbatch/4 Study accumulation, T4×2, Internet OFF, Save & Run All. 입력 3개 Kaggle datasets는 RMIL-02D와 동일. Save Version: `RMIL-03B K16 TargetAttn vs Mean T4x2`. 실행 예상 약 65~140분 **미실측**.
+
+**Output:** `RMIL-03A-K16-MEAN/best.pt`, `RMIL-03B-K16-TARGET_ATTN/best.pt`는 Notebook Output에 유지. 검토용 `RMIL-03B_results_for_review.zip`에는 각 Epoch AUROC/AUPRC/예측·12타깃별 메트릭·Target별 집중도·1000회 쌍체 Gold58 Bootstrap CI·콘솔 로그/설정/SHA만 저장. HDF5 16 Shard 실제 SHA, GPU 할당, 모든 질환·Gold 58명, Attention 합계1, 초기 공통 SHA/첫 예측 동등, ZIP CRC를 실제 실행에서 검증. Gold58은 **반복된 개발 검증**, 독립 일반화·Public LB 지표가 아님.
+
+**다음:** Kaggle 실행 후 결과 ZIP·로그 수령 → 독립 검증 → RMIL-03C 진행 여부 판단. LABEL-V6는 현재 사용하지 않으며 `CANDIDATE_NOT_RELEASED` 유지. 원본 해상도 320/384/Native 실험은 Attention 효과와 분리해서 추후 비교.
+
+---
+
 ## 2026-10-10 — RMIL-02D 완료·독립 검증: K16 Shared Attention < K16 Mean
 
 **최신 확정 단계: RMIL-02D 두 모델 Kaggle Save & Run All 완료/PASS.** `RMIL-02D_results_for_review.zip` SHA256 `67badca393c11ab7664ca2e8f120e5e93181209a8e96f784bb9bc020377373c8`; ZIP 57파일 CRC PASS, 선언된 **49개 산출물 SHA256 일치**, 58×12 예측·매크로·최적 Epoch·336 GOLD Series Attention 진단 및 공통 초기 가중치 SHA 검증 PASS. K16 Mean의 58×12 예측은 RMIL-02C K16 Mean과 **파일 SHA까지 동일**(정확히 재현).
