@@ -1,3 +1,17 @@
+## 2026-10-12 — 새 채팅에서 **이 3개 누적 문서만 먼저 읽기** (과거 '실험당 문서' 방식 폐지)
+
+**최신 문서 운영 결정:** 실험 하나마다 신규 `.md`를 만들지 않음. 이전에 사용하던 누적 체계 복원.
+
+1. **[EXPERIMENT_HISTORY.md](EXPERIMENT_HISTORY.md)** — 유일한 **실험 결과 누적 기록**. RMIL-04C02 4,349명 A/B 실행 로그, 실제 Epoch 시간 및 성능, 중단·실패 상태가 2026-10-12 항목에 정리됨.
+2. **[CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md](CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md)** — 유일한 **진행 상태·다음 실험 계획 누적 기록**.
+3. **[AI_AGENT_KAGGLE_NOTEBOOK_RULES.md](AI_AGENT_KAGGLE_NOTEBOOK_RULES.md)** — 유일한 **공통 Notebook·GPU 효율·문서 작성 규칙 누적 기록**.
+
+**한 줄 상태:** A ResNet34 T4×2 DDP 7 Epoch 완료, 8 진행 로그까지 확인, 1 Epoch 약46.3분, Gold58 best 0.652246 @ E5. B DINOv2 Small 1 Epoch 완료, 2 진행 로그까지 확인, 1 Epoch 약217.1분, Gold58 best 0.727655 @ E1. B Window Microbatch1 설계로 시간 초과 위험 커 사용자가 중단 의사 표현; 종료/가중치 보존 여부 미확인. 모든 결과는 Gold58 반복 DEV 검증이며 Public LB 미확인. 사용자 과거 **Batch124 이상 VRAM 여유**를 후속 실험에서 반드시 반영할 것. LAB-V6 아직 `CANDIDATE_NOT_RELEASED`.
+
+**오래된 개별 설계/QA 파일은 과거 참고자료이며 현재 지시사항 아님.** 이 인수인계 문서의 아래 오래된 'NEXT'도 현재 작업 지시로 사용하지 말 것. 앞으로 실험 결과는 실험당 개별 문서가 아니라 위 누적 History/Plan/Rules 파일에 반영한다. 파일을 기억에 의존해 선택하지 않고 위 경로를 고정한다.
+
+---
+
 ## 2026-10-12 — TOP PRIORITY: 실제 Batch≥124 GPU 여유 기록 / 임의 축소 금지
 
 **사용자 직접 재강조 (네 번 이상 반복된 중요 사실):** 초기 RSNA 실험에서 GPU 메모리를 측정하면서 Batch **124 이상**으로도 메모리 여유가 있었음. **GPU는 한정된 자원이며 임의로 Window Microbatch 1 등으로 축소한 판단을 금지**. RMIL-04C02 B DINO-Small V4 K16 1 Epoch 실측 **217.15분**, A ResNet34 **46.33분**; 원인을 분해하지 않고 모든 차이를 Microbatch 때문이라고 단정하지 말 것. 과거의 Batch 124+는 모델·입력·Global/Window 기준이 이 문서만으로는 특정되지 않았으므로 현행 DINO Full FT에 대한 자동 보증은 아님. 그러나 **작은 배치를 default로 정하는 근거도 아님**. 새 장시간 Notebook 생성 전 최소 여러 Window Microbatch 실제 GPU Forward+Backward 시간·VRAM 측정 및 5~10 epoch 총비용, checkpoint resume 검증 필요. 중요한 설정은 사용자에게 사전 보고하고 승인을 얻는다.
