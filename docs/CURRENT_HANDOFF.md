@@ -1,3 +1,20 @@
+## 2026-10-11 — RMIL-04C02 final independent per-model notebooks, end-to-end artifacts audited
+
+**SUPERSEDES** earlier `RMIL-04C02_A_ResNet34_...` and `RMIL-04C02_B_DINOv2Small_...` artifacts. User requires no account A/B instructions *inside* notebooks, numbered add-input sections with file/version and careful code QA.
+
+**Latest files** (all Kaggle GPU execution pending):
+- `RMIL-04C02_ResNet34_Full4349_V4_K16_DDP_T4x2_REVIEWED_KO.ipynb` SHA `727e9cc646285bdc183246d20b78cdd2baf6988b4ef27e5764e1022c856d79f7`
+- `RMIL-04C02_DINOv2Small_Full4349_V4_K16_DDP_T4x2_REVIEWED_KO.ipynb` SHA `5147ca7377098dff3438f7b1fb64be84a0550b69d946c2e9b2da44b848ac87e3`
+- combined ZIP SHA `6950b560aab93c37a43cd0f56a9e2f523e293e3214687931be3f201421c64789`.
+
+Both standalone Notebook Markdown ① Full MRI 5-pack 190-shard cache ② exact V4 broad CSV SHA ③ old `R2D_SHARED224_V1` Gold58/train300/allseries4 metadata + pinned Gold58 SHA ④ exact specific backbone pretrained source/SHA. **Numeric dataset version of `rsna-knee-wide224-persistent-cache-v1` unknown in existing records**: do not guess; replicate version from **successful RMIL-04C00 Input**, verify `R2D_SHARED224_V1/frozen_manifests/gold58_manifest.csv` SHA `a3ca7df32d43ee7c683091162b1839ea8308d802bea3f2b437f4908d9cbcb079`, train300_manifest.csv and 358 allseries4 json, old series metadata integrity.
+
+**Enhanced safety:** Before actual training do 190 HDF5 SHA data gate, synthetic final export full dry-run incl checkpoint torch.save/load, Gold58 per-Epoch/target, artifact SHA and review ZIP CRC (actual local mock BOTH PASS); then actual Kaggle 2-rank NCCL Smoke: **largest 4 Train K16 studies** full 2.5D forward/backward, optimizer step, largest Gold58 study inference, checkpoint torch.save/load roundtrip; only then 10-Epoch max/min5/patience3 FULL 4349 train. CPU Gloo 2rank correctness tested incomplete batch n=1,3,4 vs single global mean, diff ≤4.66e-10. After GPU training exact same dry-run-tested finalizer checks real best.pt last.pt SHA/torch.load, epochs and Gold58 metrics, produces review ZIP; **Kaggle GPU RUN NOT YET CONFIRMED**. Initial local QA found an actual UID scoping NameError in newly authored finalizer fixture, corrected and all tests rerun PASS.
+
+[Detailed QA and model-specific input setup](RMIL-04C02_INDEPENDENT_NOTEBOOKS_CODE_QA_2026-10-11.md). Previous A/B notebook filenames and earlier GPU launch instructions below are historical; use latest files above. Gold58 dev reused, LABEL-V6 CANDIDATE_NOT_RELEASED, V4 separate model Public LB after learning then V6 formal release and new training/LB.
+
+---
+
 ## 2026-10-11 — FINAL CHANGE: DINOv2 Small FIRST (supersedes RMIL-04C02 B Base) + V4/V6 LB stages
 
 **최종 실험 선택:** A = MedicalNet R34 2.5D, **B = DINOv2-Small 2.5D** (Base/large 확대는 마지막). A 기존 노트북 `RMIL-04C02_A_ResNet34_Full4349_V4_K16_T4x2_KO.ipynb` SHA `433cc79e4da7875d2fd0b25d165e27ea4c75828c11ef8c0ffbf905531ef9f94d` 변경 없음. **새 B Small** `RMIL-04C02_B_DINOv2Small_Full4349_V4_K16_T4x2_KO.ipynb` SHA `6b7fdc59b581cf8f9162845c5e02683612ada196ad2efb41af71cd98c4e1f813`, worker SHA `39c650a857fbeb2dc879c80cd46b8e33503abe5efcb8fe4cdc09d55e4814a41b`. Small official 384-dim, 6 heads, 12 layers, patch14, CLS+patch-mean768; Small pretrain SHA `1051e25b2ed69ddad24f3c41e7b6eed6e7f7d012103ea227e47eb82e87dc2050`, Kaggle Model MetaResearch DINO v2 PyTorch **small v1**, backbone upper LR1e-5/LLRD0.8, head1e-4, fp16. Original B Base Notebook **superseded, do NOT execute**.
