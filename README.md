@@ -1,5 +1,8 @@
 # RSNA Knee Abnormality Detection — Experiment Log
 
+> **⚠️ 필수 GPU 자원 규칙 (2026-10-12, 사용자 직접 강조): 초기 실험에서 실제 GPU 메모리를 측정했고 Batch Size **124 이상**에서도 VRAM 여유가 있었다. 기존 경험을 잊고 근거 없이 DINO `Window Microbatch=1` 같은 작은 값을 임의 설정하지 말 것. 신규 모델과 K16 Full FT에서 124 이상을 그대로 보장하는 것은 아니므로 해당 구조의 GPU VRAM/속도를 반드시 실측하고, 사용자에게 보고한 후 결정할 것. Kaggle GPU 크레딧/세션 시간은 유한 자원. [반드시 읽을 정책](docs/GPU_BATCH_RESOURCE_MANDATORY_POLICY.md) · [AI Agent 규칙](AGENTS.md).**
+
+
 ## 2026-10-10 — RMIL-02C 완료: K4·K16·K24 Mean 통제 비교
 
 **완료 상태:** T4×2에서 K4·K16·K24 3개 Mean 모델 모두 정상 학습·Gold58 평가·ZIP 산출 완료. 수령 ZIP 70개 항목 CRC 및 60개 산출물 SHA-256 **독립 검증 통과**. 캐시 `rmil-02b-native224-v3`의 HDF5 **16개 실제 SHA-256 Kaggle 재검사 PASS**. 358명(Train300/Gold58), 2,006 Series, 66,430 Slice, seed20261013, MedicalNet-deflated R34 2.5D+Transformer, 동일 학습 설정. 이전 RMIL-01 K4 값은 픽셀 전처리가 달라 직접 비교하지 않음.
