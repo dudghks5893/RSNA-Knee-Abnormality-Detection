@@ -1,3 +1,11 @@
+## 2026-10-11 — FINAL CHANGE: DINOv2 Small FIRST (supersedes RMIL-04C02 B Base) + V4/V6 LB stages
+
+**최종 실험 선택:** A = MedicalNet R34 2.5D, **B = DINOv2-Small 2.5D** (Base/large 확대는 마지막). A 기존 노트북 `RMIL-04C02_A_ResNet34_Full4349_V4_K16_T4x2_KO.ipynb` SHA `433cc79e4da7875d2fd0b25d165e27ea4c75828c11ef8c0ffbf905531ef9f94d` 변경 없음. **새 B Small** `RMIL-04C02_B_DINOv2Small_Full4349_V4_K16_T4x2_KO.ipynb` SHA `6b7fdc59b581cf8f9162845c5e02683612ada196ad2efb41af71cd98c4e1f813`, worker SHA `39c650a857fbeb2dc879c80cd46b8e33503abe5efcb8fe4cdc09d55e4814a41b`. Small official 384-dim, 6 heads, 12 layers, patch14, CLS+patch-mean768; Small pretrain SHA `1051e25b2ed69ddad24f3c41e7b6eed6e7f7d012103ea227e47eb82e87dc2050`, Kaggle Model MetaResearch DINO v2 PyTorch **small v1**, backbone upper LR1e-5/LLRD0.8, head1e-4, fp16. Original B Base Notebook **superseded, do NOT execute**.
+
+A/B new ZIP `RMIL-04C02_AB_ResNet_vs_DINOv2Small_Full4349.zip` SHA `ef610daf58976d2f915731380dbd010893436c9275d3244ed08b5c14925c85b9`. Each Kaggle account T4×2 DDP; full Train4349 Gold58-dev, K16 2.5D, confidence & target-balanced V4 loss, max10/min5/patience3. Notebook nbformat/AST PASS; **Kaggle GPU/strict Small pretrained checkpoint load NOT RUN**. **After training:** independent ResNet V4 LB submission then Small V4 LB submission; obtain exact actual Public LB, no invented 0.94. **Later only when V6 formally released**: audit policy/UID+target masks, do NOT treat `not_mentioned/insufficient/uncertain` as negatives, retrain same A/B backbones and submit V6 LB independently; report delta 4-arm matrix. [Full staged execution protocol](RMIL-04C02_SMALL_FIRST_V4_LB_THEN_V6_LB_PROTOCOL_2026-10-11.md). Previous B Base design section below is **historical/superseded**.
+
+---
+
 # RMIL-04C02 — A/B 동시 Full4,349: ResNet34 2.5D vs DINOv2-Base 2.5D
 
 **2026-10-11. Notebook 2개 생성, Notebook AST/nbformat 및 synthetic encoder forward/backward PASS. Kaggle T4 실제 학습 미실행.**
