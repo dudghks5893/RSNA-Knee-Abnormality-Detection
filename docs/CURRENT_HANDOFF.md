@@ -1,3 +1,15 @@
+## 2026-10-11 — RMIL-04C02 최종 입력 UI/Notebook 파일명 간소화 (사용자 실제 mount 확정)
+
+**SUPERSEDES** older `REVIEWED_KO` copies for notebook execution; only input description/paths and filenames updated, not training worker or training hyperparameters. **A/B wording ONLY notebook filenames; contents are model-only.** Current validated artifacts:
+- **A ResNet34:** `RMIL-04C02_A_ResNet34_Full4349_K16_T4x2.ipynb` SHA256 `d9b97086882906d2be66849477d2e4ae0997dd787d564d7b25a85f8a07293ff6`
+- **B DINOv2 Small:** `RMIL-04C02_B_DINOv2Small_Full4349_K16_T4x2.ipynb` SHA256 `8096bd390b12802979b715c444a543a582841ac7ece0947e81ecd20716d892aa`
+- **ZIP:** `RMIL-04C02_A_ResNet34_B_DINOv2Small_Input_Clean.zip` SHA256 `fa747f46cc7c8b5d74f1b3fd21db0d5b43ff9fb46034a0e59e135b612eaecb17`.
+- **Notebook Add Input order (simplified)**: 1 `rsna-knee-wide224-persistent-cache-v1/R2D_SHARED224_V1`, 2 **A** `rsna-knee-r3d-medicalnet-pretrained-v1` / **B** `metaresearch/dinov2/pytorch/small/1`, 3 `rsna-knee-v4-consensus-dataset`, 4 `rmil-04b-full-mri-native224-v3`; each lists actual absolute user-provided path, needed files and purpose. No guessed Kaggle numeric versions; metadata SHA fail-fast still enforced.
+- Actual input path A pretrained `/kaggle/input/datasets/yhlucas/rsna-knee-r3d-medicalnet-pretrained-v1/resnet_34.pth`; B `/kaggle/input/models/metaresearch/dinov2/pytorch/small/1/pytorch_model.bin`; common `/kaggle/input/rsna-knee-wide224-persistent-cache-v1/R2D_SHARED224_V1`, V4 `/kaggle/input/datasets/yhlucas/rsna-knee-v4-consensus-dataset/rsna_knee_pseudolabels_v4_routed_broad.csv`, full cache `/kaggle/input/datasets/yhlucas/rmil-04b-full-mri-native224-v3/` plus 5 exact `results (i)` pack paths.
+- Both notebooks **`nbformat.validate`, all code-cell AST, embedded worker AST, exact path string checks, 4 MD input sections, no A/B-account mention PASS**. **Kaggle actual GPU execution still not performed**, worker/training logic unchanged from previous independently reviewed version. Need Kaggle T4 live preflight for real environment.
+
+---
+
 ## 2026-10-11 — RMIL-04C02 final independent per-model notebooks, end-to-end artifacts audited
 
 **SUPERSEDES** earlier `RMIL-04C02_A_ResNet34_...` and `RMIL-04C02_B_DINOv2Small_...` artifacts. User requires no account A/B instructions *inside* notebooks, numbered add-input sections with file/version and careful code QA.
