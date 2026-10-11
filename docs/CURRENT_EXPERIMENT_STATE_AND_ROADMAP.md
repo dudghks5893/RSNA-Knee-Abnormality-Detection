@@ -1,3 +1,15 @@
+## 2026-10-12 — 단일 누적 기록 체계 복원 / RMIL-04C02 현재 상태 (최신)
+
+**문서 운영 결정 (사용자 의도 복원):** 실험 1개당 GitHub 보고서 파일 1개를 추가하는 방식을 **중단**한다. 실험 결과·수치·변경 근거는 기존 [`EXPERIMENT_HISTORY.md`](EXPERIMENT_HISTORY.md) **하나에 계속 누적**한다. 실험 계획/현재 상태는 **이 파일 하나에 누적**한다. Notebook 규칙과 GPU 운영 절차는 기존 [`AI_AGENT_KAGGLE_NOTEBOOK_RULES.md`](AI_AGENT_KAGGLE_NOTEBOOK_RULES.md)에 누적한다. 신규 채팅 인수인계 `CURRENT_HANDOFF.md`에는 이 3개 파일을 어디부터 봐야 하는지만 간결하게 유지한다. README는 진입점, 옛 파일·개별 QA 보고서는 **과거 참고자료**.
+
+**현재 관측:** RMIL-04C02 A ResNet34 / B DINOv2-Small, Full V4 train4349 / Gold58 dev, K16, T4×2 DDP. 현재 사용자 제공 로그 범위: A 7 Epoch 완료/8 진행, B 1 Epoch 완료/2 진행. Epoch 실제 소요: A 46.334분, B 217.147분. Best Gold58 macro AUROC A 0.652246 @ E5, B 0.727655 @ E1 (B는 1 Epoch만 평가). A/B 결과 ZIP·최종 Public LB는 미확인. B의 Microbatch1 배치 전략은 너무 느리고 **GPU 자원 사전 계측 실패**; 사용자는 B 실행 중단 의사 표시했으며 실제 중단/저장 가중치 회수 여부 확인 전.
+
+**다음 방향:** A 완료 산출물이 보존됐는지 먼저 확인한다. B 재실행을 즉시 요구하거나 이전 배치1을 유지하지 않는다. 기존 사용자 실측 **Batch>=124에도 GPU VRAM 여유**를 반드시 고려하면서, 현행 DINO Full Fine-tuning 조건에 맞는 Window Microbatch 후보의 VRAM/실제 처리량을 소규모 테스트한 뒤, 체크포인트 복구와 GPU 세션 예산을 확인하고 사용자에게 사전 보고한다. LAB-V6는 정식 릴리스 전에는 금지(`CANDIDATE_NOT_RELEASED`). V4 각 모델 별도 Public LB 제출 후 V6 정식 릴리스/재학습/재제출 비교 계획은 유지하되, 실행 실패/중단으로 계획 조정 가능.
+
+**문서 분기 금지:** 임시 DDP 오류, Notebook 변경, 사전 Smoke QA, GPU 시간 문제를 별도의 실험당 신규 `.md`로 계속 만들지 말 것. 이 파일에는 **결정·상태만**, `EXPERIMENT_HISTORY.md`에는 **실제 관측 수치·판정만**, `AI_AGENT_KAGGLE_NOTEBOOK_RULES.md`에는 **재사용할 엔지니어링 규칙만** 누적. 각 시점 기존 기록은 삭제하지 않고 이전 상태로 보존하며, 옛 'NEXT'는 최신 블록과 충돌하면 무효.
+
+---
+
 ## 2026-10-12 — TOP PRIORITY: 실제 Batch≥124 GPU 여유 기록 / 임의 축소 금지
 
 **사용자 직접 재강조 (네 번 이상 반복된 중요 사실):** 초기 RSNA 실험에서 GPU 메모리를 측정하면서 Batch **124 이상**으로도 메모리 여유가 있었음. **GPU는 한정된 자원이며 임의로 Window Microbatch 1 등으로 축소한 판단을 금지**. RMIL-04C02 B DINO-Small V4 K16 1 Epoch 실측 **217.15분**, A ResNet34 **46.33분**; 원인을 분해하지 않고 모든 차이를 Microbatch 때문이라고 단정하지 말 것. 과거의 Batch 124+는 모델·입력·Global/Window 기준이 이 문서만으로는 특정되지 않았으므로 현행 DINO Full FT에 대한 자동 보증은 아님. 그러나 **작은 배치를 default로 정하는 근거도 아님**. 새 장시간 Notebook 생성 전 최소 여러 Window Microbatch 실제 GPU Forward+Backward 시간·VRAM 측정 및 5~10 epoch 총비용, checkpoint resume 검증 필요. 중요한 설정은 사용자에게 사전 보고하고 승인을 얻는다.
