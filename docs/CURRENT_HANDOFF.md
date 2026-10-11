@@ -1,3 +1,11 @@
+## 2026-10-11 — RMIL-04B Pack01~04 independent QA PASS / RMIL-04C00 CPU gate prepared (GPU not run)
+
+사용자가 Pack01~04 `results_for_review.zip` 4개를 제출. ZIP CRC 4/4 PASS, 40개 내부 파일 SHA256 직접 일치, RMIL-04A 동결 Study·Series UID/역할/part/Slice 원본과 전 행 일치, 중복/누락 없음, 4종 K nested center 검증 PASS. Pack01~04 **3,526 Studies (Train3481/Gold45), 19,492 Series, 655,290 Slices, 152 Shards**, 과거 V3 parity 기록 **1600/1600**. Pack00 과거 로그 PASS(881 Studies, 4,879 Series, 163,788 Slices, 38 Shards, V3 parity 406/406) 포함한 **전체 계획 4,407 Studies / 24,371 Series / 819,078 Slices / Train4,349+Gold58 /190 HDF5 / V3 parity 2,006**. 주의: 사용자 리뷰 ZIP에 원본 영상 파일은 없으므로 **190개 HDF5의 실제 바이트 SHA와 현 Kaggle Dataset 마운트는 아직 재검증되지 않음**. V4 4349×12 score/conf 값/NaN/gold leakage 검증 전. LABEL-V6 CANDIDATE_NOT_RELEASED.
+
+**다음 권장 실행:** `RMIL-04C00_Full4407_Cache190SHA_V4_Label_Gate_CPU_KO.ipynb`, SHA256 `b468235ac9797d40abdfe65d0103bf97c67592cddc1cf8f4065b65f047e81bbe`, Notebook nbformat/AST PASS, **Kaggle CPU 미실행**. 단일 Dataset의 실물 5개 경로(기존 문서의 `results`, `results (1)`,...`results (4)`) + V4 broad + Gold58 frozen 추가. CPU/Internet OFF/Seed20261013/Run All, HDF5 shard 190개 실제 SHA, 메타 50개 SHA, RMIL-04A full UID inventory fingerprint, nested K, Gold58 제외 및 V4 soft/conf 0..1 검증 후 `RMIL-04C00_results_for_review.zip` 수령. 통과 시 Full4,349 GPU K16 Mean model (02D 구조) 준비. [전체 QA·C00 계획](RMIL-04B_PACK01_04_QA_AND_RMIL-04C00_GATE_2026-10-11.md).
+
+---
+
 ## 2026-10-11 — RMIL-04B 실제 통합 Kaggle Dataset 마운트 경로 확보 (RMIL-04C 전용)
 
 **사용자가 Kaggle에 `yhlucas/rmil-04b-full-mri-native224-v3`를 등록하고 다음 5개 실제 마운트 경로를 제공했다.** 파일 존재/SHA/5-pack 통합 상태는 현재 ChatGPT에서 Kaggle mount에 직접 접근할 수 없어 **사용자 진술 기반 경로 확보이며 아직 Kaggle 실측 검증 전**. 다음 RMIL-04C 작업은 이전에 가정한 `RMIL-04B_FULL_NATIVE224_V3/RMIL-04B_PACK_XX` 구조를 **사용하지 말 것**.
