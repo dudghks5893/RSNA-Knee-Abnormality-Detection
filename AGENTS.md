@@ -8,6 +8,16 @@ The user reports **previous GPU memory profiling found substantial VRAM headroom
 
 **Important:** Historic Batch>=124 is **not** a blanket guarantee for DINOv2 Full Fine-tuning K16. Test actual memory and end-to-end throughput of *this* model/input/backward before claiming a batch is safe. Keep Study Global Batch and Window Microbatch separately documented. Report choices that affect runtime/VRAM; do not silently lower batches. Profile Window microbatches upward from realistic sizes, record measured peak VRAM and steps/sec, estimate 5–10 Epoch total vs Kaggle session/time budget, verify checkpoint resumption before lengthy training. Request user review of material changes.
 
+## Documentation source-of-truth (2026-10-12: MUST FOLLOW)
+
+**Do not create one new `.md` per experiment, Notebook revision, DDP bug, or QA audit.** User explicitly prefers their original cumulative history. Always update three **existing** documents:
+
+- `docs/EXPERIMENT_HISTORY.md`: cumulative actual experiment observations, metrics, completed/failed/interrupted runs, independent QA results.
+- `docs/CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md`: cumulative latest decisions, active state, next experiment and priorities.
+- `docs/AI_AGENT_KAGGLE_NOTEBOOK_RULES.md`: cumulative notebook-delivery, testing, GPU resource and documentation rules.
+
+`docs/CURRENT_HANDOFF.md` and `README.md` are short navigation/current-state pointers. Older per-experiment QA/design Markdown documents are archived reference, **not the primary source of truth**. Create a separate document only when the user explicitly requests a standalone artifact or an unavoidable technical reason is stated and approved. Do not rely on assistant memory to choose a document: these fixed paths are authoritative. Historic Batch>=124 VRAM-headroom evidence remains mandatory.
+
 ## Reproducibility and safety
 
 - Always keep input exact Kaggle dataset/model paths, pinned hashes, data split and Gold58 handling; never mix Gold58 into train labels.
