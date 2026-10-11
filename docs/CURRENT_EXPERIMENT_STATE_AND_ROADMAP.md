@@ -1,3 +1,13 @@
+## 2026-10-11 — B DINO Small DDP failure diagnosed / V2 two-step smoke fix prepared (Kaggle re-run PENDING)
+
+**User Kaggle failure (B only):** full MRI 190 SHA/V4/Gold58 PASS, pretrained DINOv2 Small strictly loaded, GPU T4x2 one-step Smoke PASS. Then first FULL_TRAIN second forward rank1 `Expected to have finished reduction in prior iteration`, missing-grad parameter index 2. No epoch complete. DDP old `find_unused_parameters=False`; DINO mask token used in masked pretrain but not 2.5D classification. A ResNet not implicated/unchanged.
+
+**Superseding B notebook** `RMIL-04C02_B_DINOv2Small_Full4349_K16_T4x2_DDP_FIX_V2.ipynb`, sha256 `a0d18b42ae006ddbf5cdd43af0ba33033bf572a8f42b3dcd7b2b77634971ceb1`, worker SHA `e2ce001a15b384e1cccc661bb412685a54e5332a609728a5914fe9c8f0e38533`. Before DDP freeze unused `encoder.embeddings.mask_token` if Parameter, enable `find_unused_parameters=True`, named trainable grad audit, smoke **two consecutive full DDP optimizer steps** on largest four TRAIN studies, smoke JSON `smoke_optimizer_steps==2` required, then original Gold test/checkpoint; training config/K16/V4 unchanged. Source notebook and C00 gate verified paths retained.
+
+**QA evidence:** CPU 2-rank Gloo with DINO-like unused mask & nonreentrant activation checkpoint reproduced *old second-forward reducer crash* vs FIXED two-step PASS. Notebook/embedded-worker AST, nbformat PASS, final export mock PASS, 13 unchanged-input and dynamic safety checks PASS. **Actual Kaggle GPU rerun NOT done.** Use new B notebook GPU T4×2 Internet OFF Save&Run All; expect `GPU_SMOKE_DDP_STEP 2/2 PASS` before `FULL_TRAIN`, then `EPOCH_COMPLETED`, `FINAL PASS`. Do not misreport as training completed. [Diagnosis and change log](RMIL-04C02_B_DINO_SMALL_DDP_FIX_V2_2026-10-11.md).
+
+---
+
 ## 2026-10-11 — RMIL-04C02 final independent per-model notebooks, end-to-end artifacts audited
 
 **SUPERSEDES** earlier `RMIL-04C02_A_ResNet34_...` and `RMIL-04C02_B_DINOv2Small_...` artifacts. User requires no account A/B instructions *inside* notebooks, numbered add-input sections with file/version and careful code QA.
