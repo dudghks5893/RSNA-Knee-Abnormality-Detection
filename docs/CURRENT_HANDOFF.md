@@ -1,3 +1,11 @@
+## 2026-10-12 — TOP PRIORITY: 실제 Batch≥124 GPU 여유 기록 / 임의 축소 금지
+
+**사용자 직접 재강조 (네 번 이상 반복된 중요 사실):** 초기 RSNA 실험에서 GPU 메모리를 측정하면서 Batch **124 이상**으로도 메모리 여유가 있었음. **GPU는 한정된 자원이며 임의로 Window Microbatch 1 등으로 축소한 판단을 금지**. RMIL-04C02 B DINO-Small V4 K16 1 Epoch 실측 **217.15분**, A ResNet34 **46.33분**; 원인을 분해하지 않고 모든 차이를 Microbatch 때문이라고 단정하지 말 것. 과거의 Batch 124+는 모델·입력·Global/Window 기준이 이 문서만으로는 특정되지 않았으므로 현행 DINO Full FT에 대한 자동 보증은 아님. 그러나 **작은 배치를 default로 정하는 근거도 아님**. 새 장시간 Notebook 생성 전 최소 여러 Window Microbatch 실제 GPU Forward+Backward 시간·VRAM 측정 및 5~10 epoch 총비용, checkpoint resume 검증 필요. 중요한 설정은 사용자에게 사전 보고하고 승인을 얻는다.
+
+**Required:** [GPU VRAM/Batch 정책](GPU_BATCH_RESOURCE_MANDATORY_POLICY.md) / [root AI coding agent rules](../AGENTS.md). 이 지침이 이전 Notebook의 `microbatch=1` 등의 레거시 설명보다 우선함.
+
+---
+
 ## 2026-10-11 — A ResNet34 DDP 검토 및 예방 수정 V2 (B 오류와 별도)
 
 **A 이전 1-Step GPU smoke는 B에서 발생한 second-forward DDP reducer 오류를 예방했다고 보장할 수 없음.** A ResNet34에는 DINO 마스크 토큰에 해당하는 예상 미사용 weight는 없지만 새 실행 전 V2 권장. Latest **A V2** `RMIL-04C02_A_ResNet34_Full4349_K16_T4x2_DDP_QA_V2.ipynb`, SHA256 `69356b45c3c1b92ce9a043649bf5d9e12f5743fbacb1106f227618b7a82e5332`, worker SHA `079a3b5dd4de2609bf1995dae63d071040484c797e7e1568ac9662bd6a7dbb27`. GPU 2-rank actual ResNet pretrained/224 Kaggle **NOT RUN**. New Smoke two sequential complete optimizer steps, all trainable params named-grad check, full train first batch grad audit. Model, LR, K16, label, epochs, outputs unchanged; `find_unused_parameters=False` retained with fail-fast preflight for known all-used ResNet. CPU 2rank *actual torchvision ResNet34 random weights* + tiny 64px & CLS Transformer, 2 synchronized optimizer steps PASS, finalizer synthetic PASS. Already running A with completed multiple batches/Epoch need not restart; fresh A start use V2. [Detailed QA](RMIL-04C02_A_RESNET34_DDP_QA_V2_2026-10-11.md).
