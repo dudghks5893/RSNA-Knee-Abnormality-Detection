@@ -1,3 +1,15 @@
+## 2026-10-11 — RMIL-04C02 A/B Full4,349 2.5D ResNet vs DINO 준비 (Kaggle GPU 미실행)
+
+사용자 요청으로 기존 `RMIL-04C01` **4-Epoch 고정 ResNet 단독 설계 대신** A계정 MedicalNet R34 2.5D / B계정 **DINOv2-Base 2.5D** 병렬 GPU T4×2 DDP 비교 전환. **최대10, 최소5 Epoch, patience3 Early Stopping**, Gold58 Macro AUROC 기준 두 DDP rank 동일 종료. V4 train4349에서 질환별 soft 양성/음성 비율과 Confidence를 결합해 **양성·음성 질환별 loss weight(.5~2.5 제한, 정규화)** 두 모델 공통 적용. 기존 RMIL-02D는 confidence-only라 **기존 모델과 직접 구조 실험 비교는 confounded**. DINO는 ImageNet 정규화, CLS+Patch Mean1536, Layer-wise ViT LR decay, FP16 activation checkpoint/micro1, ResNet은 기존 -5..5 MedicalNet full FP32/micro4. Gold58 반복 Dev, V6 `CANDIDATE_NOT_RELEASED` 미사용.
+
+준비 파일 SHA:
+- `RMIL-04C02_A_ResNet34_Full4349_V4_K16_T4x2_KO.ipynb` `433cc79e4da7875d2fd0b25d165e27ea4c75828c11ef8c0ffbf905531ef9f94d`
+- `RMIL-04C02_B_DINOv2Base_Full4349_V4_K16_T4x2_KO.ipynb` `cf7f83c08f7791227083007e2800e8188e35a558ff2d284cd08b8051668fb889`
+- ZIP `RMIL-04C02_AB_ResNet_vs_DINO_Full4349_EarlyStop.zip` `202914fde02a7b27bab5376e8d67b708c991a30a0f0dd91411bee8a254168d9c`.
+Notebook AST, Worker AST, nbformat + TinyEncoder CPU 2.5D Forward/Backward 확인 (실제 DINO checkpoint, Kaggle T4 CUDA/NCCL, GPU 학습 **미확인**). **DINO Checkpoint** Kaggle Model `metaresearch/dinov2/PyTorch/base/1`, 이전 프로젝트에서 기록된 exact path `/kaggle/input/models/metaresearch/dinov2/pytorch/base/1/pytorch_model.bin`, SHA `014965d9e330e7f4bff8ddcbee9df5e4f2ca032b2f5180942a6edb454783e75d`, input add 여부는 B Kaggle 직접 확인. DINO ViT-B Full-data K16는 **실행시간이 길어 Kaggle 세션 제한 초과 가능성**이 큼. 기존 GPU Notebook 사용하면 이 새 변경은 반영되지 않음. [전용 실험·운영 기록](RMIL-04C02_AB_FULL4349_RESNET_VS_DINO_DESIGN_2026-10-11.md).
+
+---
+
 ## 2026-10-11 — RMIL-04C00 verified PASS / RMIL-04C01 4,349-study V4 DDP GPU Notebook prepared (NOT executed)
 
 수령한 `RMIL-04C00_results_for_review.zip` SHA256 `4a2ada496d44501554f510b4f15f7b40df74d11edf3ac8a39e656019a445c322`: CRC, 내부 3개 파일 SHA PASS. Kaggle 실제 로그 상태 `PASS_FULL_CACHE_AND_V4_SCHEMA_GATE`, CPU 5.34분. 5-Pack 4,407 Studies / 24,371 Series /819,078 Slices, Train4,349/Gold58 nonleak UID, **190/190 HDF5 shard 파일 SHA 실제 전수 읽기 PASS**, V4 전체 4,349 × 12 score/conf finite/0..1/누락0, K16 windows 총 387,714. 기존358 V3 픽셀 parity2,006는 04B Producer 보고값이며 C00 재전처리 재검사는 아님. **C00은 GPU 학습 아님**.
