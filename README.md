@@ -1,5 +1,20 @@
 # RSNA Knee Abnormality Detection — Experiment Log
 
+## 📌 문서 시작점 — 기존 누적 방식 유지 (2026-10-12)
+
+**실험당 개별 Markdown 파일을 새로 만들지 않습니다.** 기존 누적 문서 세 개가 기준입니다.
+
+| 목적 | 반드시 볼 파일 |
+|---|---|
+| **지난 실험 결과·Epoch/LB/실패 기록 전체** | [docs/EXPERIMENT_HISTORY.md](docs/EXPERIMENT_HISTORY.md) |
+| **현재 진행 상태·다음 실험 계획** | [docs/CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md](docs/CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md) |
+| **Notebook 설계·GPU Batch/메모리/시간·품질 검사 규칙** | [docs/AI_AGENT_KAGGLE_NOTEBOOK_RULES.md](docs/AI_AGENT_KAGGLE_NOTEBOOK_RULES.md) |
+
+새 채팅용 요약은 [CURRENT_HANDOFF.md](docs/CURRENT_HANDOFF.md). 예전에 생성한 실험별 설계/오류 QA 문서는 **보존된 과거 참고자료**이며 최신 상태 기준이 아닙니다. 특히 과거 **Batch Size 124 이상에서도 충분한 GPU 메모리 여유**가 있었다는 사용자 실측 기록을 무시하고 Window Microbatch를 임의 축소하는 것을 금지합니다.
+
+---
+
+
 > **⚠️ 필수 GPU 자원 규칙 (2026-10-12, 사용자 직접 강조): 초기 실험에서 실제 GPU 메모리를 측정했고 Batch Size **124 이상**에서도 VRAM 여유가 있었다. 기존 경험을 잊고 근거 없이 DINO `Window Microbatch=1` 같은 작은 값을 임의 설정하지 말 것. 신규 모델과 K16 Full FT에서 124 이상을 그대로 보장하는 것은 아니므로 해당 구조의 GPU VRAM/속도를 반드시 실측하고, 사용자에게 보고한 후 결정할 것. Kaggle GPU 크레딧/세션 시간은 유한 자원. [반드시 읽을 정책](docs/GPU_BATCH_RESOURCE_MANDATORY_POLICY.md) · [AI Agent 규칙](AGENTS.md).**
 
 
