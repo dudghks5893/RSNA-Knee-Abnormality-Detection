@@ -1,3 +1,19 @@
+## 2026-10-11 — RMIL-04B 5 Pack → 1 Kaggle Dataset 등록 결정 (기존 5개 Dataset 안내 대체)
+
+**사용자 확정 등록 방식:** 이미 각 Kaggle CPU Notebook에서 생성된 `RMIL-04B_PACK_00` ~ `RMIL-04B_PACK_04` 폴더를 **하나의 Kaggle Dataset**에 넣음. **캐시 제작 실행 단위(5개 CPU Notebook)**와 **등록 Dataset 수(1개)**는 별개다. 기존 문서의 "각 Pack 별도 Kaggle Dataset 5개 필수"와 "RMIL-04C Add Input 5개"는 이 결정으로 대체.
+
+추천:
+- Title `RMIL-04B Full MRI Native224 V3 Cache`
+- Slug `rmil-04b-full-mri-native224-v3`
+- Visibility **Private** 권장: 의료영상 및 대회 데이터 사용 조건 준수 확인 전 공개하지 않기.
+- Dataset top-level `RMIL-04B_FULL_NATIVE224_V3/` 아래 `RMIL-04B_PACK_00/` ~ `RMIL-04B_PACK_04/` 그대로 유지(각 `shards/*.h5`, `series_index.csv`, `k_selection.jsonl`, `shard_sha256.csv`, `cache_contract.json`, SHA manifest 포함). **HDF5를 재압축·리네임·병합하지 않음**.
+- 아직 **등록 전**이므로 Kaggle 실제 mount 경로는 미확정. 예상 경로 `/kaggle/input/datasets/yhlucas/rmil-04b-full-mri-native224-v3/RMIL-04B_FULL_NATIVE224_V3/RMIL-04B_PACK_00` (01~04 동일). RMIL-04C는 **단일 Dataset Add Input**, 예상 root + `is_dir()`/SHA 검증, 전역 재귀탐색 없음.
+- 전체 uint8 원시 영상 **41.098 GB**, 5개 Notebook **각각 14GB Output** 제한을 지키고 생성한 후 사용자 로컬(또는 지원되는 Dataset 업로드 워크플로)에서 하나로 모아 등록. Kaggle Dataset **최대 200GB/데이터셋, Private 총 200GB, 최상위 파일 최대 50개** (2026-10-11 Kaggle 공식 docs `https://www.kaggle.com/docs/datasets#technical-specifications`). 41GB 자체는 단일 Dataset 한도 아래지만 사용자의 **기존 Private Dataset 총 사용량 + 41GB**가 200GB를 넘지 않는지 확인 필요. 단일 Kaggle Notebook의 Output 제한과 Dataset 등록 용량 제한은 **다른 제한**. 업로드/게시 성공 실제 확인 전 완료 주장 금지.
+- 사용자에게 학습용 Dataset은 `RMIL-04B_PACKXX_results_for_review.zip` 5개만 업로드하지 말고, 반드시 **실제 HDF5 픽셀 폴더 5개 전체**를 보존하도록 안내.
+- 5팩 출력을 각각 검증하고 **4,407 Studies·24,371 Series·819,078 Slices UID 중복·누락 0**, 2,006개 이전 V3 Series SHA parity 및 파일별 shard SHA 확인한 뒤 RMIL-04C Full4,349 학습으로 이동. LABEL-V6 `CANDIDATE_NOT_RELEASED` 유지.
+
+---
+
 # RMIL-04 — 전체 4,349 report-only 데이터 학습 실행 계획 (2026-10-10)
 
 **현재 단계: `RMIL-04A` CPU 사전 검증 Notebook 작성 완료, Kaggle 미실행. `RMIL-04B` 대용량 캐시와 `RMIL-04C` GPU 학습은 아직 생성·실행되지 않음.** LABEL-V6는 후보 `CANDIDATE_NOT_RELEASED`.
