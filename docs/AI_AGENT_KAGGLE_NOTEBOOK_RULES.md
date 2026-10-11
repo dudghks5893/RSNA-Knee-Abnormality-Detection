@@ -1,3 +1,20 @@
+## 2026-10-12 — **최우선 고정 규칙: 실험당 새 GitHub 문서 생성 금지 / 이전 누적 방식 유지**
+
+사용자 명시 요청: 프로젝트 초기에 **기존 한 파일에 실험 기록을 계속 누적**했음. 최근 AI가 실험마다 별도 설계·오류·QA `.md` 파일을 만든 방식은 채택하지 않는다. 이전 문서의 **§32.2 '디버깅 파일 생성 금지'와 동일한 의도를 우선 적용**한다.
+
+**새 Notebook·실험이 생길 때 편집할 문서는 세 개뿐이다.**
+1. [EXPERIMENT_HISTORY.md](EXPERIMENT_HISTORY.md) — 실제 완료·중단·관측된 실험 결과, 중요한 과학적 판단, 사용자 제공 로그 검증 및 버전 이력을 **한 파일에 누적**. 결과와 예정/추정은 구분.
+2. [CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md](CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md) — 현재 모델/데이터/실험 번호, 무엇이 실행·중단·예정인지, **다음 한 가지 작업**을 한 파일에서 관리.
+3. **이 파일 [AI_AGENT_KAGGLE_NOTEBOOK_RULES.md](AI_AGENT_KAGGLE_NOTEBOOK_RULES.md)** — Notebook 제작/검증/배포, GPU 배치·시간, 저장 복구 및 문서 규칙만 누적.
+
+`CURRENT_HANDOFF.md`는 신규 채팅 탐색용으로 위 세 파일 경로와 최신 상태를 **짧게 안내**하는 부수 파일이다. `README.md`는 저장소 진입점이다. 기존 개별 실험 설계·QA 파일은 정확한 당시 보고서를 보존하는 **archive/reference**이고 새 상태의 authoritative source가 아니다. 개별 `.md` 추가는 사용자가 명시적으로 단독 문서를 요청했거나, 형식/파일 크기상 분리가 필수인 객관적 이유를 사용자에게 설명한 경우에만 허용. 반복 디버깅에서 늘리지 말 것.
+
+**GPU 자원 필수 기록:** 사용자 측 **초기 실험에서 Batch Size 124 이상에도 VRAM 여유가 확인**됨. 이 결과를 간과해 RMIL-04C02 B의 Window Microbatch1 설정을 사전 속도 계측 없이 확정한 것은 실패. 신규 DINO/ResNet Full FT에서는 과거 Batch 조건을 자동으로 동일하다고 가정하지 않으면서, **같은 모델·해상도·Window 구성에서 여러 Microbatch 값 실제 Forward+Backward+Optimizer 처리량·peak allocated/reserved를 비교**하고, 최소/최대 Epoch·전체 GPU 예산, checkpoint resume를 사전 평가한 뒤 사용자에게 보고한다. 임의의 보수적 Batch 축소·사용자 비보고 금지. 수치 상세는 [GPU resource policy](GPU_BATCH_RESOURCE_MANDATORY_POLICY.md) 참고하되, 문서 기록의 주체는 이 공통 규칙 파일이다.
+
+**읽기 순서:** `AGENTS.md` → `CURRENT_HANDOFF.md`(현황 요약) → `CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md`(최신 결정) → `EXPERIMENT_HISTORY.md`(실험별 실제 결과) → 이 파일(Notebook 규칙). 단일 메인 파일로 매뉴얼을 무리하게 합치지 않되 **실험마다 새 파일은 만들지 않는다**.
+
+---
+
 **RMIL-02C 캐시 입력 경로 확정 (2026-10-10):** 사용자가 Kaggle Dataset `yhlucas/rmil-02b-native224-v3`로 등록했으며 정확한 하위 폴더는 `/kaggle/input/datasets/yhlucas/rmil-02b-native224-v3/RMIL-02B_NATIVE224_V3`입니다. 후속 K4·K16·K24 학습은 **이 경로 하나만 사용**하고 그 안의 `shards/shard_000.h5`~`shard_015.h5`, `series_index.csv`, `k_selection.jsonl`, `cache_contract.json`, `shard_sha256.csv`를 실행 전에 검사합니다. 경로를 고정한 한글 Notebook은 `RMIL-02C_K4_K16_K24_Mean_T4x2_경로확정.ipynb` (SHA-256 `44c92cac63126c5b477ed0a1864c473587df14a0fc19dce56374930e68898e4d`); 코드 문법 검증 PASS, **Kaggle GPU 실행은 아직 미검증**입니다.
 
 # AI Agent Rules — Kaggle Notebook Delivery
