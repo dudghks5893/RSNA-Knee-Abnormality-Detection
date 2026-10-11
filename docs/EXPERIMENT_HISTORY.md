@@ -1,3 +1,37 @@
+## 2026-10-12 — RMIL-04C02 A/B 전체 4,349명 학습 실측·자원 실패 기록 (누적 실험 이력)
+
+> **유일한 RMIL 포함 누적 실험 기록:** 향후 완료된 RMIL·기타 실험의 관측 결과는 기존 **`docs/EXPERIMENT_HISTORY.md` 안에 추가**한다. 사소한 디버깅·실험별 개별 보고서 파일 신설 금지. 정확한 실제 로그와 이전 저장 결과를 구분하며, Gold58은 반복 사용 개발 검증임을 명시.
+
+### 공통 계약
+
+- Full Native224 cache 5 Pack: 4,407 Studies, 24,371 Series, 819,078 Slices; Train V4 Broad 4,349 Studies, Gold58은 학습 제외한 반복 Dev 검증.
+- K16 2.5D 3-slice, Series Mean → metadata CLS Transformer, 12 targets; T4×2 DDP Global Study Batch4, 최대10·최소5 Epoch, patience3.
+- Full 190 HDF5 SHA, 라벨 정합성 PASS, GPU 2-Step Smoke PASS. 각각 학습 1 Epoch당 Optimizer Step `ceil(4349/4)=1088`.
+- 과거 **Batch 124 이상에서도 여유 VRAM이 있었던 사용자 실측 경험**을 이번 DINO Microbatch 결정에 반영하지 못함. 정확히 과거의 어떤 모델·학습 모드·Batch 의미였는지는 추가 근거 없이 단정 금지. **GPU 예산 사전 검증 미비는 실험 설계 실패**.
+
+### 사용자 제공 실제 Kaggle 로그 요약 (2026-10-11)
+
+| 구분 | A — ResNet34 2.5D | B — DINOv2-Small 2.5D |
+|---|---|---|
+| Window Microbatch | 4 | **1 (사전 속도 검증 없이 선택한 문제 설정)** |
+| 1 Epoch 실제 시간 | **46.334분** | **217.147분** |
+| 학습 완주 상태 (수신 로그) | **7 Epoch 완료, 8 Epoch 진행 중** | **1 Epoch 완료, 2 Epoch 진행 중** |
+| Best Gold58 Macro AUROC (로그 범위) | **0.652246** (Epoch5) | **0.727655** (Epoch1) |
+| Best Gold58 Macro AUPRC (같은 best epoch) | 0.524157 | 0.611968 |
+| Best Epoch (로그 범위) | 5 | 1 |
+| GPU 구성 | T4×2 DDP | T4×2 DDP |
+| 10 Epoch 단순 시간 투영 | 약 7.7시간 | 약 36.2시간 |
+
+- A가 7 Epoch를 성공적으로 완료했고 Epoch8의 중간 진행 로그까지 확인. 이후 최종 종료/체크포인트/ZIP 상태는 최신 사용자 실행 산출물 확인 전까지 **미확인**.
+- B는 첫 시도에서 DINO `embeddings.mask_token` 미사용으로 DDP reducer error 발생. 이후 마스크 토큰 `requires_grad=False`, `find_unused_parameters=True`, 2-Step 사전 Smoke 검사를 적용했고 **수정본의 Kaggle 2-Step Smoke 및 본학습 Epoch1 정상 완료 확인**. 그러나 Batch1/DINO Full Fine-Tuning K16은 217.147분/Epoch으로 GPU 세션/크레딧 예산에 적합하지 않았음. 사용자는 B 실행 중단 의사 표시. 실제 중지·체크포인트 회수 완료는 **아직 확인되지 않음**.
+- **B의 높은 개발 AUROC가 Public LB 성능을 의미하지 않음**, 반복 사용된 Gold58 결과를 독립 시험으로 해석하지 않음.
+- DINO Epoch당 4.7배 느린 원인을 모두 Window Microbatch 하나로 확정하지 않음. ViT 전체 역전파, checkpointing, DDP, 데이터 로딩 병목의 실측 분해가 필요함.
+- Kaggle GPU 메모리를 실측했고 초기 실험에서 **Batch Size 124 이상에 여유가 있었다는 사용자 핵심 진술**을 최우선 입력 가정으로 보존. 다음 장시간 Notebook은 Window Batch 4·8·16·32·64·128 등 가능한 후보군을 점진 측정하고 메모리/실제 처리량/총 예상시간 확인 후 제안.
+- 새로운 LABEL-V6는 `CANDIDATE_NOT_RELEASED` 상태. 정식 릴리스 후에만 재학습 가능.
+- **본 04C02 작업 중 생성된 개별 설계·QA·오류 보고서 문서는 참고용 과거 스냅샷**이며 **현재 상태 판단의 기준 아님**. 정식 진행 상태는 [현재 계획](CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md), Notebook 작성 규칙은 [AI Agent 규칙](AI_AGENT_KAGGLE_NOTEBOOK_RULES.md), 전체 GPU 정책은 [GPU 자원 정책](GPU_BATCH_RESOURCE_MANDATORY_POLICY.md).
+
+---
+
 ## 2026-10-10 — RMIL-03 A/B 2×2 학습 네 모델 완료, 최종 셀 오류 복구 분석 완료
 
 **현재 상태:** A계정 03A/03B, B계정 03D/03C **4개 모델 학습 전부 GPU 종료코드 0**, 각 최고 Epoch `best.pt` Kaggle Output 로그에 저장. 사용자가 직접 ZIP 묶어서 제공. **최종 Notebook 비교 셀 오류:** 동일 초기 SHA에도 최초 `initial_forward_logits`가 FP32로 최대 1.78814e-7 차이인데 `==` 정밀 비교하여 `AssertionError ('설정 불일치','initial_forward_logits')`; **학습 무효 아님**. 후속 코드에서 이 설정 필드 제외 후 `np.allclose(...,atol=2e-5,rtol=0)`로 별도 검사. 학습 재실행 불필요.
