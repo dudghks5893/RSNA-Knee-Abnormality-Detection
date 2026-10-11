@@ -1,3 +1,9 @@
+## 2026-10-11 — A ResNet34 DDP 검토 및 예방 수정 V2 (B 오류와 별도)
+
+**A 이전 1-Step GPU smoke는 B에서 발생한 second-forward DDP reducer 오류를 예방했다고 보장할 수 없음.** A ResNet34에는 DINO 마스크 토큰에 해당하는 예상 미사용 weight는 없지만 새 실행 전 V2 권장. Latest **A V2** `RMIL-04C02_A_ResNet34_Full4349_K16_T4x2_DDP_QA_V2.ipynb`, SHA256 `69356b45c3c1b92ce9a043649bf5d9e12f5743fbacb1106f227618b7a82e5332`, worker SHA `079a3b5dd4de2609bf1995dae63d071040484c797e7e1568ac9662bd6a7dbb27`. GPU 2-rank actual ResNet pretrained/224 Kaggle **NOT RUN**. New Smoke two sequential complete optimizer steps, all trainable params named-grad check, full train first batch grad audit. Model, LR, K16, label, epochs, outputs unchanged; `find_unused_parameters=False` retained with fail-fast preflight for known all-used ResNet. CPU 2rank *actual torchvision ResNet34 random weights* + tiny 64px & CLS Transformer, 2 synchronized optimizer steps PASS, finalizer synthetic PASS. Already running A with completed multiple batches/Epoch need not restart; fresh A start use V2. [Detailed QA](RMIL-04C02_A_RESNET34_DDP_QA_V2_2026-10-11.md).
+
+---
+
 ## 2026-10-11 — B DINO Small DDP failure diagnosed / V2 two-step smoke fix prepared (Kaggle re-run PENDING)
 
 **User Kaggle failure (B only):** full MRI 190 SHA/V4/Gold58 PASS, pretrained DINOv2 Small strictly loaded, GPU T4x2 one-step Smoke PASS. Then first FULL_TRAIN second forward rank1 `Expected to have finished reduction in prior iteration`, missing-grad parameter index 2. No epoch complete. DDP old `find_unused_parameters=False`; DINO mask token used in masked pretrain but not 2.5D classification. A ResNet not implicated/unchanged.
