@@ -1,3 +1,15 @@
+## 2026-10-12 — RMIL-04C02 A/B 독립 V4 Best Kaggle 제출 Notebook 준비 (GPU 미실행)
+
+**현재 작업:** 사용자 제공 Kaggle Best checkpoint Input:
+- A ResNet34 `/kaggle/input/datasets/yhlucas/rsna-knee-rmil04c02-resnet34-v4-k16-best/best.pt`; 제출 Notebook: `RMIL-04C02_A_ResNet34_V4_K16_SUBMISSION_T4x2.ipynb`; Notebook SHA256 `0d7dc4c01a76cb21cef370365a578a27acdf478b195503776cb3b0756e3902bf`.
+- B DINOv2-Small `/kaggle/input/datasets/woniyeon/rsna-knee-rmil04c02-dinov2small-v4-k16-best/best.pt`; 제출 Notebook: `RMIL-04C02_B_DINOv2Small_V4_K16_SUBMISSION_T4x2.ipynb`; Notebook SHA256 `b7ab9ed270230b9b8e7bf38f26a4e48acaed8bfa8bc710866311b5770a7a79d3`.
+
+**Inference-only:** Official Competition Test Dataset 자동 연동 + 각 자체 Best Dataset **총 두 Inputs씩**. Label/cache/pretrained 별도 Add Input 불필요. 기존 학습 04B V3의 실제 130mm crop, physical Slice ordering, sampled series p0.5/99.5 Zscore→224 uint8, farthest-first K16, 2.5D 인접 3slice, 원래 StudyModel 그대로, checkpoint strict state, 실제 checkpoint config plane_map. T4x2 independent study parallelism; 실제 MRI 첫 Study에서 Window inference 4/8/16/32/64/128 후보 VRAM/속도 계측 후 자동 선택(학습 Microbatch1 재사용 금지). 출력 `/kaggle/working/submission.csv` 12 label; no GPU training. Notebook `nbformat`, Worker/code-cell AST, exact StudyModel AST parity, 04B 전처리 함수 AST parity, CPU A ResNet forward+strict state, synthetic MRI 130mm preprocessing/K16 및 3-row submission CSV execution checks PASS.
+
+**한계/다음 작업:** 사용자가 제공한 원격 Kaggle Best checkpoint의 실제 바이트·구조와 실전 hidden 1300 Study T4 inference는 **아직 테스트하지 않음**. 사용자에게 A/B 각각 Kaggle Save & Run All (Internet OFF, T4×2) 후 성공하면 Competition Submit하도록 안내. 실제 LB 수치와 추론 시간은 제출 이후 `EXPERIMENT_HISTORY.md` 누적; 개별 `.md` 실험 보고서 파일은 만들지 않는다. **대회 Code Submission GPU/CPU <=9h, Internet OFF, submission.csv 필수.**
+
+---
+
 ## 2026-10-12 — 단일 누적 기록 체계 복원 / RMIL-04C02 현재 상태 (최신)
 
 **문서 운영 결정 (사용자 의도 복원):** 실험 1개당 GitHub 보고서 파일 1개를 추가하는 방식을 **중단**한다. 실험 결과·수치·변경 근거는 기존 [`EXPERIMENT_HISTORY.md`](EXPERIMENT_HISTORY.md) **하나에 계속 누적**한다. 실험 계획/현재 상태는 **이 파일 하나에 누적**한다. Notebook 규칙과 GPU 운영 절차는 기존 [`AI_AGENT_KAGGLE_NOTEBOOK_RULES.md`](AI_AGENT_KAGGLE_NOTEBOOK_RULES.md)에 누적한다. 신규 채팅 인수인계 `CURRENT_HANDOFF.md`에는 이 3개 파일을 어디부터 봐야 하는지만 간결하게 유지한다. README는 진입점, 옛 파일·개별 QA 보고서는 **과거 참고자료**.
