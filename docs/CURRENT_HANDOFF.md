@@ -1,3 +1,30 @@
+## 2026-10-11 — RMIL-04B 실제 통합 Kaggle Dataset 마운트 경로 확보 (RMIL-04C 전용)
+
+**사용자가 Kaggle에 `yhlucas/rmil-04b-full-mri-native224-v3`를 등록하고 다음 5개 실제 마운트 경로를 제공했다.** 파일 존재/SHA/5-pack 통합 상태는 현재 ChatGPT에서 Kaggle mount에 직접 접근할 수 없어 **사용자 진술 기반 경로 확보이며 아직 Kaggle 실측 검증 전**. 다음 RMIL-04C 작업은 이전에 가정한 `RMIL-04B_FULL_NATIVE224_V3/RMIL-04B_PACK_XX` 구조를 **사용하지 말 것**.
+
+```python
+from pathlib import Path
+PACK_PATHS = [
+    Path("/kaggle/input/datasets/yhlucas/rmil-04b-full-mri-native224-v3/results/RMIL-04B_PACK_00"),
+    Path("/kaggle/input/datasets/yhlucas/rmil-04b-full-mri-native224-v3/results (1)/RMIL-04B_PACK_01"),
+    Path("/kaggle/input/datasets/yhlucas/rmil-04b-full-mri-native224-v3/results (2)/RMIL-04B_PACK_02"),
+    Path("/kaggle/input/datasets/yhlucas/rmil-04b-full-mri-native224-v3/results (3)/RMIL-04B_PACK_03"),
+    Path("/kaggle/input/datasets/yhlucas/rmil-04b-full-mri-native224-v3/results (4)/RMIL-04B_PACK_04"),
+]
+for i, root in enumerate(PACK_PATHS):
+    assert root.is_dir(), f"PACK_{i:02d} 경로 없음: {root}"
+    for name in ("series_index.csv", "k_selection.jsonl", "shard_sha256.csv", "cache_contract.json"):
+        assert (root/name).is_file(), f"PACK_{i:02d} 파일 없음: {root/name}"
+    assert (root/"shards").is_dir(), f"PACK_{i:02d} shards 없음: {root}"
+```
+
+- **Kaggle Add Input**: `rmil-04b-full-mri-native224-v3` 하나. 그 안에서 Pack별 `results`, `results (1)`, `results (2)`, `results (3)`, `results (4)`가 **상이하며 공백·괄호를 포함하므로 정확한 문자열 유지**. 디렉터리 `rglob`, 전체 `/kaggle/input` 재귀 탐색 금지.
+- Expected metadata from RMIL-04A: Packs 00~04의 studies `881,881,881,882,882`, series `4879,4863,4896,4881,4852`, slices `163788,163788,163788,163860,163854`; 합계 **4,407 Studies /24,371 Series /819,078 Slices**, frozen **Train4,349/Gold58**. **RMIL-04B Pack01~04의 성공 로그·review ZIP을 이번 턴에서 받지 않았으므로 파트별 완료/SHA 확인이 아직 끝난 것으로 주장하지 말 것.**
+- 학습 전 **Pack별 실제 HDF5 shard 존재·SHA-256·`series_index.csv`/manifest/metadata·UID coverage·K selection**; 5개 Pack 간 중복 없음; 358명 중첩 기존 V3 2,006 Series 픽셀 SHA parity(각 Pack 산출 메타) 검증; V4 full 4349×12 label schema/score/conf/leakage 별도 승인. LABEL-V6는 `CANDIDATE_NOT_RELEASED`인 동안 학습 금지.
+- RMIL-04C baseline 후보 **RMIL-02D V3 K16 Mean**; Seed **20261013**. Gold58은 반복 사용 개발 검증, 별도 standalone 실제 제출 이후에만 LB 보고.
+
+---
+
 ## 2026-10-11 — RMIL-04B 5 Pack → 1 Kaggle Dataset 등록 결정 (기존 5개 Dataset 안내 대체)
 
 **사용자 확정 등록 방식:** 이미 각 Kaggle CPU Notebook에서 생성된 `RMIL-04B_PACK_00` ~ `RMIL-04B_PACK_04` 폴더를 **하나의 Kaggle Dataset**에 넣음. **캐시 제작 실행 단위(5개 CPU Notebook)**와 **등록 Dataset 수(1개)**는 별개다. 기존 문서의 "각 Pack 별도 Kaggle Dataset 5개 필수"와 "RMIL-04C Add Input 5개"는 이 결정으로 대체.
