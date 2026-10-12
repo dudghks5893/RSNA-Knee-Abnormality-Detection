@@ -1,3 +1,29 @@
+## 2026-10-12 — Stage1 A=V4 / B=Strict: 공통 RMIL-04B 이미지 캐시 재사용 결정 (CPU 입력 manifest 준비 완료 / GPU 학습 미실행)
+
+**결정**: A계정 = V4 라벨, B계정 = Strict V1 라벨. MRI 픽셀 전처리·Slice/Series UID·학습 샘플러 동일. **각 라벨별 영상 캐시 2벌 생성 금지**. 기존 RMIL-04B Full Native224 V3 HDF5 5 Packs / 190 Shards (4407 UID, 24371 Series, 819078 uint8 Slice, 원시 uint8 pixel bytes 41.1GB) 단일 공통 Input으로 사용. 기존 RMIL-04C00 Kaggle Audit `PASS_FULL_CACHE_AND_V4_SCHEMA_GATE`, 190 Shard SHA 검증 보고; B계정이 A소유 Kaggle Dataset에 실제 접근 가능한지는 별도 mount 체크 필요(미검증). 이 대화 컨테이너에는 원격 HDF5 본문 41GB 없음; **재처리/업로드를 이미 수행한 것으로 주장 금지**.
+
+**정확한 원래 `RMIL-04B_PACK00_FullNative224_V3_Cache_CPU_KO.ipynb` 전처리 확인**:
+1. Pixel array float32, RescaleSlope/Intercept, MONOCHROME1 `frame=-frame`, geometry physical slice ordering;
+2. PixelSpacing 130mm centered FOV, 부족한 외부는 Z=-5 Padding;
+3. Series 전체의 crop pixels에서 stride-sampled percentile p0.5/p99.5 Clip;
+4. 해당 Series cropped pixels mean/std Z-score `clip(z,-5,5)`;
+5. 부족한 FOV 영역 Constant -5 pad → `cv2.INTER_AREA` 224×224 resize;
+6. `uint8 = rint(clip((z+5)*25.5,0,255))`, HDF5 저장 `[n_slices,224,224] uint8` 및 exact SHA/Series metadata;
+7. DINO pipeline에서는 `[c-1,c,c+1]` 인접 물리 Slice를 3-channel로 stack, `uint8/255`, ImageNet mean/std (`0.485,.456,.406`/`0.229,.224,.225`)로 양쪽 모델 **완전히 동일**하게 변환. 새 N4/CLAHE/denoise/gamma·다른 FOV·Crop 적용 금지; train-only mild augmentation 추후 별도 동결. Gold/V4/Strict label 불문 pixels 동일.
+
+**새로 생성한 경량 메타데이터 ZIP**: `STAGE1_DINO_SHARED_INPUT_MANIFEST_V1.zip` (현재 대화 배포, 770712 Bytes). 내부 `common_series_manifest.csv` 24371 rows(UID/SUID/n_slices/role/cache_part/center20_start/center80_end/central_valid_centers), `sampler_reference.py` (Seed20261013, all-series mandatory 1+ windows, Study 18 windows/epoch, central [20,80] physical center, 3-adjacent slice, label-independent deterministic), `config.json`, `strict_distribution.csv`, `README.txt`. CPU 검증: 4407 Studies × Epoch0/1, Study마다 18 unique (Series,center), 모든 해당 Study Series가 적어도 한 번 포함. 후보 483096 centers, Train 476882/Gold 6214; original full valid centers 770336. 샘플링 manifest **픽셀 HDF5 자체 아님**, 추가 이미지 전처리 불필요.
+
+**학습 입력**:
+- Account A: common 5pack HDF5 + common metadata ZIP + V4 broad label CSV + DINO official Base pretrained + official Gold split artifacts (Gold 사용 허용된 custom protocol 선택 시).
+- Account B: **정확히 같은** 5pack HDF5/metadata + `RSNA_KNEE_VERSION_A_STRICT_V1_TRAIN_READY.zip`의 `STRICT_V1_TRAIN_LABELS_12_TARGETS.csv` + 같은 DINO official Base pretrained. Strict 4181 trainable (168 fully masked), 32163 valid masks. Missing = mask0, 절대 음성화 금지.
+- V4 4349 vs Strict 4181 supervised train counts mismatch expected; primary label-recipe comparison retains actual coverage, controlled label-value-only comparison requires shared-UID + shared-target mask ablation. Same UID/Fold group and deterministic sampler regardless of labels.
+- Strict ZIP README prohibits Gold58 optimisation/tuning/repeated evaluation. Gold29 train/29 val previous proposal is **별도 custom protocol** as already logged; this run cannot simultaneously claim Strict release README compliant. Held-out Gold29 cannot be used by Stage1/MIL/Final if custom 2Fold chosen. Gold-separated supervised and evaluation policies to be fixed before training; not yet final.
+- DINO feature cache (float16 CLS+PatchMean) **라벨별/모델별 Stage1 가중치가 다르므로 추후 MIL 단계에서 서로 달라짐**: image pixel HDF5 cache only is shared, *model-generated feature HDF5 cache is NOT shared* across A/B. Each Fold task-tuned DINO has unique weight/hash and independent feature cache.
+- GPU job before preflight includes account-specific Mount check 190 shard existence + data SHA or trusted RMIL-04C00 summary, one Study real input parity SHA(A/B), 2–3 Batch forward/backward VRAM and study batch vs window microbatch throughput. A/B T4×2, no arbitrary microbatch1.
+- New experiments results only when actual GPU execution; only this current roadmap gets the plan. No new per-experiment md docs.
+
+---
+
 ## 2026-10-12 — Label A Strict V1 ZIP 실물 검증 및 Stage1 DINO 학습 판단 (설계 / GPU 미실행)
 
 **첨부 릴리스** `RSNA_KNEE_VERSION_A_STRICT_V1_TRAIN_READY.zip`: ZIP CRC 전체 PASS, 내부 17개 파일 SHA256 목록 항목 전부 PASS(0 mismatches), `README.md` 상태 **`TRAIN_READY_RESEARCH_ONLY`** (전문 MRI Ground Truth 아님). `STRICT_V1_FINAL_GATE_REPORT.json`의 patch replay 414 PASS 및 Gold58 UID 분리 주장 확인. 내부 Label CSV와 NPZ를 읽어 다음 수치 검증: 후보 Report 4349×12=52188, train-ready UID 4181, fully masked UID 168; 유효 target-mask 32163 (61.6291%), excluded 20025 (38.3709%), positives 4607, negatives 27556, Gold58 UID collision 0, NPZ masks sum 32163, masked zeros storage representation only. Target별 P/N/valid/excluded:
