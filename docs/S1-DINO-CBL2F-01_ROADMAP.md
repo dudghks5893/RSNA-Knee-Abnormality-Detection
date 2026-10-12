@@ -3,6 +3,13 @@
 > **Current as of 2026-10-13:** `DATA_PREPARED_LOCAL / GOLD_SPLIT_VERIFIED_LOCAL / KAGGLE_PREFLIGHT_PENDING`.
 > 새 실험마다 계획서를 만들지 않고 **이 파일에서 현황·의존성·다음 한 가지 액션을 수정**한다. 실제 관측 점수는 별도 누적 EXPERIMENT_LOG에만 기록.
 
+### 2026-10-13 — PREFLIGHT 결함 보정 후 상태
+
+- 실제 A 계정 `RUN_MODE=PREFLIGHT` 로그: 공통 Series 24,371, Pack 5개, Gold58 29/29 분할 SHA, STRICT 4,181 입력, Gold/타깃 leakage 검사와 Class Balancing 계산 **CPU 입력 Gate PASS**.
+- V6은 CUDA 학습 시작 이전 `NameError: name 'worker_path' is not defined` 발생. **GPU Worker는 시작되지 않았으므로 GPU 처리량/학습 결과 없음.** B도 동일 코드 결함을 갖고 있어 V7로 동시 수정.
+- 새 A/B `GOLDDEDICATED_V7_WORKERFIX` 로컬 AST·Worker 파일 생성·2 독립 프로세스 mock-launch PASS. **Kaggle GPU 아직 미실행**; S3 상태는 `PENDING_V7_KAGGLE_PREFLIGHT`.
+- V7 Save 이름: A `S1-STRICT-F01-WFIXV7-PREFLIGHT` / B `S1-V4-F01-WFIXV7-PREFLIGHT`. 먼저 PREFLIGHT를 Save & Run All 후 GPU 2개 `GPU_PREFLIGHT_PASS` 확인.
+
 ## 1. 목적과 비교 축
 
 목적: 공통 Native224 MRI/Gold58 2-Fold에서 STRICT V1(엄격한 mask, 희소 클래스 보정)과 V4(soft/confidence 보정) DINOv2-Base Stage1을 비교, 품질이 확인된 Fold encoder로 전체 MRI 특징 추출 후 질환별 MIL을 학습한다. 단일 Fold 결과로 성능 단정하지 않으며 Stage1 AUROC 향상이 MIL AUROC 향상을 보장하지 않는다.
@@ -21,7 +28,7 @@
 | S0 | Strict/V4 라벨·공통 Native224 cache 계약/원본 SHA | UID, 12 Target, masks, 5 Packs/190 Shards 검증 | `로컬 라벨·명세 확인`; Kaggle mount 확인 전 |
 | S1 | Gold58 별도 Kaggle Dataset 게시 | `rsna-knee-gold58-2fold-v1` 5개 파일 게시, 지정 root 마운트, 파일 SHA PASS | `PENDING_USER_UPLOAD/MOUNT` |
 | S2 | Gold58 29/29 다중 타깃 분할 검증 | 58 UID 중복0/누락0, 각 Fold×12 Target 모두 positive≥1, negative≥1, A/B 동일 Fold SHA | `LOCAL_PASS`, Kaggle `PENDING` |
-| S3 | A/B V6 PREFLIGHT Save & Run All | 양 계정 5 Input, SHA, pretrain load, 두 GPU 분리, 최소 2-step 또는 실제 GPU 실험 검증, Loss/gradient, peak VRAM, 처리량 확인 | `NOT_RUN` |
+| S3 | A/B V7 PREFLIGHT Save & Run All | 양 계정 5 Input, SHA, pretrain load, 두 GPU 분리, 최소 2-step 또는 실제 GPU 실험 검증, Loss/gradient, peak VRAM, 처리량 확인 | `NOT_RUN` |
 | S4 | 학습 시간·메모리 재평가 | 실측 GPU 처리량, microbatch 18/12/8/4, Study batch4/8 비교 필요성, 전체 예상 세션 비용, Resume 경로 | `BLOCKED_ON_S3` |
 | S5 | A와 B Stage1 Fold0/1 TRAIN | 각 Fold best/last checkpoint, 두 fold success, class balance/epoch log, 실패 시 보존 산출물 복구 | `NOT_RUN` |
 | S6 | Gold58 pooled OOF58 및 Target별 평가 | 예측 중복0/누락0, Macro AUROC/AUPRC, Recall·F1·Specificity 등; 클래스별 confusion, 근거 포함 | `BLOCKED_ON_S5` |
@@ -47,8 +54,8 @@
 **Runtime:** T4×2 / Internet OFF / `RUN_MODE=PREFLIGHT`에서 Save & Run All. GPU0는 Fold0, GPU1는 Fold1. 두 독립 single-GPU processes, DDP 아님. Study physical batch1, gradaccum4 → effective4 per Fold. Window microbatch18/12/8/4를 실측하여 결정.
 
 **Save Version 이름(각 60자 미만)**
-- A PREFLIGHT `S1-STRICT-F01-GOLDV6-PREFLIGHT`; TRAIN `S1-STRICT-F01-GOLDV6-TRAIN`
-- B PREFLIGHT `S1-V4-F01-GOLDV6-PREFLIGHT`; TRAIN `S1-V4-F01-GOLDV6-TRAIN`
+- A PREFLIGHT `S1-STRICT-F01-WFIXV7-PREFLIGHT`; TRAIN `S1-STRICT-F01-WFIXV7-TRAIN`
+- B PREFLIGHT `S1-V4-F01-WFIXV7-PREFLIGHT`; TRAIN `S1-V4-F01-WFIXV7-TRAIN`
 
 **Run All 예상(실측 아님)**
 - PREFLIGHT: **약 5~20분**, 초기 계획 근거 약함. Input mount/샤드 검증 시간 별도 변동.
