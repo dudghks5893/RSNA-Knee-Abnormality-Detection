@@ -1,3 +1,18 @@
+## 2026-10-13 — Kaggle Stage1 Notebook 1MB Source Limit 오류 및 LITE 수정본
+
+**사용자 실행 오류**: `An error occurred while committing kernel: The kernel source must be less than 1 megabytes in size.` 실제 원본 4개 `S1_*T4x2.ipynb` 각 1,142,399~1,142,419 bytes, 코드 Cell5 압축+Base64 inline `COMMON_SERIES_ZLIB_B64` 1,031,218 chars 포함; **Kaggle 노트북 소스 한도 초과 원인 확정**. 이 오류는 GPU/DDP나 V4/Strict 라벨 문제가 아니며 원본 Kaggle Kernel이 저장/커밋되지 않음.
+
+**수정 산출물**: `STAGE1_DINO_V4_STRICT_2FOLD_LITE_FIX.zip` SHA256 `4473c9775be8f9f59ad3016292471614607c0ac55df90cd37f52c0499bec95ac`. 소스 인라인 압축 CSV를 제거하고 기존 경량 공통 입력 `STAGE1_DINO_SHARED_INPUT_MANIFEST_V1.zip` (770,712 bytes)을 **별도 Kaggle Dataset**으로 Add Input하여 `/kaggle/input` 재귀 탐색, SHA 검사 후 read. ZIP 첨부 그대로나 `common_series_manifest.csv`+`sampler_reference.py` 풀어서 등록해도 자동 탐색 가능.
+- A V4 Fold0 `S1_V4_DINOBase_F0_T4x2_LITE.ipynb` **37,582 bytes**, SHA `c9e9ebe8a9e8ff734b2456d25f4a5c8680c92cd168c44a4ce660729d63dfc710`
+- A V4 Fold1 `S1_V4_DINOBase_F1_T4x2_LITE.ipynb` **37,582 bytes**, SHA `a3fe17c016508b70a3dcc073aa4dabd2e198b53da7c4b34a37ca607da2dc4190`
+- B Strict Fold0 `S1_STRICT_DINOBase_F0_T4x2_LITE.ipynb` **37,602 bytes**, SHA `733dfdc6c12a4683d725db81b6180e531672f8558a7d168cc98dd72099c1d6e5`
+- B Strict Fold1 `S1_STRICT_DINOBase_F1_T4x2_LITE.ipynb` **37,602 bytes**, SHA `77d6cc8077fbe367b1eaa5b795ca5fe4df3186860c99e9386c611c0bcc9636f9`
+**검증**: 4×nbformat validate, 전체 Code AST, DDP embedded worker AST, notebook embed 데이터 잔존 검사, Zip-only 및 raw CSV+PY 가상 dataset path load+SHA 통과. 실제 Kaggle 원격 마운트/2×T4 GPU 본학습은 **아직 미실행**.
+
+**실행**: A Fold0 LITE / B Fold0 LITE 각각 새 노트북 업로드, 기존 4종 Input 유지하면서 **5번째 공통 Manifest Dataset** 추가, Internet OFF T4×2, `RUN_MODE=PREFLIGHT` Save & Run All. `SHARED_KIT_PASS`, `INPUT_PREFLIGHT_PASS`, `GPU_PREFLIGHT_PASS`, `PREFLIGHT_COMPLETE` 로그 확인 후 `RUN_MODE=TRAIN` 변경해 별도로 본학습. Gold29 custom 2fold vs Strict release policy 차이 유지, 원본 라벨/이미지 전처리 변경 없음. 사용자에게 최종 실행 결과 수령 후 EXPERIMENT_HISTORY.md에 실제 관측 추가.
+
+---
+
 ## 2026-10-12 — Stage1 DINOv2 Base V4/Strict 2-Fold Kaggle Notebook 4종 제작 (코드 생성/로컬 정적·합성 QA 통과, Kaggle GPU 미실행)
 
 **새 사용자 입력**: Strict A Kaggle Dataset 경로 **`/kaggle/input/datasets/yhlucas/rsna-knee-version-a-strict-v1/STRICT_V1`**, 사용하는 CSV `STRICT_V1_TRAIN_LABELS_12_TARGETS.csv`. 이 경로를 B계정 Notebook에 고정 후보로 반영.
