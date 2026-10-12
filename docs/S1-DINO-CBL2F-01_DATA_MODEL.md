@@ -6,6 +6,14 @@
 - **실행 상태(2026-10-13):** Kaggle 학습 **미실행/미검증**. 아래는 준비된 입력의 로컬 감사와 V6 노트북 설정이다. 데이터셋이 Kaggle에 업로드·마운트되었다는 의미가 아니다.
 - **출처:** 로컬 공개된 A/B V6 노트북, 사용자 제공 STRICT/V4 원본 ZIP, Gold58 사용자 제공 정답, 기존 GitHub cache 명세. 최신 노트북 설정이 바뀌면 해당 변경 이력과 SHA를 이 문서에 갱신.
 
+## 2026-10-13 — 실제 PREFLIGHT 오류 수정: V7 WorkerFix
+
+- **새 노트북:** A `A_S1_STRICT_DINOBASE_F01_GOLDDEDICATED_V7_WORKERFIX.ipynb` (SHA256 `e603978948c0d6d378385105b1b3d8088e8771b3f40e5f53b66d838d1f31e1c0`), B `B_S1_V4_DINOBASE_F01_GOLDDEDICATED_V7_WORKERFIX.ipynb` (SHA256 `5e99513024329483cacc114fb814f83b35b06dfd924705b744451d18c458a84c`).
+- V6에서 `worker_path` 미정의로 `subprocess.Popen` 이전에 `NameError` 발생. V7은 Worker 문자열을 `/kaggle/working/STAGE1_DINO_<LABEL>_DUALFOLD/stage1_<label>_worker.py`에 기록하고, 파일 존재·크기·AST를 검증 후 Fold0/1 실행.
+- 양쪽 V7은 notebook nbformat/AST, embedded Worker AST, 파일 생성/읽기, 독립 2-프로세스 **CPU mock-launch PASS**. 실제 Kaggle T4×2 PREFLIGHT / TRAIN 아직 미검증.
+- **그 외 Label, Loss, Class Balancing, Gold, 모델, Batch 및 Hyperparameters 모두 V6과 동일.** B에도 동일한 V6 결함이 있어 B 노트북도 교체해야 한다.
+- V6 파일은 과거 입력 버전 참조용이며 현재 실행 추천 파일은 **V7**이다.
+
 ## 1. 공통 데이터 파이프라인
 
 ```text
@@ -104,8 +112,8 @@ V4 Soft Label은 단순 0/1로 전환하거나 다수 클래스를 일괄 삭제
 
 ## 5. Notebook 및 Input 운용 상태
 
-- A: `A_S1_STRICT_DINOBASE_F01_GOLDDEDICATED_V6.ipynb`; 파일 SHA256 `bef2684ccc1e114782cf7cc7efc9c27db4cabeffa4e54317917b6898486a79e5`
-- B: `B_S1_V4_DINOBASE_F01_GOLDDEDICATED_V6.ipynb`; 파일 SHA256 `ebbd19492b51687e927d1c730197a3c4d7ec1f4e014e11f74b7be770cbac859b`
+- A: `A_S1_STRICT_DINOBASE_F01_GOLDDEDICATED_V7_WORKERFIX.ipynb`; 파일 SHA256 `e603978948c0d6d378385105b1b3d8088e8771b3f40e5f53b66d838d1f31e1c0`
+- B: `B_S1_V4_DINOBASE_F01_GOLDDEDICATED_V7_WORKERFIX.ipynb`; 파일 SHA256 `5e99513024329483cacc114fb814f83b35b06dfd924705b744451d18c458a84c`
 - 두 파일은 대화 산출물이며 **현재 GitHub에 노트북 바이너리를 커밋했다는 뜻이 아님**. 최신 구현으로 교체 시 파일명·SHA·설정을 본 문서에서 갱신.
 - **Add Input 5개/계정:** 공통 ① Native224 cache ② shared manifest ③ 전용 Gold58 ④ official DINOv2 Base 모델, 개별 ⑤ STRICT/V4 라벨.
 - 구 R2D `rsna-knee-wide224-persistent-cache-v1`은 이 Stage1 Gold Input에서 **사용하지 않음**.
