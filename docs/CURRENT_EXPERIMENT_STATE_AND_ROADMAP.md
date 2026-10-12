@@ -1,3 +1,19 @@
+## 2026-10-12 — Stage1 후보: ALL Series + 20~80% 중앙 Slice 고빈도 순환 학습 (사용자 제안 반영 / 설계 후보 / GPU 미실행)
+
+**핵심:** 고정 6 Wide9 Slot 대신 **Study 내 모든 Series**를 sampling inventory에 포함하고, 각 Series의 물리적 Slice 순서 기준 **중앙 20~80%의 3-slice Window 중심**을 높은 빈도로 **epoch-rotating coverage** 학습한다. 원본 각 .dcm는 2차원 Slice이며 기존 Native224 V3 cache는 이를 224×224로 전처리한 영상. "모든 Series"는 "모든 Slice"와 다름. **Host가 20~80%가 선명하다고 발언했다는 원문 근거는 2026-10-12 검색에서 확정되지 않음; 공식 주최자 지침으로 표기 금지.** 중앙부가 항상 pathology-optimal도 아니며 가장자리 위치의 임상 정보 보존 필요.
+
+**실제 04A Series inventory 24,371 rows로 계산:** 4,407 Studies, 819,078 Slice (Train4349 808,550, Gold58 10,528). 인접 3-slice를 위해 valid center 1..n-2만 허용하면 총 770,336 full-coverage centers. 중앙부 범위를 `ceil(.2*(n-1))..floor(.8*(n-1))`로 잡으면 **483,096 center windows (mean Study 109.62, 전체 valid 중심의 62.7124%)**, Train4349만 476,882 / Gold58 6,214. 중앙부 중심에서 구성된 triplets는 ±1 때문에 일부 범위 밖 slice를 이웃 채널로 포함할 수도 있다. 중앙부 60%는 Slice 100%가 아니므로 "전부 학습" 주장 금지.
+
+**효율 제안:** 모든 중앙 center를 모든 epoch DINO로 역전파하면 483,096 windows/epoch, 12 epochs≈5.80M windows 처리(수량 근사, 이미지 decoding/GPU wall-time 아님). Stage1은 환자당 **18~24 Window/epoch**를 예산 시작값으로 두고, 각 실제 Series에 적어도 1개 중앙 Window를 배정한 뒤 가변 Series count(3~14)에서 나머지를 coverage fair scheduling, FoldUID+Epoch deterministic 순환. 18 사용시 전체 4407에서 79,326 Window/epoch, 12 epochs 951,912 window presentations; 483,096 전부 매번 학습의 약 1/6 Window 제시량. 실제 Study 학습 4378명이므로 per-fold 학습 epoch는 78,804 (18/Study). **매 epoch 전체 Series 최소 1개 보장**; 같은 center를 자주 중복하지 않고 12 epoch 동안 중앙 후보의 넓은 범위를 순환. 3-slice window(c-1,c,c+1), 224px, DINO input/normalization과 Series metadata consistent. Center near 20/80 edges면 neighbor 20% 밖에서 약간 사용 가능.
+
+**주의점:** Stage1 supervised label은 Study-level이고 Slice-level label이 아님. Positive Study에서 every Window를 positive로 학습하는 직접 Window BCE는 심각한 weak label noise. Stage1에서 light masked attention/mean+gated Study aggregator를 통해 **Study당 하나의 12-target loss**만 주고 Backbone을 공동 FT. Stage2 more expressive disease-specific hierarchical MIL을 full MRI cached DINO features로 학습. 20~80% strict center-only는 outside morphology and some findings 놓치므로 실행안은 중앙 샘플을 85~90%, 외곽 0~20/80~100의 일부(10~15%)는 optional strata/rotating sampling으로 보존하는 방안을 권고. 첫 고정 실험에서 두 band를 다 실험해 GPU 낭비하지 않고 데이터 coverage log를 수집하여 위험만 확인.
+
+**전체 downstream:** Stage1만 central preference, **Stage2 full MRI Feature extraction / MIL / Top24 Selector는 전체 Slice 위치 0~100%를 후보로 유지**, 실제 DICOM edge windows replicate padding/valid centers 정책 명시. 전체 이미지 cache Native224 V3 이미 존재하므로 새 DICOM decode/crop cache 만들지 않음. V4/V6×Small/Base×2Fold 모두 fixed split, same sampler schedule, same preprocessing, Stage1 MRI DINO from same official pretrained init; V6 release 전 GPU 실험 금지. Age of Gold58 repeated development/label routing leakage warnings 유지. Single T4 batch VRAM vs T4×2 DDP preflight profile 후 GPU 배치 확정.
+
+**선행 작업:** Current Full Native224 V3 cache from RMIL-04B/04A manifests, 24,371 Series inventory로 deterministic `center_band_index` manifest/SHA를 CPU에서 매우 저비용으로 생성. Main Gold split/fold-safe semantics, Stage1 sampler coverage quality and full Stage2 generalization 계획 정리. 새로운 Exp57 재현 학습 불필요.
+
+---
+
 ## 2026-10-12 — Stage1 개선안: Wide9 고정 선택 대신 All-Series epoch-rotating 3-Slice Window (DESIGN DRAFT / GPU 미실행)
 
 **사용자 핵심 우려:** Stage1 DINO를 기존 Exp11B `6 slots × 9 selected slices`로만 학습하면, 특징 추출 Encoder가 제외된 다른 Series/전후방 Slice 및 rare sequences에 충분히 task-adapt하지 못할 수 있음. 고정 Wide9 원안은 **권고 취소**. 원래 Exp11B 성공 기록을 무시하는 것이 아니라, 새 Stage1의 목적(전체 MRI 3-slice window Feature Encoder)을 우선한 설계 변경.
