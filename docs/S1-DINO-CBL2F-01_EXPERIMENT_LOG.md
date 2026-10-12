@@ -59,3 +59,15 @@
 Stage1 Fold checkpoint 4개가 확보되면 fold별 DINO feature extraction SHA와 CLS+PatchMean1536 cache UID/Slice coverage를 검증한 뒤, Window/Series Attention MIL 결과와 Top-K ablation 성적을 이 파일에 순서대로 누적한다. 실험별 새 `.md`는 만들지 않는다.
 
 [데이터/모델 기준](S1-DINO-CBL2F-01_DATA_MODEL.md) · [현재 계획/상태](S1-DINO-CBL2F-01_ROADMAP.md)
+
+
+### 2026-10-13 — B V4 V7 PREFLIGHT 실측 PASS (TRAIN 미실행)
+
+- **실행 방식/증거:** 사용자 제공 실제 Kaggle 실행 TXT `붙여넣은 텍스트(1)(20261012-191942).txt`, `STAGE1_V4_DUALFOLD_PREFLIGHT_review.zip`. ZIP CRC 전체 PASS; V4 Worker SHA256 `0a2cd180491ad0c91502f40a4287c0739c8b5d108e50867002754dad70d0a2d7`, AST PASS. Notebook 실행은 V7 WorkerFix, `RUN_MODE=PREFLIGHT`.
+- **데이터 계약:** common manifest 24,371 Series/4,407 Studies; 5 Packs 각38 Shards; Gold58 전용 데이터셋 및 29/29 UID split SHA PASS; 12타깃 Fold별 positive/negative PASS; V4 pseudo 4,349+각 Fold Gold29 → **4,378 train/Fold**, Gold29 val/Fold; leakage 검사 PASS.
+- **Loss:** `LOSS_CONTRACT_PASS Gold3xNoPseudoPrior Conf0.25 MaskedNoGradient 12-target_norm`; V4 pseudo Confidence-weighted tempered positive/negative class BCE; Synovitis 평균 confidence 약0.173 / Fracture weighted soft positive prevalence 약0.1002는 경고로 기록(오류 아님).
+- **실제 GPU0 Fold0:** T4 독립 worker exit0; Window microbatch18, peak allocated **2.41 GiB**, synthetic full18 Window F+B **1.32초**, 실제 HDF5 Study F+B **0.239102214초**, loss0.4005183, `GPU_PREFLIGHT_PASS`.
+- **실제 GPU1 Fold1:** T4 독립 worker exit0; microbatch18, peak allocated **2.41 GiB**, synthetic full18 Window F+B **1.32초**, 실제 HDF5 Study F+B **0.236578257초**, loss0.4299068, `GPU_PREFLIGHT_PASS`.
+- **결과:** `BOTH_GPU_PREFLIGHT_PASS`, `PREFLIGHT COMPLETE`. **아직 optimizer step이나 전체 epoch는 수행되지 않음; best.pt/last.pt 없음; 학습 성능 기록 없음.**
+- **12 Epoch GPU F+B만 단순 예상:** Fold0 3.49시간 / Fold1 3.45시간(동시 실행, 합산 금지). HDF5 I/O·Optimizer step·Epoch validation·checkpoint 저장·병렬 I/O 경합 **미반영**, 실제 시간은 더 길 수 있음. 세션 간 resume 미구현이므로 Kaggle 세션 제한 시 중도 결과 위험.
+- **결정:** B는 입력/실제 모델 GPU 사전검증을 통과해 `RUN_MODE=TRAIN`으로 변경할 수 있는 단계. 단 과도한 시간·비용 위험을 명시하고 1 Epoch 실측/남은 세션 예산을 모니터링할 것. A STRICT V7 GPU PREFLIGHT는 별도 로그 확인 대기.
