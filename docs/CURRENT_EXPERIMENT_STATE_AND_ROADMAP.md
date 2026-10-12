@@ -1,3 +1,27 @@
+## 2026-10-12 — Stage1 개선안: Wide9 고정 선택 대신 All-Series epoch-rotating 3-Slice Window (DESIGN DRAFT / GPU 미실행)
+
+**사용자 핵심 우려:** Stage1 DINO를 기존 Exp11B `6 slots × 9 selected slices`로만 학습하면, 특징 추출 Encoder가 제외된 다른 Series/전후방 Slice 및 rare sequences에 충분히 task-adapt하지 못할 수 있음. 고정 Wide9 원안은 **권고 취소**. 원래 Exp11B 성공 기록을 무시하는 것이 아니라, 새 Stage1의 목적(전체 MRI 3-slice window Feature Encoder)을 우선한 설계 변경.
+
+**Stage1 신규 권고 (추정 개선 효과, 아직 테스트 없음):**
+- Meta 공식 Pretrained DINOv2 Small/Base에서 출발, **전체 Series를 학습 후보**로 두고 Epoch마다 Series당 다양한 물리적 Slice 중심을 재샘플. 윈도우는 실제 인접 `[center-1,center,center+1]`로 만들어 **Stage2 전체 MRI feature 추출/최종 Top24 2.5D와 입력 계약 일치**. 환자 라벨로 supervised 12-target classification, 작은 quality-aware/Series-aware aggregation Head를 Stage1 학습에만 사용; Head는 feature extraction 때 제거하고 Backbone `CLS + patch mean`만 저장.
+- 단순 매 Epoch 전체 819,078개 window를 DINO로 **역전파하지 않음**. 제안 시작값: Study당 ~12–18개의 동적 Window, 실제 Series마다 우선 최소 하나를 배정하고 남는 수를 균등 배분. Study Series가 상한 초과 시 Fold·UID·Epoch 기반 회전 선택으로 시리즈 누락을 장기간 방지; **매 Epoch All Series 고정 처리라고 오표현하지 않음**. 위치는 예를 들어 0~100% 범위의 계층화 bins/10~90% 중심 및 양끝 보충으로 설계, epoch간 덜 본 위치 우대; 정해진 단일 20~80% 범위에 고정하지 않음. All-series 사용으로 Scan 품질과 label noise에 민감해질 수 있으니 balanced allocation + fixed deterministic validation, Series별 selected positions/coverage audit 권장.
+- 동일 Study/Series/Window 입력 3장에 identical geometric transform 적용(동일 위치 정렬), mild intensity augmentation은 train only / 원본 contrast 보존. 모델 K24 자체는 **Study당 24개**로 Stage2 MIL selector가 선택할 것이며 Stage1의 `12-18`은 성능 실험의 K가 아니라 연산 예산임.
+
+**전처리 제안 — 효율 우선 vs 원본 DICOM:**
+- DICOM pixel은 `RescaleSlope+Intercept`, MONOCHROME1 inversion, ImageOrientationPatient+ImagePositionPatient 물리 정렬, 130mm FOV centered crop 및 boundary pad, **Series 단위** robust intensity normalize, resize224, uint8로 먼저 처리. Meta DINO input은 uint8→float [0,1] 및 ImageNet channel normalization. 원본 DICOM을 무전처리로 입력하지 않음.
+- **현재 완성된 RMIL-04B Full Native224 V3 5Pack/190Shard**는 전체 `4,407 Studies/24,371 Series/819,078 Slices`를 이미 저장. 현재 V3 원본 실제 규칙은 Series-sampled p0.5/99.5 clipping → full-Series z-score clamp[-5,5] → pad -5 → cv2 INTER_AREA resize224 → uint8, 130mm FOV. 신규 Stage1/FullMRI feature/Top24/hidden inference를 이 **동일 V3 규칙으로 전부 새로 학습**하면 이전 Exp57의 1/99 uint8와 정확히 같을 필요 없음. **과거 Exp57의 가중치/Feature를 V3 pixel cache와 혼용하면 안 됨**. 기존 공개 Hidden code 제출에서 V3 DICOM assertions로 `Notebook Threw Exception` 보고되어, Hidden metadata/decoder fallback을 학습 전 preflight로 정의하고, 정상 DICOM에 대한 preprocessing parity와 decode coverage 검증 필수.
+- Old Exp57에는 laterality canonicalization이 있었으나 현재 V3 preprocess 함수에는 해당 transformation이 명시되지 않은 것으로 파악. 새로운 일관된 Laterality 처리 추가는 별도 결정·검증 없는 자동 적용 금지. N4, CLAHE, denoise, gamma contrast 큰 보정은 근거 없는 기본 추가 금지.
+
+**라벨/Fold**
+- Strict 2Fold 29/29 Gold split; Stage1, MIL/Selector, final DINO의 각 Fold는 동일 held-out Gold29 supervision/pseudo-derived routing을 침범하면 안 됨. V4/V6 비교 시 Stage1 자체도 각각 동일 공개 pretrained 초기값/같은 Study sampling calendar에서 독립 학습 (V6 canonical release 전에는 GPU 학습 금지). Stage1 dynamics의 epoch sampling position은 seed+StudyUID+epoch 고정해 pair 비교 가능.
+- Over-claimed OOF 방지: V4 pseudo 라벨 routing/history Gold 관련 누출 가능성 별도 표기; Gold58 개발 여러 번 사용. 이미 학습된 Exp57 Fold weights는 새 2Fold에 무조건 warmstart 금지.
+- Input Study budget 12~18는 **초기 가설**이며 이전 Exp11B 18개의 3채널 group과 유사한 forward량을 의도하지만, 모델·학습 구조/Series Count 가변과 2GPU VRAM이 달라서 실제 T4×2 2–3-step FP32/mixed precision smoke 및 GPU throughput 측정 후 고정. Window Microbatch 1 금지, Batch>=124 과거 모델 경험만으로 새로운 K24 full FT VRAM 단정 금지.
+- Stage1 평가: Macro AUROC/AUPRC 외 Gold heldout에서 인식하는 Series/position coverage, Target-wise score, MIL attention 분산, Feature statistics, class distribution 그리고 downstream MIL 최종 score를 함께 평가. Stage1 score가 높다고 최종 좋은 feature 보장 X.
+
+**다음 사용자 합의 필요:** 현재 complete Full Native224 V3 캐시 기반으로 전 단계의 픽셀 전처리를 통일하고, Stage1 All-Series 3-slice Window epoch coverage 변경안을 채택하면 신규 Notebook을 제작한다. 학습 미실행, 초안 변경만 수행.
+
+---
+
 ## 2026-10-12 — 설계 논의: 3단계 Task-tuned DINO Feature → MIL Selector+Direct → Top24 DINO (DRAFT, 미실행)
 
 **사용자 질문/방향:** Exp57 계보를 참조한 개선형 모델에서 특징 추출 DINO를 official pretrained 그대로 쓸지 MRI 전체 학습할지 결정. 사용자 파이프라인은 정확히 `DINO feature encoder → hierarchical MIL (12-target window/series importance + direct prediction) → patient-level Top24 3-slice windows → final DINO warm-start predictor → final Top24 70% + MIL direct30%`. 1 Fold에서 2개 DINO checkpoint(초기 task-tuned feature encoder, Top24 end-to-end final) + 1개 MIL, 단 MIL은 Selector이면서 Direct30%의 예측기이므로 별도 세 번째 direct 모델은 불필요. Final DINO는 initial DINO와 MIL pretrained weights를 초기화로 활용하며 서로 독립적 모델 2개를 처음부터 2회 새로 학습하지 않음.
