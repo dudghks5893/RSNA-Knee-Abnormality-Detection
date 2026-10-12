@@ -1,34 +1,31 @@
-## 2026-10-12 — DRAFT: DINOv2 Small/Base × V4/V6 × Gold58 2-Fold 비교 실험
+## 2026-10-12 — UPDATED DRAFT: Exp57 통찰 기반 개선형 K24 DINO × Label V4/V6 × Small/Base × Gold 2-Fold
 
-**상태: 사용자 요청을 바탕으로 한 설계 초안. 미실행 / GPU 예약 없음 / 최종 설계 확정 전.** 현재 라벨 `LABEL-V6`는 `CANDIDATE_NOT_RELEASED`. Policy V2와 원본 Report 독립 판정·mask 규칙을 지키고 canonical SHA/UID/target QA/의미 검토와 명시적 release 전에는 학습하지 않는다.
+**사용자 최신 결정**: Exp57 체크포인트/전처리 재현 실험, 기존 Wide9 재기준선 학습, K32/고해상도 확대 선행 실험 **하지 않는다**. 과거 결과 자체를 연구 근거로 사용하고 **새로운 개선형 Top24 모델 하나**를 사전에 고정하여 라벨 2종 × 모델 크기 2종 × 2-Fold = 총 8개 학습으로 비교한다. 현재는 설계 초안/미실행. LABEL-V6는 `CANDIDATE_NOT_RELEASED`: canon SHA, UID × 12, mask, high-review 최종 승인 후에만 V6 GPU 학습.
 
-### 연구 질문과 2단계 구조
-1. **1차 Screen**: 과거 Exp7A(Small)·Exp11B(Base)의 같은 **DINOv2 224px Wide9/6 slots / Exp3B multi-query global/spatial gated residual** 비교 가능한 학습 Recipe를 고정해 레이블 효과와 Backbone 크기 효과를 분리한다. Small/Base 공통 Full FT, physical Batch4, grad accum1, backbone Early/Mid/Late LR=1e-6/3e-6/1e-5, Head LR=2e-4, Max12 Epoch, patience4, warmup5%+step-linear decay, physical130mm, slice band12~88%, 9 slices/slot, 3 adjacent channel groups. Base hidden/head768, Small hidden/head384. Epoch 중간 Validation/Gold stopping은 동일 Budget로 고정하고 기존 실험별 차이 정합을 실제 Notebook과 대조한다.
-2. **후속 Confirm**: 1차 우수 모델을 Exp57 Top24 Selector + B3A + Full-MRI Direct 70:30 (과거 Public LB 0.918, 3-Fold) 계보로 확장해 비교. Exp57 자체의 MIL/Selector가 추가 학습 단계이며 **1차 Wide9=Exp57 재현**이라고 주장 금지. 2-Fold 변경도 역사적 Exp57 3-Fold와 차이이므로 점수 직접 등치 금지. 기존 Exp57 task-tuned 모델 중 새로운 검증 Fold의 Gold가 학습에 들어간 weights/selector를 사용하지 않도록 fold별 provenance를 먼저 감사한 뒤 안전한 초기화·fold 전용 학습 결정.
-### 잠금 Gold split
-Gold58을 **multilabel iterative stratification으로 29/29**, 각 타깃의 Fold별 양·음 확보 확인(실제 58개 정답 분포 확인 전 미확정). Fold0 train=Gold29(B)+report-only4349, val=Gold29(A); Fold1 train=Gold29(A)+report-only4349, val=Gold29(B). 두 Fold OOF 결합=58; 12타깃 pooled macro AUROC와 AUPRC, target별 AUROC/AUPRC, paired delta 및 uncertainty. V4/V6와 Small/Base의 Fold UID/seed/이미지 전처리/학습 Gold/예측 순서 동일. OOF는 Gold58 다회 개발 사용/V4 routing 이력으로 독립 테스트 아님.
+### 누적 근거 (과거 결과)
+- Exp11B Base vs Exp7A Small: Fold2 AUROC 0.942758 vs 0.900860 (Head width 등도 다르므로 Backbone 크기의 순수 효과라고 단정하지 않음). Exp12B Wide9→Slice15 hidden LB 0.822, Exp13A 224→336 LB 0.861; 이미지 수/해상도 무조건 늘리는 방법은 선행 금지.
+- Exp47 patient-level attention Top24(3-slice window) / 평균 선택 Series 5.48, Exp48 Warm-start B3A LB 0.907 vs Exp49 Clean-start 0.903. Selector 자체 강한 신호, 기존 Top24 persisted raw cache와 ranking을 가능한 그대로 재사용하되 provenance/validation leakage 확인은 새 거대 재학습이 아닌 **메타데이터/manifest의 소규모 무결성 점검**으로 수행.
+- Exp50 Full-MRI Direct 0.904, Exp51 70:30 0.913, Exp57 3fold 70:30 0.918. B3A 중요 영상과 전체 MRI Direct 상보성은 강한 관측; 추가 Full-MRI feature extraction/branch 재학습은 1차 8회 모델에 포함하지 않고, 승자에 대해 **저장된 Fold별 Direct predictions/weights 활용 가능 시** 후속 평가.
+- Exp58 inference-only K32 Fold2 0.969147은 Exp62 K32-trained hidden LB 0.905로 재현되지 않음(다른 조건도 변화), Exp63 no-val all-data 0.897. K24 유지 및 validation-best 선택.
 
-| ID | DINO | Labels | Fold | 상태 |
-|---|---|---|---|---|
-| EXP-L01 | Small | V4 | 0 | Planned |
-| EXP-L02 | Small | V4 | 1 | Planned |
-| EXP-L03 | Base | V4 | 0 | Planned |
-| EXP-L04 | Base | V4 | 1 | Planned |
-| EXP-L05 | Small | V6 (released only) | 0 | BLOCKED_LABEL |
-| EXP-L06 | Small | V6 (released only) | 1 | BLOCKED_LABEL |
-| EXP-L07 | Base | V6 (released only) | 0 | BLOCKED_LABEL |
-| EXP-L08 | Base | V6 (released only) | 1 | BLOCKED_LABEL |
+### 고정된 개선형 모델 1종 (안)
+- 입력: **Study당 K24**, Exp57 질환별 Attention 기반 Top24 Ranking/Window(실제 인접 slice c-1,c,c+1), 224×224, 원래 130mm physical FOV/원래 normalization/laterality. **Series별 K24가 아님**. **현 Native224 V3는 원래 Exp57 픽셀 전처리와 다르므로 아무 검사 없이 혼용 금지**; 이전 Exp57 Top24 persisted cache를 가능하면 그대로 사용. 기존 Top24 캐시는 재생성보다 재사용 우선.
+- DINOv2 Small/Base full fine-tune, CLS+patch mean global, per-target hierarchical Window/Series attention(Exp57 강점). **새 제안**: target-wise attention context와 Top24 전체 mean pooled context를 learnable bounded residual/gate로 결합하는 안정화 Head(기존 hierarchical B3A의 구체 코드 중복 여부 확인 후 설계). Metadata plane/fluid/slice-normalized position은 이미 존재하는 입력과 충돌 없이 적용. 12 Target single shared backbone, 매 실험 전체 구조 동일; Base feature width와 Small feature width 차이 외 가능한 같은 계약. 새 헤드 효과 자체를 독립 검증한 게 아니며 실제 향상 가설일 뿐. Full-MRI Direct는 나중에 blend.
+- 이전 검증된 DINO Recipe **Exp7A/Exp11B**: Full FT, physical batch4/gradaccum1, Backbone early/mid/late LR 1e-6/3e-6/1e-5, Head 2e-4, MaxEpoch12, patience4, 5% warmup+linear decay; Base Head768, Small Head384. 위는 구 모델 recipe이며 K24 학습에서는 **물리 VRAM 사전 속도/peak 배치 벤치 필수**; 불가능한 숫자를 억지 적용하거나 WindowMicrobatch=1로 자동 축소하지 않음. V4/V6 동일 run budget/augmentation/optimizer/early stopping. 2-Fold의 Gold 29 train은 과거 Exp57 Gold47 train과 다르므로 절대성능 직접 대조 불가.
+- **공통 Model Initialization**: 동일 Size/Fold V4-V6 Pair는 공식 공개 DINO pretrained와 동일한 초기 Head RNG/seed/state SHA에서 출발한다. 기존 Exp57 task-tuned checkpoint를 임의 Warm-start하면 변경된 Gold29 Val에 이미 정답이 포함될 수 있어 비교 결과 오염 가능; matched clean-start가 안전한 기본값. Old Fold checkpoint 재사용은 provenance 증명이 있을 때만 별도 검토.
 
-### GPU A/B 일정
-Round 1 V4: Account A GPU0=Small Fold0, GPU1=Small Fold1; Account B GPU0=Base Fold0, GPU1=Base Fold1. Round 2 V6 release 후 동일 자원 매핑으로 L05~L08. 각 GPU **서로 다른 독립 Fold job**, 1GPU/job, 독립 optimizer/weights. 원래 실험에서 2GPU DataParallel을 사용했더라도 Batch4 global semantics를 맞춘 뒤 single T4 full forward/backward+optimizer benchmark 2~3 Step, VRAM peak/throughput/end-to-end ingest·estimated 12 Epoch budget/Resume/Save & Run All QA를 통과해야 실행한다. 못 맞추면 사용자에게 2GPU DDP-per-model 2-wave 방안을 제시하며 임의 Batch1 축소 금지. 과거 Batch128 T4x2 PASS는 **다른 Wide9 조건**의 검증이어서 current Top24/full-MRI 동일 보장 금지.
+### Gold split / 8 run
+- Gold58 iterative multilabel stratification `29/29` 고정 Manifest, 타깃별 양·음 class 분포 실제 확인. Fold0 train=Pseudo4349+Gold[1]29, val=Gold[0]29; Fold1 train=Pseudo4349+Gold[0]29, val=Gold[1]29. V4/V6 모델/seed/validation IDs/metadata/Top24 입력/augmentation/pixel & checkpoint selection 모두 동일. Gold train에는 Gold truth만; pseudo routing이 Gold-derived일 수 있으므로 "clean independent OOF" 주장 금지.
+- RUN ID: `EXP-L01/L02` Small+V4 Fold0/1, `EXP-L03/L04` Base+V4 Fold0/1, `EXP-L05/L06` Small+V6 Fold0/1, `EXP-L07/L08` Base+V6 Fold0/1.
+- **주의: 이전 Exp57 Selector/Top24 Gold cached results에 새로운 Gold29 validation 라벨이 학습에 간접 반영됐을 가능성**. 모두 같은 고정 후보를 사용하더라도 누출이 무효화되지는 않음. 가능한 Fold-agnostic/pseudo-only selector 또는 실제 held-out에 대해 fold-safe old selector가 확인되면 그것을 사용; 재생성 비용이 크거나 불명확하면 기존 Cache는 **탐색적 개발 비교**에만 쓰고 'strict clean OOF'라 부르지 않는다. 이미 Gold58을 반복 탐색한 사실도 별도 표기. Full rerun 금지가 이 사실을 삭제하지 않음.
+- V4 = 기존 routed soft + confidence (broad/strict 명시); V6 = canon label known-only + mask, not_mentioned/insufficient/uncertain mask0, numerical Baker cyst uncertain mask0. **라벨 값 + 가용 supervision coverage + soft/hard 차이의 결합 효과**임을 명시. 각 Target V4/V6 positive/negative/mask 차이 분석. 우수 Backbone에 대해 `V4 with V6 mask` 조건만 필요시 추가 2-Fold로 coverage-controlled 실험.
+- Paired Gold58 OOF macro AUROC/AUPRC 및 disease-level, label count, paired delta/CI, GPU throughput/epoch/runtime. 작은 Gold58이 여러 번 사용돼 통계적 독립 최종 검증 아님; LB 최종 확인.
 
-### 라벨 비교 중요 조건
-- V4 report-only 4,349 soft/routed broad supervision과 V6 4,349 candidate report-only 서로 다른 의미·coverage. Gold fold-train 29 labels 항상 Gold truth, validation 29 Gold 완전 격리. V6 `not_mentioned/uncertain/insufficient`는 **mask=0**, 음성화 금지. Pos/Neg target별 train count, mask rate, 주요 클래스와 loss 가중치 전제 확인.
-- **Primary operational comparison**: V4 original coverage/soft scores vs V6 known-target masked supervision; 효과는 **레이블 값+커버리지+표현 변경의 결합 효과**이지 순수 adjudication 개선 효과만 아님.
-- 필요 시 winner Backbone에 **matched coverage**: V4 학습에도 V6 known-target mask를 동일 적용해 V4 vs V6 값 효과를 별도 확인(추가 2-Fold 모델 2개).
-- 동일 optimizer/scheduler/augmentation/checkpoint선택/Study Gold weight/seed/sampling budget; V4 confidence soft weight와 V6 hard+mask의 차이는 명시적으로 리포트. V6 숫자형 Baker cyst ambiguous는 동결 Policy V2에 따라 mask0, 향후 Strict vs Evidence Extended는 최종 review 후 **별도 실험**으로만.
-- 학습 목표=Gold58 2-Fold paired out-of-fold. 승자 선정 후만 실제 Kaggle standalone Public LB 비교, 기존 Exp57 0.918은 직접 독립된 대회 점수 기준. Kaggle 제출 코드 숨김-test 실패 이력 재발 방지.
-- Output: `fold_manifest.csv` SHA, `label_manifest+mask_audit`, `run_config.json`, `best.pt` and `last.pt` 저장, per-epoch logs/OOF 58×12, target metrics, GPU runtime. `best.pt`는 ZIP 내부에만 넣지 않음. 기존 `EXPERIMENT_HISTORY.md`와 이 Roadmap에만 확정 결과 누적, 실험별 `.md` 신설 금지.
+### 자원과 단계
+1. **실행 전에 할 최소 점검(재현 학습 아님)**: 실제 Exp57 cached Top24 완결/경로, Gold UID–Fold/source provenance, V4/V6 범위·canonical 상태, 2-Fold label counts, 1–2 실제 batch forward/backward peak/step-time 예측 (Small/Base 각각). 기존 cache를 재생성하는 Exp57 별도 재현 실험은 하지 않음.
+2. V4 4개 Round: Account A T4 GPU0/1 = Small F0/F1, Account B T4 GPU0/1=Base F0/F1 **독립 1GPU batch4가 가능할 때만**. 불가능하면 계정당 2GPU DDP로 Fold 순차 실행하고 Model/Grad semantics 유지. 실행 시 V6용 seed 초기상태 보존; V6 릴리스 뒤 같은 GPU 배치로 L05~L08 실행.
+3. 성능 비교 후 우수 라벨/Backbone으로 Exp57 저장 Full-MRI Direct와 보완성 검토. 필요 시 그때만 Full-MRI branch 추가 학습; 새로운 Crop/CLAHE/N4/336/K32 실험은 그 이후에 한 변수씩.
+4. Save&RunAll, `best.pt`, `last.pt`, `fold_manifest.csv`, label-mask audit, run config+SHA, metrics/OOF/report artifacts. 결과는 `EXPERIMENT_HISTORY.md`, 진행 상태는 이 문서에만 누적. 새 개별 md 없음.
 
 ---
 
