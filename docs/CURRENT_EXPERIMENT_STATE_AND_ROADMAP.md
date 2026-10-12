@@ -1,3 +1,23 @@
+## 2026-10-12 — Stage1 DINOv2 Base V4/Strict 2-Fold Kaggle Notebook 4종 제작 (코드 생성/로컬 정적·합성 QA 통과, Kaggle GPU 미실행)
+
+**새 사용자 입력**: Strict A Kaggle Dataset 경로 **`/kaggle/input/datasets/yhlucas/rsna-knee-version-a-strict-v1/STRICT_V1`**, 사용하는 CSV `STRICT_V1_TRAIN_LABELS_12_TARGETS.csv`. 이 경로를 B계정 Notebook에 고정 후보로 반영.
+
+**실제 Notebook 4개, ZIP 한 개 생성:** `STAGE1_DINO_V4_STRICT_BASE_2FOLD_NOTEBOOKS.zip` (SHA256 `4456c684e441f78ea9a5b76b713c3e53de91d89490f88069cfc8a432c2ac9d1c`). 파일 목록 및 SHA:
+- `S1_V4_DINOBase_F0_T4x2.ipynb` SHA `75c6363d36b203cd4d4b9efbb13992655c01cc9a58dd29bd25808443527326e1`
+- `S1_V4_DINOBase_F1_T4x2.ipynb` SHA `9a9779bbc05d16fec2e2c2efc4d7646d1fb5e422c8628ec44453fc66590011dc`
+- `S1_STRICT_DINOBase_F0_T4x2.ipynb` SHA `8c9e0d980ebd588ab1f8bbfba31dde6c36a22e360638c0f6a85463ecdc7f47e7`
+- `S1_STRICT_DINOBase_F1_T4x2.ipynb` SHA `5ed9becdcfd71b4935ec63d954743fffae73c20c3f8bea387b99b659b071271d`.
+
+**운영**: A계정 V4 F0 / B계정 Strict F0 동시, 이후 각각 F1. 한 Notebook은 T4×2 DDP로 **Fold 하나**의 DINOv2 Base 학습. Kaggle `Internet OFF`, 4개 Add Input: `rmil-04b-full-mri-native224-v3` 5pack/190 shards, account-specific V4 vs Strict label CSV, MetaResearch DINOv2 PyTorch Base 1, `rsna-knee-wide224-persistent-cache-v1` frozen Gold58 manifest. 경로는 현재 과거 Notebook 기록 기반; 실제 사용 계정 mount 존재 및 모델 패키지 버전은 **Kaggle에서 확인해야 함**.
+
+**실행 2단계**: `RUN_MODE=PREFLIGHT` default로 2GPU 모델 Weight load, 실제 HDF5 Study read/Masked BCE Forward+Backward, VRAM peak Window Microbatch 후보 18/12/8/4 확인 → `GPU_PREFLIGHT_PASS` 또는 실패. 통과 후 사용자가 `RUN_MODE=TRAIN`으로 편집하여 Save & Run All. Max Epoch12, patience4, global study batch4(2 ranks x 1 Study with gradient accumulation2), Backbone layer bands LR1e-6/3e-6/1e-5, HeadLR2e-4, mixed precision + gradient checkpoint (no forced Window MB=1), same Seed20261013 and sampler, 18 central20-80% study-window/epoch; all series candidate each epoch. 기존 HDF5 픽셀은 재생성하지 않음. Stage1 학습/Pred Summary/Best·Last checkpoint 저장, `review.zip` includes logs/metadata only. 모델 직접 Kaggle LB 제출 Notebook 및 downstream full MRI Feature Cache Notebook은 **이번 패키지 범위 아님**.
+
+**명시적 Protocol override:** Notebook은 사용자 이전 Gold29 train + Gold29 val 요구대로 `CUSTOM_GOLD_2FOLD_TRAIN`. 원본 Strict Release README는 Gold58 최적화/검증 **금지**하므로 이것은 원본 Strict 릴리스 규칙 준수 실험이 아니라 **별도 Gold 연구용 교차검증 실험**이다. 원본 라벨 ZIP/CSV 불변. Gold58 재사용 및 V4 routing provenance 때문에 independent holdout이라 주장하지 않음. 사용자에게 이 차이 명시할 것. Strict pseudo 4181 + Gold29 train =4210, V4 pseudo4349 + Gold29=4378 (각 Fold). Gold29 held out val. Both A/B same Fold split.
+
+**로컬 QA**: 4× Notebook nbformat validate + Code cells/worker AST parse, Notebook 내 embedded Series CSV·sampler reference exact parity, 합성 HDF5 인접 three slice (epoch0/1), all-series 18 unique centers, mask=0 BCE gradient 0 PASS. NO Kaggle GPU/remote pretrained/190-HDF5 complete real execution. Unit-test result should not be presented as actual training success. Because real performance unknown, user should **run PRE-FLIGHT only first** and share GPU logs before full training.
+
+---
+
 ## 2026-10-12 — Stage1 A=V4 / B=Strict: 공통 RMIL-04B 이미지 캐시 재사용 결정 (CPU 입력 manifest 준비 완료 / GPU 학습 미실행)
 
 **결정**: A계정 = V4 라벨, B계정 = Strict V1 라벨. MRI 픽셀 전처리·Slice/Series UID·학습 샘플러 동일. **각 라벨별 영상 캐시 2벌 생성 금지**. 기존 RMIL-04B Full Native224 V3 HDF5 5 Packs / 190 Shards (4407 UID, 24371 Series, 819078 uint8 Slice, 원시 uint8 pixel bytes 41.1GB) 단일 공통 Input으로 사용. 기존 RMIL-04C00 Kaggle Audit `PASS_FULL_CACHE_AND_V4_SCHEMA_GATE`, 190 Shard SHA 검증 보고; B계정이 A소유 Kaggle Dataset에 실제 접근 가능한지는 별도 mount 체크 필요(미검증). 이 대화 컨테이너에는 원격 HDF5 본문 41GB 없음; **재처리/업로드를 이미 수행한 것으로 주장 금지**.
