@@ -1,3 +1,17 @@
+## 2026-10-12 — 사용자 방향 제안: Exp57 기준점 복귀·K16 캐시 실제 범위 확인
+
+**사용자 방향:** 새 RMIL-04C02 A/B 본학습의 비용과 기존 Exp57 Public LB 0.918을 고려해 **최고 성능 Exp 계보로 돌아가 개선**하는 방향 선호. 새 Full4349 DINO Gold58 지표를 기존 Exp57 Public LB와 같은 척도로 비교하면 안 됨. 복귀 전에 기존 Exp57 3-Fold B3A Top24 + Full-MRI Direct 70:30 아티팩트/실험 조건부터 확인하고, 안정적인 단일 변수 개선안을 검토한다. GPU 재학습 자동 시작 금지.
+
+**현재 Native224 V3 캐시 실제 정책 — 원본 `RMIL-04B_PACK00_FullNative224_V3_Cache_CPU_KO.ipynb` centers_nested와 04A 24,371 Series inventory 기준:**
+- 4,407 Studies(Train4,349/Gold58), **24,371 Series, 819,078 native slices 모두** 130mm 중심 FOV·224×224 uint8로 HDF5에 저장; 5 Packs, 190 Shards. 모든 Series를 캐시하며, Train은 24,035 Series·808,550 slices.
+- **3-Slice Window는 중심 slice 하나와 물리적 양옆 한 장씩 `(c-1,c,c+1)`**, Window 수 3개란 뜻이 아님.
+- 유효 중심 `1..n-2`(0-based). K4 초기 anchor `rint(linspace(0.1*(n-1),0.9*(n-1),4))` (~10%, 36.7%, 63.3%, 90%). 이후 기선택 중심들과의 **최소 거리 최대인 유효 중심을 반복 추가**해 K16/K24/K32 중첩. 따라서 Window 중심은 초기 10~90%에만 묶이지 않으며 시작/끝 근처까지 확장한다. K16 중심 위치는 Series 전체에 분산; K16 위의 triplet이 첫/마지막 Slice까지 포함할 수도 있음.
+- 위 실제 inventory의 n_slices를 원본 알고리즘으로 계산한 **K16 중심 개수 387,714개**, 3-Slice Triplet의 합집합 고유 Slice **723,689/819,078=88.3541%**, **18,224/24,371 Series=74.78%에서 모든 Slice 적어도 1회 포함**, **23,477/24,371=96.33% Series가 Slice 90% 이상 포함**. 주의: 819,078은 **캐시에 전부 저장된 수**, 723,689는 **K16 Model Input Triplet에 선택된 유니크 Slice**; 중복된 3-Slice Window 호출이 있으므로 실제 연산량은 387,714×3 Slice 사용량 기반. Train만 K16 **382,408 Windows**, Gold58 **5,306 Windows**.
+- **Exp57과의 구조 차이:** Exp57은 전체 MRI를 후보로 학습한 질환별 MIL attention에서 환자당 중요 **Top-24 3-Slice Windows**를 선택하고, DINOv2-Base warm-start final B3A 3-fold 70% + 전체 MRI direct MIL 3-fold 30% 확률 앙상블 (Public LB **0.918**). 현행 RMIL-04C02는 전체 Series당 K16 균등 공간분산 Mean pooling+Metadata Transformer, DINOv2-Small/ResNet34 single model; 결과를 Backbone 하나의 우열로 단정 불가.
+- 다음 단계: Exp57 기준 재현 가능한 기존 모델/selector/feature cache/Top24를 우선 사용하고, 개선 변수·추론 시간·GPU 자원 예산을 별도 제시할 것. 기존 사용자 실측 Batch≥124 GPU VRAM 여유와 사전 속도 측정 의무 유지.
+
+---
+
 ## 2026-10-12 — RMIL-04C02 A/B 독립 V4 Best Kaggle 제출 Notebook 준비 (GPU 미실행)
 
 **현재 작업:** 사용자 제공 Kaggle Best checkpoint Input:
