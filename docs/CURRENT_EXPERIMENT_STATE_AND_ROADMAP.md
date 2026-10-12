@@ -1,3 +1,17 @@
+## 2026-10-12 — RMIL-04C02 A/B Kaggle 비공개 제출 오류·안전 추론 V2 준비
+
+**현재 상태:** 사용자 공유 A Kaggle Notebook (`scriptVersionId=357563109`) `Notebook Threw Exception`, B DINOv2 Small도 동일 사용자 보고. 공개 `Save & Run All` 3 Study/12 target 모두 정상, `best.pt` 로딩 성공; **비공개 실제 오류 위치/원인 미확인, Public LB 없음**. `.pt` 확장자는 문제가 아님; 이전 Exp11B `.bin`도 PyTorch `torch.load`. 사용자가 공유한 Exp11B 성공 Notebook은 Series fallback과 slice read failure/결측 복원 등 더 방어적인 방식. RMIL 원래 제출코드의 경직된 DICOM assertions, 의도적인 8h40 경과 예상 `RuntimeError`, 전체 Study Window GPU 일괄 할당은 비공개 대량 데이터에서 위험. 확인 사실과 가설 구분.
+
+**수정본 — 실제 Kaggle GPU/hidden 미실행:**
+- A `RMIL-04C02_A_ResNet34_K16_SUBMIT_SAFE_V2.ipynb`, SHA256 `8d4524d4c37a3260c77e5488b87a2ae5f494807631f251702f6208c9ce13959f`.
+- B `RMIL-04C02_B_DINOv2Small_K16_SUBMIT_SAFE_V2.ipynb`, SHA256 `6b326bc5df53c2f678af69a3adec1fe46f0206d00e7f4faac90c85f67de97e93`.
+
+**입력 그대로:** A `/kaggle/input/datasets/yhlucas/rsna-knee-rmil04c02-resnet34-v4-k16-best/best.pt`; B `/kaggle/input/datasets/woniyeon/rsna-knee-rmil04c02-dinov2small-v4-k16-best/best.pt`; 각 Notebook은 Competition + 자기 best.pt Dataset 2개. V3 Native224 전처리/선택/12 target/모델 구조 유지. 이상 Series는 기록 후 건너뜀, 모든 Series 불가능한 Study는 0.5 중립 확률로 계속하며 품질 열화 위험을 summary에 기록; CPU에 원본 Study 텐서를 두고 GPU Forward를 Window microbatch로 제한; 사전 예측 시간 초과 RuntimeError 제거.
+
+**다음:** 무료 새 학습 불필요. 사용자가 제출 시도 횟수·자원 예산을 고려해 **A V2 하나**의 Kaggle 공개 Save & Run All / 정상 CSV 먼저 확인, 그다음 필요하면 Code Submit 검증. 실제 hidden 점수·에러 수신하면 `EXPERIMENT_HISTORY.md`에만 누적한다. 실패 시 무작정 반복 제출 금지. Exp57 Public LB 0.918 복귀 개선 방향은 유지.
+
+---
+
 ## 2026-10-12 — 사용자 방향 제안: Exp57 기준점 복귀·K16 캐시 실제 범위 확인
 
 **사용자 방향:** 새 RMIL-04C02 A/B 본학습의 비용과 기존 Exp57 Public LB 0.918을 고려해 **최고 성능 Exp 계보로 돌아가 개선**하는 방향 선호. 새 Full4349 DINO Gold58 지표를 기존 Exp57 Public LB와 같은 척도로 비교하면 안 됨. 복귀 전에 기존 Exp57 3-Fold B3A Top24 + Full-MRI Direct 70:30 아티팩트/실험 조건부터 확인하고, 안정적인 단일 변수 개선안을 검토한다. GPU 재학습 자동 시작 금지.
