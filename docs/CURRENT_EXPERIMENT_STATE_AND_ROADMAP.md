@@ -1,3 +1,37 @@
+## 2026-10-12 — DRAFT: DINOv2 Small/Base × V4/V6 × Gold58 2-Fold 비교 실험
+
+**상태: 사용자 요청을 바탕으로 한 설계 초안. 미실행 / GPU 예약 없음 / 최종 설계 확정 전.** 현재 라벨 `LABEL-V6`는 `CANDIDATE_NOT_RELEASED`. Policy V2와 원본 Report 독립 판정·mask 규칙을 지키고 canonical SHA/UID/target QA/의미 검토와 명시적 release 전에는 학습하지 않는다.
+
+### 연구 질문과 2단계 구조
+1. **1차 Screen**: 과거 Exp7A(Small)·Exp11B(Base)의 같은 **DINOv2 224px Wide9/6 slots / Exp3B multi-query global/spatial gated residual** 비교 가능한 학습 Recipe를 고정해 레이블 효과와 Backbone 크기 효과를 분리한다. Small/Base 공통 Full FT, physical Batch4, grad accum1, backbone Early/Mid/Late LR=1e-6/3e-6/1e-5, Head LR=2e-4, Max12 Epoch, patience4, warmup5%+step-linear decay, physical130mm, slice band12~88%, 9 slices/slot, 3 adjacent channel groups. Base hidden/head768, Small hidden/head384. Epoch 중간 Validation/Gold stopping은 동일 Budget로 고정하고 기존 실험별 차이 정합을 실제 Notebook과 대조한다.
+2. **후속 Confirm**: 1차 우수 모델을 Exp57 Top24 Selector + B3A + Full-MRI Direct 70:30 (과거 Public LB 0.918, 3-Fold) 계보로 확장해 비교. Exp57 자체의 MIL/Selector가 추가 학습 단계이며 **1차 Wide9=Exp57 재현**이라고 주장 금지. 2-Fold 변경도 역사적 Exp57 3-Fold와 차이이므로 점수 직접 등치 금지. 기존 Exp57 task-tuned 모델 중 새로운 검증 Fold의 Gold가 학습에 들어간 weights/selector를 사용하지 않도록 fold별 provenance를 먼저 감사한 뒤 안전한 초기화·fold 전용 학습 결정.
+### 잠금 Gold split
+Gold58을 **multilabel iterative stratification으로 29/29**, 각 타깃의 Fold별 양·음 확보 확인(실제 58개 정답 분포 확인 전 미확정). Fold0 train=Gold29(B)+report-only4349, val=Gold29(A); Fold1 train=Gold29(A)+report-only4349, val=Gold29(B). 두 Fold OOF 결합=58; 12타깃 pooled macro AUROC와 AUPRC, target별 AUROC/AUPRC, paired delta 및 uncertainty. V4/V6와 Small/Base의 Fold UID/seed/이미지 전처리/학습 Gold/예측 순서 동일. OOF는 Gold58 다회 개발 사용/V4 routing 이력으로 독립 테스트 아님.
+
+| ID | DINO | Labels | Fold | 상태 |
+|---|---|---|---|---|
+| EXP-L01 | Small | V4 | 0 | Planned |
+| EXP-L02 | Small | V4 | 1 | Planned |
+| EXP-L03 | Base | V4 | 0 | Planned |
+| EXP-L04 | Base | V4 | 1 | Planned |
+| EXP-L05 | Small | V6 (released only) | 0 | BLOCKED_LABEL |
+| EXP-L06 | Small | V6 (released only) | 1 | BLOCKED_LABEL |
+| EXP-L07 | Base | V6 (released only) | 0 | BLOCKED_LABEL |
+| EXP-L08 | Base | V6 (released only) | 1 | BLOCKED_LABEL |
+
+### GPU A/B 일정
+Round 1 V4: Account A GPU0=Small Fold0, GPU1=Small Fold1; Account B GPU0=Base Fold0, GPU1=Base Fold1. Round 2 V6 release 후 동일 자원 매핑으로 L05~L08. 각 GPU **서로 다른 독립 Fold job**, 1GPU/job, 독립 optimizer/weights. 원래 실험에서 2GPU DataParallel을 사용했더라도 Batch4 global semantics를 맞춘 뒤 single T4 full forward/backward+optimizer benchmark 2~3 Step, VRAM peak/throughput/end-to-end ingest·estimated 12 Epoch budget/Resume/Save & Run All QA를 통과해야 실행한다. 못 맞추면 사용자에게 2GPU DDP-per-model 2-wave 방안을 제시하며 임의 Batch1 축소 금지. 과거 Batch128 T4x2 PASS는 **다른 Wide9 조건**의 검증이어서 current Top24/full-MRI 동일 보장 금지.
+
+### 라벨 비교 중요 조건
+- V4 report-only 4,349 soft/routed broad supervision과 V6 4,349 candidate report-only 서로 다른 의미·coverage. Gold fold-train 29 labels 항상 Gold truth, validation 29 Gold 완전 격리. V6 `not_mentioned/uncertain/insufficient`는 **mask=0**, 음성화 금지. Pos/Neg target별 train count, mask rate, 주요 클래스와 loss 가중치 전제 확인.
+- **Primary operational comparison**: V4 original coverage/soft scores vs V6 known-target masked supervision; 효과는 **레이블 값+커버리지+표현 변경의 결합 효과**이지 순수 adjudication 개선 효과만 아님.
+- 필요 시 winner Backbone에 **matched coverage**: V4 학습에도 V6 known-target mask를 동일 적용해 V4 vs V6 값 효과를 별도 확인(추가 2-Fold 모델 2개).
+- 동일 optimizer/scheduler/augmentation/checkpoint선택/Study Gold weight/seed/sampling budget; V4 confidence soft weight와 V6 hard+mask의 차이는 명시적으로 리포트. V6 숫자형 Baker cyst ambiguous는 동결 Policy V2에 따라 mask0, 향후 Strict vs Evidence Extended는 최종 review 후 **별도 실험**으로만.
+- 학습 목표=Gold58 2-Fold paired out-of-fold. 승자 선정 후만 실제 Kaggle standalone Public LB 비교, 기존 Exp57 0.918은 직접 독립된 대회 점수 기준. Kaggle 제출 코드 숨김-test 실패 이력 재발 방지.
+- Output: `fold_manifest.csv` SHA, `label_manifest+mask_audit`, `run_config.json`, `best.pt` and `last.pt` 저장, per-epoch logs/OOF 58×12, target metrics, GPU runtime. `best.pt`는 ZIP 내부에만 넣지 않음. 기존 `EXPERIMENT_HISTORY.md`와 이 Roadmap에만 확정 결과 누적, 실험별 `.md` 신설 금지.
+
+---
+
 ## 2026-10-12 — RMIL-04C02 A/B Kaggle 비공개 제출 오류·안전 추론 V2 준비
 
 **현재 상태:** 사용자 공유 A Kaggle Notebook (`scriptVersionId=357563109`) `Notebook Threw Exception`, B DINOv2 Small도 동일 사용자 보고. 공개 `Save & Run All` 3 Study/12 target 모두 정상, `best.pt` 로딩 성공; **비공개 실제 오류 위치/원인 미확인, Public LB 없음**. `.pt` 확장자는 문제가 아님; 이전 Exp11B `.bin`도 PyTorch `torch.load`. 사용자가 공유한 Exp11B 성공 Notebook은 Series fallback과 slice read failure/결측 복원 등 더 방어적인 방식. RMIL 원래 제출코드의 경직된 DICOM assertions, 의도적인 8h40 경과 예상 `RuntimeError`, 전체 Study Window GPU 일괄 할당은 비공개 대량 데이터에서 위험. 확인 사실과 가설 구분.
