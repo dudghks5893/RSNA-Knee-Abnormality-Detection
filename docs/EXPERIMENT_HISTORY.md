@@ -1,3 +1,9 @@
+### 2026-10-12 — Native224 전체 캐시 선택 위치 실제 코드 감사
+
+코드: `RMIL-04B_PACK00_FullNative224_V3_Cache_CPU_KO.ipynb`, 04A 수령 ZIP의 `RMIL-04A_full_series_inventory.csv` (24,371행). Full Native224 V3: 4,407 Studies, 24,371 Series, 819,078 Slice **전량 저장**(5×Pack, 190 HDF5). K16은 가운데 20~80%만 쓰지 않음. 원래 K4 중심위치 `rint(linspace(.1*(n-1),.9*(n-1),4))`; 이후 유효중심 `1..n-2` 중 선택한 중심들과의 최소 거리가 가장 먼 위치를 반복 선택한 K16. 각 Window=(center-1,center,center+1) 실제 인접 3-Slice. **3장은 Window 3개가 아니라 채널 3장**. Original 04A `n_slices` 전체 적용 코드 재산출: K16 총 **387,714 Window**, 고유 입력 Slice **723,689/819,078(88.3541%)**, 모든 Slice가 적어도 한 번 포함되는 Series **18,224/24,371(74.78%)**, 90% 이상 고유 Slice 사용 Series **23,477/24,371(96.33%)**. Train4349: 24,035 Series, 808,550 Slice, 382,408 K16 Window, 입력에 포함된 서로 다른 Slice 713,965; Gold58: 336 Series, 10,528 Slice, 5,306 K16 Window. 고유 커버리지와 3장씩 중복된 GPU 실제 연산량을 혼동하지 않음. 사용자 Exp57 (Public LB0.918) 기반 복귀 방향 제안은 향후 로드맵 최신 항목에 반영했으나 신규 학습 실행은 아직 없음.
+
+---
+
 ## 2026-10-12 — RMIL-04C02 A/B 전체 4,349명 학습 실측·자원 실패 기록 (누적 실험 이력)
 
 > **유일한 RMIL 포함 누적 실험 기록:** 향후 완료된 RMIL·기타 실험의 관측 결과는 기존 **`docs/EXPERIMENT_HISTORY.md` 안에 추가**한다. 사소한 디버깅·실험별 개별 보고서 파일 신설 금지. 정확한 실제 로그와 이전 저장 결과를 구분하며, Gold58은 반복 사용 개발 검증임을 명시.
