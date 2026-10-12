@@ -18,6 +18,15 @@
 - **A STRICT**: 이 기록 시점까지 V7 GPU PREFLIGHT 실제 완료 증거 없음. B 결과로 A의 성공을 대신 주장하지 않음.
 - S3 상태 `B_GPU_PREFLIGHT_PASS / A_PENDING`, S4 상태 `B_ONE_STUDY_GPU_PROFILED / OPTIMIZER_AND_EPOCH_UNMEASURED`, S5 `NOT_RUN`.
 
+
+### 2026-10-13 — A/B 양쪽 GPU PREFLIGHT PASS (TRAIN 대기)
+
+- A STRICT: 실제 `BOTH_GPU_PREFLIGHT_PASS`, Fold0/1 microbatch18, GPU allocated peak2.41GiB, real Study F+B 0.2706/0.2394초, train4,210/fold, Gold29 validation/fold. Epoch1 target-mask 미리보기 희소 클래스 보존과 majority rotation PASS.
+- B V4: 이미 `BOTH_GPU_PREFLIGHT_PASS`, 18 Window, peak2.41GiB, train4,378/fold, HDF5 Study F+B 0.2391/0.2366초.
+- S3 상태 **`A_PASS / B_PASS`**. S5 TRAIN **`NOT_RUN`**. 두 계정의 V7 노트북 `RUN_MODE=TRAIN` 전환 가능하지만 **정상 전체 Epoch 완료/Optimizer step/세션 간 Resume는 아직 검증하지 않았음**.
+- A Save Version: `S1-STRICT-F01-WFIXV7-TRAIN`. B Save Version: `S1-V4-F01-WFIXV7-TRAIN`. 둘 다 T4×2, Internet OFF, Save & Run All.
+- 12 Epoch GPU F+B만 단순 투영 A Fold0 **3.80h**, Fold1 **3.36h**, B Fold0 **3.49h**, Fold1 **3.45h** (Fold 동시 병렬). I/O, optimizer, validation, checkpoint 제외, 실제 첫 Epoch 실측 필수.
+
 ## 1. 목적과 비교 축
 
 목적: 공통 Native224 MRI/Gold58 2-Fold에서 STRICT V1(엄격한 mask, 희소 클래스 보정)과 V4(soft/confidence 보정) DINOv2-Base Stage1을 비교, 품질이 확인된 Fold encoder로 전체 MRI 특징 추출 후 질환별 MIL을 학습한다. 단일 Fold 결과로 성능 단정하지 않으며 Stage1 AUROC 향상이 MIL AUROC 향상을 보장하지 않는다.
