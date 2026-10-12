@@ -1,3 +1,20 @@
+## 2026-10-12 — 설계 논의: 3단계 Task-tuned DINO Feature → MIL Selector+Direct → Top24 DINO (DRAFT, 미실행)
+
+**사용자 질문/방향:** Exp57 계보를 참조한 개선형 모델에서 특징 추출 DINO를 official pretrained 그대로 쓸지 MRI 전체 학습할지 결정. 사용자 파이프라인은 정확히 `DINO feature encoder → hierarchical MIL (12-target window/series importance + direct prediction) → patient-level Top24 3-slice windows → final DINO warm-start predictor → final Top24 70% + MIL direct30%`. 1 Fold에서 2개 DINO checkpoint(초기 task-tuned feature encoder, Top24 end-to-end final) + 1개 MIL, 단 MIL은 Selector이면서 Direct30%의 예측기이므로 별도 세 번째 direct 모델은 불필요. Final DINO는 initial DINO와 MIL pretrained weights를 초기화로 활용하며 서로 독립적 모델 2개를 처음부터 2회 새로 학습하지 않음.
+
+**권고:** 공식 Meta DINOv2 Base/Small (224; Base embedding768/CLS+patchmean1536, Small384/CLS+patchmean768)에서 시작해 **Fold-aware supervised task adaptation** 으로 knee MRI encoder 생성, 그 checkpoint에서 `eval()` freeze feature extraction across all Series/Slices → float16 persistent full MRI cache를 Fold별 1회 생성 → MIL 학습→Top24 cache → final DINO Full Fine-tune warmstart. Exp11B→Exp45 검증된 효율적 방식은 선별된 Wide9(6 slots × 9 raw slices)로 first-stage DINO를 task-tune하고, 이후 전체 3-neighbor-slice windows를 819078 candidate로 특징화하는 방식. 이것은 Exp11B 점수 재현 독립 실험이 아닌 **새 파이프라인에 반드시 필요한 stage1 학습**이다. Slice 선택 및 3채널 구성의 train/inference 분포 차이는 결과에 명시하며, 1차에는 새 변수를 더해 3-slice task-tuning으로 바꾸지 않는다. Full 819078 candidate backbone 훈련은 GPU 시간 낭비; **feature extraction만 전체**를 순회. 과거 Exp53 full cache fold당 200.44/241.14분 실제 기록을 비용 기준으로 참고(동일 실행 시간 보장 X).
+
+**Gold과 라벨:** 2-Fold Gold58 29/29, 각 Fold stage1 DINO/MIL/final predictor **모두 동일 held-out Gold29를 감독 학습에서 제외**. Train pseudo report-only4349 + training-side Gold29(4,378 studies), validation Gold29. "Gold58 전원+4349 학습한 공통 MRI DINO 하나"는 Fold validation leakage. Original Exp57 old weights/Top24 Gold artifacts도 새 split held-out 라벨과 충돌 가능; 직접 OOF 주장 금지. 기존 V4 Gold-derived routing 감사할 때 원본 전체 rerun 필요 없으며, 독립 OOF를 보장할 수 없으면 dev comparison이라는 명칭 유지.
+
+**V4/V6 실험 공정성 대 비용 (둘 다 명시)**:
+- **Strict full pipeline paired comparison (final research claim):** 동일 Size×Fold의 Official DINO initial state에서 V4 TaskDINO vs V6 TaskDINO를 독립 supervised fine-tune; 각각의 full feature cache/MIL/Top24/final DINO를 별도로 학습. 2 labels × 2 sizes × 2 folds=8 independent full pipelines (not 8 single training jobs). 동일 optimizer LR/batch/seed/time/Fold, target mask/weights auditing. V6 canonical release 이전에는 V6 run 금지. **이것이 라벨이 encoder에도 미치는 효과까지 평가하는 공정한 실험**.
+- **Budget-first conditional screening:** 먼저 Size×Fold 당 common MRI feature extractor 1개를 만든 뒤 DINO frozen cache를 **V4/V6 MIL+final comparator에 재사용**하여 feature cost 2배 절감. 그러나 common encoder를 V4 labels로 학습하면 V4에 편향된 Representation 고정이며 "V6 전체 pipeline이 V4보다 나쁜가"라는 주장 불가; "V4-encoder-fixed downstream label influence"만 평가. Label-neutral unlabeled adaptation은 GPU 비싸며 현 priority 아님. User label-comparison priority면 full pipeline fair path가 기준, 가벼운 screen은 명칭/범위를 엄격 표기.
+- 권장 실행은 **Base 우선**: Base V4 Fold0/1 기반 Stage1 backbone → feature+MIL/Direct+Top24+Final까지 실질 성공과 비용 계측. V6 canon release 후 Base V6 identical training paired, Small은 이어서 같은 pipeline으로 2×2. Option to start Small as cheap engineering smoke without model scoring. T4×2 single full fine-tune 1 job/account (또는 1GPU×2 fold 분리는 실제 VRAM/throughput 측정 통과 시). Window microbatch1 금지, preflight forward/backward VRAM/throughput 필수.
+
+**단계별 체크포인트 산출:** `stage1_dino_best.pt`, `full_features_fp16_shards+manifest_sha`, `mil_direct_selector_best.pt`, `top24_manifest+image_cache`, `final_top24_dino_best.pt`, `fold_val_predictions_branchwise`. MIL Direct30%는 동일 MIL 모델의 질환 직접 확률, 최종 Top24 70%는 최종 DINO 모델의 확률. 70:30은 Exp57 검증값으로 출발하지만 새 라벨/Backbone/2-Fold에서는 최종 blend 최적 보장 없음. 관련 실험 기록은 기존 README Exp11B, Exp45-57, Exp62-63을 따름. 신규 실험별 Markdown 금지.
+
+---
+
 ## 2026-10-12 — UPDATED DRAFT: Exp57 통찰 기반 개선형 K24 DINO × Label V4/V6 × Small/Base × Gold 2-Fold
 
 **사용자 최신 결정**: Exp57 체크포인트/전처리 재현 실험, 기존 Wide9 재기준선 학습, K32/고해상도 확대 선행 실험 **하지 않는다**. 과거 결과 자체를 연구 근거로 사용하고 **새로운 개선형 Top24 모델 하나**를 사전에 고정하여 라벨 2종 × 모델 크기 2종 × 2-Fold = 총 8개 학습으로 비교한다. 현재는 설계 초안/미실행. LABEL-V6는 `CANDIDATE_NOT_RELEASED`: canon SHA, UID × 12, mask, high-review 최종 승인 후에만 V6 GPU 학습.
