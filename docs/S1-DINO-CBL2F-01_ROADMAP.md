@@ -10,6 +10,14 @@
 - 새 A/B `GOLDDEDICATED_V7_WORKERFIX` 로컬 AST·Worker 파일 생성·2 독립 프로세스 mock-launch PASS. **Kaggle GPU 아직 미실행**; S3 상태는 `PENDING_V7_KAGGLE_PREFLIGHT`.
 - V7 Save 이름: A `S1-STRICT-F01-WFIXV7-PREFLIGHT` / B `S1-V4-F01-WFIXV7-PREFLIGHT`. 먼저 PREFLIGHT를 Save & Run All 후 GPU 2개 `GPU_PREFLIGHT_PASS` 확인.
 
+
+### 2026-10-13 — B V4 V7 실제 GPU PREFLIGHT 통과 (A 별도 대기)
+
+- **B**: `BOTH_GPU_PREFLIGHT_PASS` 실제 Kaggle T4×2; 두 독립 Fold 정상 종료, each train4,378+val29, Window microbatch18, peak GPU allocated2.41GiB, real one-study F+B 0.2391/0.2366초. 참조: `S1-DINO-CBL2F-01_EXPERIMENT_LOG.md` 최신 항목.
+- **B RUN_MODE=TRAIN** 전환 가능(사전 GPU·입력 계약 Gate 통과). 단 실제 Optimizer step과 전체 Epoch 시간은 미측정이고 세션 간 Resume가 없어 운영상 중단 위험 존재. 12 Epoch 단순 GPU F+B 3.49/3.45h + 실제 추가 오버헤드. 첫 Epoch와 Kaggle 세션 잔여 시간을 보고 계속 여부 판단. 중간 재시작하면 이전 학습 자동 복원되지 않음.
+- **A STRICT**: 이 기록 시점까지 V7 GPU PREFLIGHT 실제 완료 증거 없음. B 결과로 A의 성공을 대신 주장하지 않음.
+- S3 상태 `B_GPU_PREFLIGHT_PASS / A_PENDING`, S4 상태 `B_ONE_STUDY_GPU_PROFILED / OPTIMIZER_AND_EPOCH_UNMEASURED`, S5 `NOT_RUN`.
+
 ## 1. 목적과 비교 축
 
 목적: 공통 Native224 MRI/Gold58 2-Fold에서 STRICT V1(엄격한 mask, 희소 클래스 보정)과 V4(soft/confidence 보정) DINOv2-Base Stage1을 비교, 품질이 확인된 Fold encoder로 전체 MRI 특징 추출 후 질환별 MIL을 학습한다. 단일 Fold 결과로 성능 단정하지 않으며 Stage1 AUROC 향상이 MIL AUROC 향상을 보장하지 않는다.
