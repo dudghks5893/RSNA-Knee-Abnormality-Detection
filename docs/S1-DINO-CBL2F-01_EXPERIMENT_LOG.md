@@ -71,3 +71,15 @@ Stage1 Fold checkpoint 4개가 확보되면 fold별 DINO feature extraction SHA�
 - **결과:** `BOTH_GPU_PREFLIGHT_PASS`, `PREFLIGHT COMPLETE`. **아직 optimizer step이나 전체 epoch는 수행되지 않음; best.pt/last.pt 없음; 학습 성능 기록 없음.**
 - **12 Epoch GPU F+B만 단순 예상:** Fold0 3.49시간 / Fold1 3.45시간(동시 실행, 합산 금지). HDF5 I/O·Optimizer step·Epoch validation·checkpoint 저장·병렬 I/O 경합 **미반영**, 실제 시간은 더 길 수 있음. 세션 간 resume 미구현이므로 Kaggle 세션 제한 시 중도 결과 위험.
 - **결정:** B는 입력/실제 모델 GPU 사전검증을 통과해 `RUN_MODE=TRAIN`으로 변경할 수 있는 단계. 단 과도한 시간·비용 위험을 명시하고 1 Epoch 실측/남은 세션 예산을 모니터링할 것. A STRICT V7 GPU PREFLIGHT는 별도 로그 확인 대기.
+
+
+### 2026-10-13 — A STRICT V1 V7 실제 GPU PREFLIGHT PASS (TRAIN 미실행)
+
+- **실행/증거:** 사용자 제공 `STAGE1_STRICT_DISTRIBUTION_V3_PREFLIGHT_review.zip`. ZIP 내 27개 파일 CRC PASS; `dual_preflight_summary.json`에 `BOTH_GPU_PREFLIGHT_PASS`; 양 Fold `console.log`, `gpu_preflight_results.json` 대조. `stage1_strict_worker.py` 존재, Worker 파일 생성 문제 V7에서는 해결.
+- **데이터 계약:** 입력 manifest 24,371 Series/4,407 Studies, pseudo STRICT supervised 4,181/각 Fold Gold train29 → **4,210 Study/Fold**, held-out Gold29/Fold. 원본 STRICT 희소 클래스 Target-mask가 보존됨. 독립 Fold 프로세스 exit0 (해당 JSON 및 사용자 제출 ZIP 기준).
+- **Loss 검증:** 양 Fold `LOSS_CONTRACT_PASS Goldx3 Conf0.25 MaskedNoGradient 12-target_norm`. Fold0/1 공통 `epoch_01_balance_preview.json`의 majority rotation: MCL 3,724 negatives 중 740, Lateral OA 2,490 negatives 중 1,320 매 Epoch 선택. MCL 37 positives·LateralOA 66 positives·Synovitis 35 negatives 전부 보존, rescue0.
+- **GPU0 Fold0:** Window Microbatch18, peak allocated **2.41 GiB**, synthetic 18-window F+B **2.60초**, real HDF5 Study F+B **0.270552014초**, loss **0.0366938189**; `GPU_PREFLIGHT_PASS`.
+- **GPU1 Fold1:** Window Microbatch18, peak allocated **2.41 GiB**, synthetic F+B **2.59초**, real Study F+B **0.239363503초**, loss **0.0585563257**; `GPU_PREFLIGHT_PASS`.
+- **12 Epoch F+B-only 투영:** Fold0 약 **3.80시간**, Fold1 약 **3.36시간**(동시 실행). HDF5 I/O, Optimizer, validation, checkpoint, 두 Fold의 동시 I/O 경합 미포함. 단일 Study 표본 측정으로 전체 Epoch 시간 확정 불가.
+- **상태:** 실제 Kaggle GPU 사전검증 PASS. **Optimizer step / 첫 Epoch / 모델 학습 / 성능 지표는 아직 미실행**. Cross-session Resume 기능이 없어 세션 중단 위험을 갖고 있음.
+- **다음:** A는 `RUN_MODE=TRAIN` 전환 가능; Save Version `S1-STRICT-F01-WFIXV7-TRAIN`, GPU T4×2 Internet OFF Save & Run All. 첫 Epoch/로그의 실제 시간·남은 세션 한도를 확인해야 함.
