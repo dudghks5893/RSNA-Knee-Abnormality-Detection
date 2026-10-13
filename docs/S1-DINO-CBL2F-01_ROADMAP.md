@@ -147,3 +147,14 @@
 | 2026-10-13 | A/B Stage1 2-Fold TRAIN 및 OOF 완료, B 우선 후보 | Gold58 pooled macro AUROC B=0.871112 > A=0.811284 (탐색적) | B 우선 Full-MRI MIL, A 유지, checkpoint Add Input 등록 필요 |
 
 [데이터/모델 기준](S1-DINO-CBL2F-01_DATA_MODEL.md) · [실험 누적 로그](S1-DINO-CBL2F-01_EXPERIMENT_LOG.md)
+
+
+### 2026-10-14 — S1-DINO-CBL2F-02 A/B Broad→Strict Fine-tune 노트북 준비 (미실행)
+
+- **변경 이유:** Stage1 V4 Broad 2-Fold Public LB **0.910** 기반으로 MIL 이전에 2종 Strict 추가 Fine-tuning 비교. **공통 초기값은 B V4 Broad Fold0+Fold1 체크포인트**. 구 A Strict 0.861 초기 가중치는 사용하지 않는다.
+- A 새 STRICT V1: pseudo 4,181 Studies / 유효 Binary Label 32,163. Target mask, pseudo-only 양/음성 imbalance power .70, 극심한 불균형에서 다수 Target만 순환 mask cap 20:1, target coverage weight power .35; Gold29는 중립 BCE×3.
+- B V4 Routed Strict: pseudo 4,349 Studies / 유효 Soft Label 39,792. Mask 유효만 Confidence(.25+.75×conf) 가중, pseudo-only soft prevalence balance power .70 cap .5..2.5 및 target coverage weight power .35; Gold29는 중립 BCE×3.
+- A/B 둘 다 DINOv2-Base full fine-tuning, 18 Windows/Study, native224 V3, 같은 Gold58 29/29 folds, backbone LR 1e-7/3e-7/1e-6, head LR 2e-5, AdamW WD .05, warmup5% linear, max3 Epoch, patience1(min2). Epoch0 Broad checkpoint score를 baseline으로 보존하고 향상 없으면 기존 가중치를 best로 유지.
+- **신규 GPU batch gate:** Study physical batch 8/4/2/1, Window microbatch 124/72/36/18, activation checkpoint ON/OFF, HDF5 DataLoader workers2/Prefetch2, 128 Study full AdamW throughput profile; 예측 4시간 초과면 본학습 Fail-fast. 사용자 경험 Batch124+ / VRAM 약20GB 여유 / GPU 30h/week 우선 규칙 적용; 실제 허용 Batch는 GPU에서 계측.
+- 준비한 Kaggle 노트북 A `S1FT02_A_BROAD_TO_STRICTV1_DUALFOLD_E3.ipynb` SHA256 `cabea26653a1c0c34b6983093461b467cef8e4b1a2aacad8a8ebb7b6aadf2232`, B `S1FT02_B_BROAD_TO_V4STRICT_DUALFOLD_E3.ipynb` SHA256 `dd98d379846c9602474772ac87c1c8fc11c7c6c2db5458421fba82bfadec38c6`.
+- 추가로 두 개의 Submission 템플릿 마련. 훈련 Output에서 각 Fold `best.pt`와 `training_summary.json` 등록한 뒤 제출 가능. **실제 Kaggle GPU 학습·새 Public LB 점수는 아직 없음.** 현재 최고 Exp57 Public LB 0.918 유지. 다음 액션: A/B 학습 노트북 각각 Kaggle Input 6개 연결 및 Save & Run All → 로그/Review ZIP 확인 → 체크포인트 등록 후 LB 제출.
