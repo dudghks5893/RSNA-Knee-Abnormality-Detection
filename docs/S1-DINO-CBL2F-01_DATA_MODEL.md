@@ -3,7 +3,7 @@
 - **실험 ID:** `S1-DINO-CBL2F-01` (2026-10-13 신규; 기존 GitHub 파일명/코드 검색에서 중복 미발견)
 - **목표:** DINOv2-Base Stage1 지도 Fine-tuning을 STRICT V1과 V4 라벨 정책으로 비교하고, 이후 Full-MRI 특징 캐시·질환별 MIL·Top-K Selector로 확장.
 - **운영:** 이 실험군의 Markdown은 본 문서(DATA_MODEL), ROADMAP, EXPERIMENT_LOG **3개만** 만들고 계속 편집한다. 실험·버그·노트북 버전마다 .md 신설 금지.
-- **실행 상태(2026-10-13):** Kaggle 학습 **미실행/미검증**. 아래는 준비된 입력의 로컬 감사와 V6 노트북 설정이다. 데이터셋이 Kaggle에 업로드·마운트되었다는 의미가 아니다.
+- **최신 실행 상태(2026-10-13):** A/B Stage1 2-Fold TRAIN 완료 및 Gold58 OOF 재계산 확인. LB V2 Notebook 정적 QA 완료, 실제 Kaggle LB 미실행. 이후 섹션의 V6/V7 미검증 문구는 당시 이력이다.
 - **출처:** 로컬 공개된 A/B V6 노트북, 사용자 제공 STRICT/V4 원본 ZIP, Gold58 사용자 제공 정답, 기존 GitHub cache 명세. 최신 노트북 설정이 바뀌면 해당 변경 이력과 SHA를 이 문서에 갱신.
 
 ## 2026-10-13 — 실제 PREFLIGHT 오류 수정: V7 WorkerFix
@@ -135,6 +135,12 @@ V4 Soft Label은 단순 0/1로 전환하거나 다수 클래스를 일괄 삭제
 - Original FeatureDINO model class source SHA256 b385856a8e5ecfcd81da42c417dc1ba96ca5cb4f3d345a44a162907c32ad0874 is identical in A/B training ZIPs; notebook preserves it. MetaResearch Dinov2 PyTorch Base v1 original model pinned via SHA is also needed to reconstruct the exact encoder init/config.
 - Notebook SHA A 268187b2ab0db2390a008cb627adaa0e8aa731b2ff8f35560cdaf85856d59eb1; B a0c7bd71d50f5e652f49ee1f23398be1eceb8b34b6fcc2b4195e6b60ebe04392. Static AST, nbformat, sampler parity 20 Studies/360 Windows, synthetic pixel byte parity 12 Slices/3 Triplets PASS. Full Kaggle inference and official LB UNVERIFIED.
 - T4x2 two full models running parallel GPU inference; Internet OFF; Kaggle Submission Code runtime <=9h. Output submission.csv strict shape/range/Study UID/12 columns/SHA. If a Study has corrupt DICOM, neutral fallback is logged; high fallback rate invalidates quality claims.
+
+## 2026-10-13 — V2 LB Checkpoint path correction (current)
+
+- **A STRICT:** `/kaggle/input/datasets/yhlucas/rsna-knee-stage1-strict-f01-best-v1/fold0/best.pt` and `/fold1/best.pt` under the same root. User-provided exact structure. V2 Notebook SHA `d272241254c8222004a74dbf34def355a6093cc7ef588d5852a22e965a89bdb0`.
+- **B V4:** `/kaggle/input/datasets/woniyeon/rsna-knee-stage1-v4-f01-best-v1/fold0/best.pt` and `/fold1/best.pt` under the same root. **Owner `woniyeon` (not `yhlucas`).** V2 Notebook SHA `2c7323124de1b5fa3a2de2463618f19b6a342a9c7e060abe8a9a0dcf0ce2cb95`.
+- Supersedes V1 **checkpoint root-level `fold0_best.pt`, `fold1_best.pt` assumptions**; model SHA and scientific configuration unchanged. Actual Kaggle mount and model file bytes not independently tested; notebook validates file presence and SHA before inference.
 
 ## 6. 변경·감사 원칙
 
