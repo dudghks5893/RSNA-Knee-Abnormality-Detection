@@ -118,6 +118,14 @@ V4 Soft Label은 단순 0/1로 전환하거나 다수 클래스를 일괄 삭제
 - **Add Input 5개/계정:** 공통 ① Native224 cache ② shared manifest ③ 전용 Gold58 ④ official DINOv2 Base 모델, 개별 ⑤ STRICT/V4 라벨.
 - 구 R2D `rsna-knee-wide224-persistent-cache-v1`은 이 Stage1 Gold Input에서 **사용하지 않음**.
 
+## 2026-10-13 — Stage1 학습 완료 체크포인트 계약
+
+- **B V4 우선 Stage2 후보:** Fold0 best.pt SHA256 `15bd9189eac7a7366239a0747e671f0f567a40a2db660e7054e2de26eb01e629` (Best Epoch8, Gold29 AUC0.892702); Fold1 `0c3939d93d3f37daacf2625711fe751586ea354e5a64b19eb9911ed5f0eb28a5` (Epoch9, AUC0.868232).
+- **A STRICT 보존 후보:** Fold0 best.pt `e5ae8a3a2b30d5bf71a19aabc7cfba888bb05d91b152d82931c3d44f3d4387a6` (Epoch9, AUC0.838365); Fold1 `954d099a0e4274c1ee4581fc8c518fd3f30dcafff39e4d2ed941eb9224704935` (Epoch7, AUC0.785654).
+- **모델 아키텍처·입력·학습 Loss 계약은 본 문서의 V7 설정과 동일**. Fold0 validation Gold29와 Fold1 validation Gold29의 모델을 혼동하지 않는다. 두 Fold 각각 독립 encoder+head 전체 checkpoint이며 1536d feature는 **DINO Encoder의 CLS768+PatchMean768 출력**을 사용한다. 저장된 best.pt는 `model`, `epoch`, `fold`, `label_mode`, `config` 및 `metric_auc`가 포함된 torch checkpoint.
+- **실물 확보 상태:** 사용자 공유 review ZIP은 `.pt` 바이너리를 제외하므로 보고된 SHA값은 `training_summary.json`에 대한 신뢰이며 **실제 `.pt` 파일 바이트 검증은 미완료**. Kaggle Output에서 추출해 별도 Dataset Add Input으로 등록한 뒤 일치 확인 필요. 모델 파일을 새 GitHub 문서에 넣는 게 아니라 기존 본 데이터·모델 문서에서 registry 업데이트.
+- **성과 참조:** Gold58 DEV OOF Macro AUROC A=0.811284, B=0.871112. 세부 Target/F1/Recall 및 해석은 동일 실험 ID의 `EXPERIMENT_LOG.md` 참조.
+
 ## 6. 변경·감사 원칙
 
 각 데이터셋의 Kaggle 게시 버전, 실제 mounted path, SHA, UID 교집합, mask, 라벨 정합성은 실측 때 이 문서에 갱신한다. QA 'PASS'와 GPU 학습 'COMPLETE'를 혼동하지 않는다. 모델 설정 변경은 이유/영향과 이전 값까지 남긴다.
