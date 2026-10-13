@@ -165,3 +165,26 @@ STATUS: NOTEBOOKS_STATIC_QA_PASS; CHECKPOINT_DATASET_MOUNT_PENDING; REAL_KAGGLE_
   - B `B_S1-DINO-CBL2F-01_V4_2FOLD_LB_SUBMISSION_V2_EXACTPATH.ipynb`, SHA256 `2c7323124de1b5fa3a2de2463618f19b6a342a9c7e060abe8a9a0dcf0ce2cb95`.
 - Only checkpoint path owner/subfolder and first Markdown / Save Version metadata changed. Original FeatureDINO architecture, RMIL-04B V3 raw DICOM policy, 18-window sampler, 2GPU Fold probability averaging, SHA-pinned `best.pt` and pretrained weights retained.
 - **QA:** Both Notebook JSON/nbformat/6 code-cell AST PASS; exact-path assertions, checkpoint SHA literals verified in source; ZIP CRC PASS. User provided paths but live Kaggle mount and actual `best.pt` bytes are **not yet verified**. Status `NOTEBOOK_V2_STATIC_PASS / KAGGLE_INFERENCE_NOT_RUN / PUBLIC_LB_UNKNOWN`.
+
+
+### 2026-10-13 — Performance audit: Exp11B 140.50min vs Stage1 V7 ~630min
+
+**Observed source**: historical 2026-09-21 Exp11B complete Kaggle saved code/log (Fold2), repository README Experiment37; new Stage1 user-provided A/B TRAIN review ZIPs, fold console logs and training_history.csv. This is a comparison of *different execution designs*, not a controlled benchmark.
+
+| Item | Exp11B DINOv2-Base | Current S1 A/B V7 |
+|---|---|---|
+| Backbone/resolution/full FT | DINOv2-Base / 224 / Yes | same |
+| DINO calls per Study | 6 slots × (9 slices/3-channel) = 18 | 18 three-slice windows |
+| Parallelization | 2×T4 DataParallel **one Fold/model** | GPU0 Fold0 and GPU1 Fold1 **independent models** |
+| Batch | physical Study batch 4, grad accum1 | physical Study batch 1/GPU, grad accum4, effective4 per Fold |
+| Cache/data loader | Persistent `.npy` `np.load(mmap_mode='r')`; DataLoader num_workers4, prefetch_factor2, pin_memory | 190 HDF5 shards random access, synchronous `train_ds[idx]` in worker (no DataLoader training prefetch), 12-open-file LRU cache |
+| Activation checkpoint | absent in retrieved Exp11B training model | `_features` checkpoint `use_reentrant=False` every Study in Train |
+| Train studies/Fold | 4,396 | A4,210; B4,378 |
+| Epochs executed | 10 (early stop) | A Fold0 12, Fold1 11; B both12 |
+| Time per epoch | Exp11B epoch10 13.97min, full mean ~14.05min | A Fold0 52.56min, B Fold0 52.42min |
+| Total/Fold | 140.50min | A Fold0 630.67min; B Fold0 629.08min / Fold1 630.70min |
+| Throughput | 5.22 studies/sec per model on 2 GPUs | A Fold0 ~1.34 studies/sec per GPU; B Fold0 ~1.39 studies/sec per GPU |
+
+**Quantitative analysis:** B wall time ~4.48× Exp11B (630/140.5); mean epoch time ~3.73× (52.4/14.05) plus 12 vs 10 epochs ×1.2 explains total. The 18 DINO inputs/Study were **the same**; more images per Study is *not* the cause. GPU count allocation 2 GPUs per Fold versus 1 GPU per Fold can explain part; 1-Study sequential forward/backward/4× accumulation, activation checkpoint recomputation, and synchronous HDF5 I/O likely cause the remainder. Neither model-side versus I/O side nor each factor's proportion is separately timed, so no measured causal attribution/percentages.
+
+**Optimization gate (no automatic retraining):** benchmark same Fold+same data+same selected model and 100-200 Study under (1) checkpoint on/off only after actual optimizer VRAM profile, (2) physical Study batch1 vs2/4 with grad accumulation adjusted to preserve effective4 (vectorized forward; never confuse Study with Window microbatch), (3) HDF5 background DataLoader workers 0/2/4 + pinned prefetch, (4) independent Fold vs DP/DDP two GPUs if goal is single-Fold wall time; separately report two-Fold total GPU-hours, preprocessing vs GPU F/B+optimizer time, measured Study/sec, peak allocated/reserved, loss/scientific parity. All these are FUTURE potential fixes, not verified runtime reductions.
