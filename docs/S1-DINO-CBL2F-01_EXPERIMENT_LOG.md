@@ -135,3 +135,19 @@ Stage1 Fold checkpoint 4개가 확보되면 fold별 DINO feature extraction SHA�
 **해석 및 결정:** B는 Gold58 개발 OOF ROC 기준 12타깃 중 9개에서 우세. Effusion/Synovitis/Fracture는 A가 소폭 우세. B를 다음 Full-MRI feature-cache/MIL 우선 백본 후보로 선택하되 **A Fold0/1 체크포인트는 보존**, 후속 A/B 또는 앙상블 비교 후보로 유지한다. A/B는 label 분포뿐 아니라 4,181 vs 4,349 Study, target mask, class-balanced loss/Confidence 차이가 있어 B 우위를 단일한 'V4 라벨 품질' 인과효과로 주장 금지. Recall/F1의 임계값 최적화는 58 Gold에서 재튜닝 시 낙관편향 위험.
 
 **차단 사항/다음 작업:** 제출 ZIP에 **모델 가중치 `.pt` 바이너리 없음**. Kaggle 각 실행의 Output `fold0/best.pt` + `fold1/best.pt` 총 4개 파일 보존 여부 및 SHA를 확인하고, 이를 Add Input 모델/데이터셋으로 등록한 뒤 Fold-aware Stage2 특징 추출을 설계해야 한다. Kaggle Public LB 점수는 본 실험에서 측정하지 않음.
+
+
+### 2026-10-13 — A/B independent 2-Fold LB submission notebooks prepared (NOT submitted)
+
+Experiment S1-DINO-CBL2F-01 Stage1 has A STRICT and B V4 independently trained Fold0/Fold1 best checkpoints. These are **separate LB submissions**, each equal 0.5/0.5 sigmoid probability averaging (not A+B averaging). No model training or Gold58-based calibration during inference.
+
+A notebook: A_S1-DINO-CBL2F-01_STRICT_2FOLD_LB_SUBMISSION_V1.ipynb SHA256 268187b2ab0db2390a008cb627adaa0e8aa731b2ff8f35560cdaf85856d59eb1.
+B notebook: B_S1-DINO-CBL2F-01_V4_2FOLD_LB_SUBMISSION_V1.ipynb SHA256 a0c7bd71d50f5e652f49ee1f23398be1eceb8b34b6fcc2b4195e6b60ebe04392.
+
+Source architecture copied verbatim from actual Train ZIP FeatureDINO Worker (identical A/B class SHA b385856a8e5ecfcd81da42c417dc1ba96ca5cb4f3d345a44a162907c32ad0874). Stage1 sampler from Train ZIP SHA 8ce97e7cebf0c75597e6bd8ea8c262bfb6596dfdcbf0975b8d31101fe125052c. Preprocessing follows RMIL-04B Native224 V3 physical slice ordering, 130mm center crop, per-Series percentile 0.5/99.5, Zscore, clamp +/-5, INTER_AREA 224, uint8; 20 Study/360 Window sampler and 12-Slice/3-triplet synthetic byte parity tests PASS.
+
+Required Kaggle Add Input per account: (1) Competition RSNA Knee Abnormality Detection test.csv/test_series.csv/sample_submission.csv/test_series/*.dcm; (2) NEW USER-UPLOADED checkpoint dataset A yhlucas/rsna-knee-stage1-strict-f01-best-v1 or B yhlucas/rsna-knee-stage1-v4-f01-best-v1, files fold0_best.pt/fold1_best.pt in its root (PROPOSED, not yet confirmed created); (3) MetaResearch dinov2 PyTorch Base version1 original pretrained model (SHA pinned). No training HDF5, pseudo label or Gold58 required.
+
+GPU T4x2, GPU0 Fold0/GPU1 Fold1; 2 GPU parallel inference, Internet OFF, Save & Run All. Kaggle GPU code submission max 9 hours. Visible 3 Studies and ~1300 hidden Studies runtime estimate 1-10min / 2-8h+ is speculative, not measured. Per Study corruption logged with neutral fallback, final submission.csv exact schema/UID/finite probability SHA verified.
+
+STATUS: NOTEBOOKS_STATIC_QA_PASS; CHECKPOINT_DATASET_MOUNT_PENDING; REAL_KAGGLE_GPU_UNVERIFIED; OFFICIAL_PUBLIC_LB_NOT_SUBMITTED. Model best.pt binary not contained in TRAIN review ZIP. Register actual checkpoint files from completed Kaggle outputs; only then execute and score. Historical Gold58 OOF STRICT 0.811284 / V4 0.871112 are NOT LB scores.
