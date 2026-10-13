@@ -163,3 +163,13 @@ V4 Soft Label은 단순 0/1로 전환하거나 다수 클래스를 일괄 삭제
 - [계획 및 현재 단계](S1-DINO-CBL2F-01_ROADMAP.md)
 - [실제 실행 결과 누적 로그](S1-DINO-CBL2F-01_EXPERIMENT_LOG.md)
 - [프로젝트 공통 Kaggle Notebook 규칙](AI_AGENT_KAGGLE_NOTEBOOK_RULES.md)
+
+
+## 2026-10-14 — S1FT02 Broad→Strict 재학습 입력/클래스 가중치 계약 (계획)
+
+- Common warm-start checkpoint B V4 Broad: `/kaggle/input/datasets/woniyeon/rsna-knee-stage1-v4-f01-best-v1/fold0/best.pt` SHA `15bd9189eac7a7366239a0747e671f0f567a40a2db660e7054e2de26eb01e629`, Fold1 `/fold1/best.pt` SHA `0c3939d93d3f37daacf2625711fe751586ea354e5a64b19eb9911ed5f0eb28a5`.
+- A source: `yhlucas/rsna-knee-version-a-strict-v1/STRICT_V1/STRICT_V1_TRAIN_LABELS_12_TARGETS.csv`, SHA `c66810ed4bf35a3fffe35d404aa7eceac860e5f28a013ee2ae7fdf0032497168`. B source: `yhlucas/rsna-knee-v4-consensus-dataset/rsna_knee_pseudolabels_v4_routed_strict.csv`, SHA `bfca4993e5c985d9318d732bf2a0970dd7af9b3beff1d6ff619822042bf7a2c0`.
+- Other inputs same Stage1: 5Pack Native224 V3, Shared Series Manifest/Sampler SHA, Gold58 frozen 29/29 split, MetaResearch DINOv2 Base/1 pretrained. No competition input for cached training, Competition required for later LB inference.
+- Pseudo-only target loss: A hard binary + Mask + majority-rotation cap20:1 + inverse-frequency power0.7 + coverage power0.35; B routed strict Soft + Confidence + Mask + soft pos/neg weighted prevalence inverse power0.7 cap0.5..2.5 + coverage power0.35. Gold29 neutral BCE×3, no pseudo class priors. Unmentioned Mask=0 never converted to negative.
+- New model datasets for submission are **proposed only**, not yet registered: A `yhlucas/s1ft02-a-strictv1-f01-v1`, B `woniyeon/s1ft02-b-v4strict-f01-v1`; require `fold0/best.pt`, `fold1/best.pt`, `fold0/training_summary.json`, `fold1/training_summary.json`. Submission notebooks fail-fast on missing files, audit checkpoint SHA from training summary. Both Fold models initialized from same V4 Broad; previously trained A Strict model is not used.
+- The training notebooks alter Study physical batching/DataLoader and turn checkpointing into a performance-tested switch while preserving architecture StateDict key names. Model checkpoint actual GPU load/Baseline Val parity not confirmed until Kaggle GPU preflight.
