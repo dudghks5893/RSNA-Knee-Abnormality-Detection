@@ -3,7 +3,7 @@
 - **실험 ID:** `S1-DINO-CBL2F-01` (2026-10-13 신규; 기존 GitHub 파일명/코드 검색에서 중복 미발견)
 - **목표:** DINOv2-Base Stage1 지도 Fine-tuning을 STRICT V1과 V4 라벨 정책으로 비교하고, 이후 Full-MRI 특징 캐시·질환별 MIL·Top-K Selector로 확장.
 - **운영:** 이 실험군의 Markdown은 본 문서(DATA_MODEL), ROADMAP, EXPERIMENT_LOG **3개만** 만들고 계속 편집한다. 실험·버그·노트북 버전마다 .md 신설 금지.
-- **최신 실행 상태(2026-10-13):** A/B Stage1 2-Fold TRAIN 완료 및 Gold58 OOF 재계산 확인. LB V2 Notebook 정적 QA 완료, 실제 Kaggle LB 미실행. 이후 섹션의 V6/V7 미검증 문구는 당시 이력이다.
+- **최신 실행 상태(2026-10-13):** A/B Stage1 2-Fold TRAIN 완료 및 Gold58 OOF 재계산 확인. LB V2 Notebook 정적 QA 완료 후 사용자 보고 Public LB A=0.861/B=0.910 수신(실제 제출 스크립트 독립 감사 미완료). 이후 섹션의 V6/V7 미검증 문구는 당시 이력이다.
 - **출처:** 로컬 공개된 A/B V6 노트북, 사용자 제공 STRICT/V4 원본 ZIP, Gold58 사용자 제공 정답, 기존 GitHub cache 명세. 최신 노트북 설정이 바뀌면 해당 변경 이력과 SHA를 이 문서에 갱신.
 
 ## 2026-10-13 — 실제 PREFLIGHT 오류 수정: V7 WorkerFix
@@ -148,6 +148,13 @@ V4 Soft Label은 단순 0/1로 전환하거나 다수 클래스를 일괄 삭제
 - User reports older Batch124+ simultaneous operation and ~20GB spare VRAM; user weekly GPU allocation 30h. Which device(s) owned that spare VRAM and whether Batch124 refers to Study/Window are unknown, but speculative OOM avoidance is not an acceptable reason to force small batches.
 - Next study benchmarks actual 128-256 MRI studies, optimizer steps, Study batch 1/2/4/8+, Window microbatch 18/32/64/96/124/128+, checkpoint ON/OFF, HDF5 prefetch, and 2GPU mode; selects measured max throughput. Full TRAIN aims <=4h, >=8h estimated blocks, weekly 30h quota is mandatory. No pretrained/label/input semantics change under this policy update.
 - References: [AI_AGENT_KAGGLE_NOTEBOOK_RULES.md](AI_AGENT_KAGGLE_NOTEBOOK_RULES.md), [GPU_BATCH_RESOURCE_MANDATORY_POLICY.md](GPU_BATCH_RESOURCE_MANDATORY_POLICY.md).
+
+## 2026-10-13 — 제출 모델 공식 Public LB 사용자 보고 (결과와 출처)
+
+- 두 V2 Notebook의 A STRICT 2-Fold 및 B V4 2-Fold sigmoid probability equal-mean 제출에 대한 **사용자 보고 Public LB**: **A=0.861**, **B=0.910**. 제출 스크립트/CSV 및 숨겨진 Test 실패 UID 감사 자료는 별도로 수신하지 않았으므로 그 실행 세부 정보를 PASS로 단정하지 않는다.
+- 개발 Gold58 OOF Macro AUROC: **A=0.811284**, **B=0.871112**. External Public LB 우위(B−A=+0.049)는 별도 test 결과이고 OOF/Both are not directly paired distribution metrics.
+- 기존 프로젝트 최고 Exp57 Public LB **0.918** (3-fold selector + full MRI direct 70:30) 대비 **B=−0.008**, **A=−0.057**. B는 next full-MRI encoder candidate; stage1 checkpoints preserved.
+- 모델 아키텍처/전처리/생성된 checkpoint hash는 V7 학습 및 V2 추론 명세에서 **변경 없음**. 이번 업데이트는 결과 기록이며 새 GPU 추론/학습 실행이 아님.
 
 ## 6. 변경·감사 원칙
 
