@@ -142,6 +142,13 @@ V4 Soft Label은 단순 0/1로 전환하거나 다수 클래스를 일괄 삭제
 - **B V4:** `/kaggle/input/datasets/woniyeon/rsna-knee-stage1-v4-f01-best-v1/fold0/best.pt` and `/fold1/best.pt` under the same root. **Owner `woniyeon` (not `yhlucas`).** V2 Notebook SHA `2c7323124de1b5fa3a2de2463618f19b6a342a9c7e060abe8a9a0dcf0ce2cb95`.
 - Supersedes V1 **checkpoint root-level `fold0_best.pt`, `fold1_best.pt` assumptions**; model SHA and scientific configuration unchanged. Actual Kaggle mount and model file bytes not independently tested; notebook validates file presence and SHA before inference.
 
+## 2026-10-13 — Historical Batch vs future throughput policy
+
+- V7 Stage1 physical StudyBatch1/GPU, gradaccum4, Window microbatch18, HDF5 synchronous and activation checkpoint ON were the **completed run settings**; they must not be reused without profiling as next-stage defaults.
+- User reports older Batch124+ simultaneous operation and ~20GB spare VRAM; user weekly GPU allocation 30h. Which device(s) owned that spare VRAM and whether Batch124 refers to Study/Window are unknown, but speculative OOM avoidance is not an acceptable reason to force small batches.
+- Next study benchmarks actual 128-256 MRI studies, optimizer steps, Study batch 1/2/4/8+, Window microbatch 18/32/64/96/124/128+, checkpoint ON/OFF, HDF5 prefetch, and 2GPU mode; selects measured max throughput. Full TRAIN aims <=4h, >=8h estimated blocks, weekly 30h quota is mandatory. No pretrained/label/input semantics change under this policy update.
+- References: [AI_AGENT_KAGGLE_NOTEBOOK_RULES.md](AI_AGENT_KAGGLE_NOTEBOOK_RULES.md), [GPU_BATCH_RESOURCE_MANDATORY_POLICY.md](GPU_BATCH_RESOURCE_MANDATORY_POLICY.md).
+
 ## 6. 변경·감사 원칙
 
 각 데이터셋의 Kaggle 게시 버전, 실제 mounted path, SHA, UID 교집합, mask, 라벨 정합성은 실측 때 이 문서에 갱신한다. QA 'PASS'와 GPU 학습 'COMPLETE'를 혼동하지 않는다. 모델 설정 변경은 이유/영향과 이전 값까지 남긴다.
