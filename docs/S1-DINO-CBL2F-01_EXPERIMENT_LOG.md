@@ -214,3 +214,13 @@ STATUS: NOTEBOOKS_STATIC_QA_PASS; CHECKPOINT_DATASET_MOUNT_PENDING; REAL_KAGGLE_
 **Decision:** Promote **B V4 2-Fold Stage1** as a strong standalone baseline and priority encoder candidate for Stage2 full-MRI feature extraction / hierarchical MIL; keep both A Fold checkpoints for future diversity tests only if performance-gated. Preserve Exp57 0.918 as project best; do not retrain Stage1 now. Next Stage2 expensive GPU run **blocked on 30h/week resource plan and same-hardware 128–256 Study full-optimizer speed profiling** (batch124+ evidence, target <=4h/run, reject predicted >=8h). First verify B submission fallback count and script/notebook provenance when those logs are available.
 
 **Submission artifact status:** Scores reported by user; exact Kaggle Script Version, `submission.csv` SHA, fallback studies/hidden decoding, checkpoint byte hashes as mounted by the submission kernel, and actual submission runtime **not independently audited**; do not mark those audit gates PASS without evidence.
+
+
+### 2026-10-14 — S1-DINO-CBL2F-02 A/B Fine-tuning + Submission notebooks STATIC QA only
+
+- **Purpose**: A new Strict V1 hard/masked vs B V4 Routed Strict soft/confidence, both warmstart **the same prior B V4 Broad Fold0/1** weights (prior 2Fold Public LB 0.910). Max3 Epoch low-LR FT, Gold29 heldout Fold-wise; no MIL yet.
+- Notebook SHA A `cabea26653a1c0c34b6983093461b467cef8e4b1a2aacad8a8ebb7b6aadf2232` B `dd98d379846c9602474772ac87c1c8fc11c7c6c2db5458421fba82bfadec38c6`. Submissions templates A `b448d25f70e79241111ab7c129d51ad83759939029a5ee7e01021fcbbe6efe18` / B `68d5355a25eac7acdaba0646b68a98899d31c0b31f7c71224973129549175b69`.
+- SHA of original source label CSV verified from user-supplied ZIP: A STRICT V1 `c66810ed4bf35a3fffe35d404aa7eceac860e5f28a013ee2ae7fdf0032497168`, 4181 rows/32163 valid; B V4 Routed Strict `bfca4993e5c985d9318d732bf2a0970dd7af9b3beff1d6ff619822042bf7a2c0`, 4349 rows/39792 valid.
+- Static checks: both notebook 9 cells AST PASS; extracted Worker Python compile PASS; lightweight CPU mock 2-Study batched-vs-per-Study forward equivalence PASS; label coverage and archive ZIP CRC PASS. **Real Kaggle T4 Optimizer/128 Study benchmark, 2Fold training, public test inference and Public LB NOT RUN.**
+- GPU resource gate: attempted Window microbatch124 and Physical Study8 among candidates, Select observed highest Study/sec on real optimizer, HDF5 prefetch workers2, projected 3Epoch >4h triggers pre-train block. Strict class balancing preserves Gold neutral weight3 and masks invalid target loss; A rare class rotation, B soft/confidence weighted imbalance, both pseudo-only.
+- Historical Exp57 LB0.918 and V4 Broad LB0.910 unchanged. No claim of new improvement or official competition score.
