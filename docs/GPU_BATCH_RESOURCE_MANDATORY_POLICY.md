@@ -1,4 +1,21 @@
-# 필수 규칙 — GPU 메모리·배치 크기·시간 예산 (2026-10-12)
+# 필수 규칙 — GPU 메모리·배치 크기·시간 예산 (최신 2026-10-13)
+
+## 2026-10-13 최신 우선 정책 — 주 30시간 / Batch 124+ / 10시간 학습 방지
+
+사용자가 **실제로 Batch 124개 이상 동시 처리**와 **VRAM 약 20GB 여유**를 경험했다고 재확인했다. 이 값은 우선 보존할 실측 이력이다. 개별 T4의 용량과 2GPU 합산 여유를 혼동하거나 Study Batch와 Window Microbatch를 같은 단위라고 가정하지 않는다. 그러나 **OOM을 단순히 우려한다는 이유만으로 작업량을 작게 쪼개는 보수적 선택은 금지**한다.
+
+1. **VRAM 사용률 자체는 벌점이 아니다.** 목표는 실제 학습 처리량(Study/s, Window/s) 최대화 및 GPU시간 절약. 잠재적인 124+ 배치를 적극 탐색한다.
+2. 동일 입력/모델/학습 모드에서 실측 Window Microbatch 후보 **18/32/64/96/124/128+**, 실제 Study Physical Batch **1/2/4/8+**를 가능한 범위에서 비교한다. 일반적인 Checkpointing ON 고정·Batch1/GradientAcc4 고정 금지. 메모리/속도 최적화 때문에 배치를 줄이려면 **실제 OOM 또는 처리량 악화 기록**을 제시해야 한다. 불필요한 실패 반복은 피하되 OOM 공포로 실측 탐색을 포기하지 않는다.
+3. **PREFLIGHT 측정 범위:** 대표 MRI 128~256 Study, Warmup, 2회 이상 실제 Optimizer Step(AdamW state 포함), full F+B, 데이터 읽기, 검증, Checkpoint 저장. Study×Window 실측 throughput, peak allocated/reserved, I/O%, 2GPU 방식/누적 gradient의 호출 횟수 별도 기록. 단일 Study F+B 측정값만으로 전체 시간을 추정하지 않는다.
+4. **GPU weekly quota 30시간(사용자 제한):** A/B 계정의 사용/잔여 시간을 기록하고 이번 주 GPU 사전실험·TRAIN·Submit/추론·재시도 예정 시간을 함께 산출한다. Kaggle에서 T4×2 시간을 어떻게 차감하는지는 각 계정 UI 실제 자료로 확인한다.
+5. **Full TRAIN 사전 통제:** 목표는 1회 실행 4시간 이내. 4시간 예상 초과 → 본학습 대신 병렬화/Study batch/HDF5 prefetch/Activation Checkpoint 최적화 후 재계측. 8시간 이상 예상되는 신규 본학습 **실행 불가**. 10시간 이상의 무계획 자원 소모는 반복하지 않는다.
+6. **자동 조기 종료와 Resume:** 128~256 Study 및 첫 200~500 Study 실측으로 전 Epoch 예상 시간을 재계산한다. 예산/시간 상한을 초과하는 계획이면 신속히 종료하고 `best.pt`, `last.pt`를 보존한다. 중단-재개 과정은 장시간 학습 전 Smoke Test. Kaggle 세션 끝나서 모델 전체를 잃는 상황도 방지.
+7. **과거-현재 비교 근거:** Exp11B DINOv2-Base는 2GPU DataParallel/physical StudyBatch4/GradientAccum1/`.npy` prefetch/No activation checkpoint에서 10 Epoch 총 140.50분 (약14.05분/Epoch). S1-DINO-CBL2F-01은 GPU마다 1 Fold, physical StudyBatch1/Accum4/HDF5 sync/activation checkpoint에서 각 12 Epoch 약630분(약52.4분/Epoch). 모두 Study당 DINO 입력 18개. 원인별 상대 기여율은 실제 profile 전까지 확정 금지.
+8. Notebook을 인도할 때 **실측으로 검증한 batch 범위, throughput, 예상 wall/GPU quota, 사용자가 요청한 30시간 잔여예산 및 이 Gate의 PASS/FAIL**을 첫 Markdown과 실행 로그에 기록한다.
+
+**이 섹션이 아래 2026-10-12 기록 중 '작은 배치 보수 설계', '시간 예측을 단일 Study F+B에서 외삽' 등의 권장과 충돌하면 최신 2026-10-13 규칙을 우선한다.** 사용자 제공 20GB 여유가 GPU별/전체 합산 어느 쪽인지 증거 없이 GPU 개별 할당에 대입하지 않는다.
+
+---
 
 > **CRITICAL / 반드시 먼저 읽기**: 사용자 직접 지시. 이 문서는 이후 모든 Kaggle RSNA Knee 실험 설계, 인수인계, Notebook 생성 및 변경 검토에 우선 적용한다. GPU 크레딧/할당량은 유한하며, 이전에 검증한 메모리 여유를 무시하는 보수적 추측은 금지한다.
 
