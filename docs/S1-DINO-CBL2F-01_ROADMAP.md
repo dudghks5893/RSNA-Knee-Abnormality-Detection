@@ -88,7 +88,7 @@
 | S4 | 학습 시간·메모리 재평가 | 실측 GPU 처리량, microbatch 18/12/8/4, Study batch4/8 비교 필요성, 전체 예상 세션 비용, Resume 경로 | `EPOCH_RUNTIME_MEASURED` |
 | S5 | A와 B Stage1 Fold0/1 TRAIN | 각 Fold best/last checkpoint, 두 fold success, class balance/epoch log, 실패 시 보존 산출물 복구 | `A/B_2FOLD_TRAIN_PASS` |
 | S6 | Gold58 pooled OOF58 및 Target별 평가 | 예측 중복0/누락0, Macro AUROC/AUPRC, Recall·F1·Specificity 등; 클래스별 confusion, 근거 포함 | `POOLED_OOF58_VERIFIED_DEV` |
-| S7 | Stage1 네 모델의 full-MRI feature-cache 추출 | 모델 별·Fold 별 서로 다른 가중치, UID/Series/Slice/center, float16 1536d, 해시/용량 budget 검증 | `BLOCKED_ON_CHECKPOINT_REGISTRATION` |
+| S7 | Stage1 B V4 Fold0/1 우선 Full-MRI feature-cache 추출 (A 선택 보존) | B 모델 Dataset 경로 제공/사용자 LB 결과 수신; 기존 4개 모델의 정확한 SHA 및 실물 기반 feature provenance 검증, UID/Series/Slice/center, float16 1536d 해시·용량·GPU 시간 예산 | `READY_FOR_PERFORMANCE_PREFLIGHT / FILE_SHA_AUDIT_PENDING` |
 | S7-LB | A/B independent 2-Fold Public LB submissions | User-reported A0.861/B0.910, check scriptVersion/CSV/hash when logs provided | `USER_REPORTED_A_0.861_B_0.910` |
 | S9 | Top-K Selector / B3A 또는 direct MIL 앙상블 | MIL 중요도 상위 Window 선별, 기존 Exp57(0.918 Public LB) 비교, 독립 제출 성공 여부 구분 | `CONDITIONAL` |
 
