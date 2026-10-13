@@ -1,6 +1,6 @@
 # S1-DINO-CBL2F-01 — Stage1~MIL 실험 결과 누적 로그 (Append-Only)
 
- > **최신 상태 2026-10-13: A/B Stage1 2-Fold TRAIN 완료 및 Gold58 OOF 검증 완료; A/B LB V2 Notebook 준비(공식 제출 미실행).** 초기 등록 항목의 미실행 상태는 작성 당시 기록이다. 노트북 실행 및 모델 평가가 끝날 때마다 **이 파일에 날짜순으로 아래쪽에만 기록**한다. 실험별 `.md` 파일을 새로 만들지 않는다.
+ > **최신 상태 2026-10-13: A/B Stage1 2-Fold TRAIN 완료, Gold58 OOF 검증 완료, 2-Fold Public LB 사용자 보고 A=0.861 / B=0.910 (제출 스크립트/산출물 독립 감사 미완료).** 초기 등록 항목의 미실행 상태는 작성 당시 기록이다. 노트북 실행 및 모델 평가가 끝날 때마다 **이 파일에 날짜순으로 아래쪽에만 기록**한다. 실험별 `.md` 파일을 새로 만들지 않는다.
 
 ## 0. 기록 규칙 (고정)
 
@@ -195,3 +195,22 @@ STATUS: NOTEBOOKS_STATIC_QA_PASS; CHECKPOINT_DATASET_MOUNT_PENDING; REAL_KAGGLE_
 - User GPU quota is 30 hours per week. The previous A/B Stage1 training taking as much as ~630.7 minutes must not recur because of unnecessarily low Study Batch, lack of HDF5 prefetch, or checkpointing without performance profiling.
 - Shared AI_AGENT_KAGGLE_NOTEBOOK_RULES and GPU_BATCH_RESOURCE_MANDATORY_POLICY updated to require 128-256 MRI Study full-step profiling, aggressive larger Batch exploration (including 124+ where available), highest-throughput selection, full GPU time forecast (goal <=4h/run, block >=8h predicted), stop/checkpoint if projected budget breached, weekly quota tracking.
 - Existing S1-DINO-CBL2F-01 ROADMAP and DATA_MODEL documents updated in place, not split. Completed training models unchanged; no new GPU experiment was run for this administrative change. Future claims about max current-model Batch will require measurement.
+
+
+### 2026-10-13 — A/B independent 2-Fold Kaggle Public LB (user-reported)
+
+**Evidence/status:** User directly reported the Kaggle Public LB scores in this chat: **A STRICT V1 = 0.861**, **B V4 = 0.910**. This is user-reported official scoreboard observation; no submission Screenshot / scriptVersionId / official score JSON / `submission_audit.json` has been attached for independent verification. Treat the scores as user-reported and do **not** invent Script Version, timestamp or hidden-test metrics.
+
+| Pipeline | Gold58 pooled OOF Macro AUROC (DEV) | Public LB (USER-REPORTED) | Same-metric LB gap versus Exp57 | Notes |
+|---|---:|---:|---:|---|
+| A STRICT V1 DINOv2-Base, Fold0+Fold1 sigmoid mean 50:50 | 0.811284 | **0.861** | **-0.057** | Custom Gold-train 2-fold STRICT, mask/class balance |
+| B V4 DINOv2-Base, Fold0+Fold1 sigmoid mean 50:50 | 0.871112 | **0.910** | **-0.008** | V4 soft/conf-balanced |
+| Historical Exp57, 3-fold B3A Top-K + full-MRI direct 70:30 | not same development evaluation | **0.918** | **0** | Historical project best remains unchanged |
+
+**Deltas:** Public LB B−A = **+0.049**; Gold58 OOF development AUROC B−A = **+0.059828** (different evaluation datasets, not statistically interchangeable). Relative to historical project best 0.918, B is only 0.008 lower. A trails B by 0.049. B/A are *separate 2-Fold* ensembles, **not** a combined A+B ensemble.
+
+**Interpretation:** The direction of the Gold58 preference for B over A is corroborated by the reported external Public LB gap (+0.049), which is useful despite repeated Gold58 DEV usage. However A/B differ simultaneously in label coverage, masks, confidence and class-balanced loss, so this result does not isolate label correctness as a causal factor. Exp57 uses another architecture/protocol and 3 folds, so direct architecture superiority is not proven. No new model training, MIL, feature extraction, blending or A+B ensemble was executed in this LB report.
+
+**Decision:** Promote **B V4 2-Fold Stage1** as a strong standalone baseline and priority encoder candidate for Stage2 full-MRI feature extraction / hierarchical MIL; keep both A Fold checkpoints for future diversity tests only if performance-gated. Preserve Exp57 0.918 as project best; do not retrain Stage1 now. Next Stage2 expensive GPU run **blocked on 30h/week resource plan and same-hardware 128–256 Study full-optimizer speed profiling** (batch124+ evidence, target <=4h/run, reject predicted >=8h). First verify B submission fallback count and script/notebook provenance when those logs are available.
+
+**Submission artifact status:** Scores reported by user; exact Kaggle Script Version, `submission.csv` SHA, fallback studies/hidden decoding, checkpoint byte hashes as mounted by the submission kernel, and actual submission runtime **not independently audited**; do not mark those audit gates PASS without evidence.
