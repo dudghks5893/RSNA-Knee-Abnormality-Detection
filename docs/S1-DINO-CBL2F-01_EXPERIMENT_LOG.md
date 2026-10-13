@@ -83,3 +83,55 @@ Stage1 Fold checkpoint 4개가 확보되면 fold별 DINO feature extraction SHA�
 - **12 Epoch F+B-only 투영:** Fold0 약 **3.80시간**, Fold1 약 **3.36시간**(동시 실행). HDF5 I/O, Optimizer, validation, checkpoint, 두 Fold의 동시 I/O 경합 미포함. 단일 Study 표본 측정으로 전체 Epoch 시간 확정 불가.
 - **상태:** 실제 Kaggle GPU 사전검증 PASS. **Optimizer step / 첫 Epoch / 모델 학습 / 성능 지표는 아직 미실행**. Cross-session Resume 기능이 없어 세션 중단 위험을 갖고 있음.
 - **다음:** A는 `RUN_MODE=TRAIN` 전환 가능; Save Version `S1-STRICT-F01-WFIXV7-TRAIN`, GPU T4×2 Internet OFF Save & Run All. 첫 Epoch/로그의 실제 시간·남은 세션 한도를 확인해야 함.
+
+
+### 2026-10-13 — A STRICT V1 vs B V4 Stage1 2-Fold TRAIN 완료 / Gold58 OOF 비교
+
+**상태:** A, B 각각 `BOTH_FOLDS_TRAIN_SUCCESS`, Fold0·Fold1 각 `STAGE1_TRAIN_SUCCESS`; ZIP CRC PASS; Gold58 예측 58 UID 모두 유일하며 양 계정의 UID·Fold·12타깃 Truth가 동일. 유저 제출 TRAIN ZIP의 원본 CSV를 재계산하여 macro 및 타깃별 AUROC·AUPRC 원본 출력과 일치 확인. **best.pt/last.pt 본체는 ZIP에서 제외된 상태**로 SHA/경로는 학습 보고서에서만 확인됨; Kaggle Output 모델 파일을 반드시 별도 보관.
+
+**실행 증거:**
+- A: `STAGE1_STRICT_DISTRIBUTION_V3_TRAIN_review.zip` SHA256 `92284f1eaf71a1abbefd0e7f54fab8fbdb5a188fe8feb1413015d144d65c01ee`; `A_S1_STRICT_DINOBASE_F01_GOLDDEDICATED_V7_WORKERFIX.ipynb`, STRICT 4,181 pseudo + 29 Gold train/Fold = 4,210.
+- B: `STAGE1_V4_DUALFOLD_TRAIN_review.zip` SHA256 `650bd27f58b16dfd18a65d021c5535263f11a362439de8f346ee3e7c6dd858d0`; `B_S1_V4_DINOBASE_F01_GOLDDEDICATED_V7_WORKERFIX.ipynb`, V4 4,349 pseudo + 29 Gold train/Fold = 4,378.
+- 두 계정 모두 실제 T4×2, Fold0 GPU0 / Fold1 GPU1 독립 병렬, Window microbatch18, effective Study batch4/Fold, 224×224 3-Slice Window×18, DINOv2-Base full fine-tune.
+
+| 계정/Fold | Best Gold29 Macro AUROC | Best Epoch | 학습 Epoch | 각 Fold 실제 시간 | best.pt SHA256 (학습 보고서 기반) |
+|---|---:|---:|---:|---:|---|
+| A STRICT Fold0 | 0.838365 | 9 | 12 | 630.67 min | `e5ae8a3a2b30d5bf71a19aabc7cfba888bb05d91b152d82931c3d44f3d4387a6` |
+| A STRICT Fold1 | 0.785654 | 7 | 11 | 587.92 min | `954d099a0e4274c1ee4581fc8c518fd3f30dcafff39e4d2ed941eb9224704935` |
+| B V4 Fold0 | 0.892702 | 8 | 12 | 629.08 min | `15bd9189eac7a7366239a0747e671f0f567a40a2db660e7054e2de26eb01e629` |
+| B V4 Fold1 | 0.868232 | 9 | 12 | 630.70 min | `0c3939d93d3f37daacf2625711fe751586ea354e5a64b19eb9911ed5f0eb28a5` |
+
+**Gold58 pooled OOF — 모델별 Fold best checkpoint에서 나온 58명 통합 예측; threshold-dependent metrics는 0.5 고정**
+
+| Metric | A STRICT | B V4 | B−A |
+|---|---:|---:|---:|
+| Macro AUROC | 0.811284 | **0.871112** | +0.059828 |
+| Macro AUPRC | 0.729597 | **0.800206** | +0.070609 |
+| Macro Recall@0.5 | 0.6170 | **0.8223** | +0.2053 |
+| Macro Precision@0.5 | **0.7975** | 0.6391 | −0.1584 |
+| Macro F1@0.5 | 0.6347 | **0.7053** | +0.0706 |
+| Macro Specificity@0.5 | **0.8529** | 0.7389 | −0.1140 |
+| Macro Balanced Accuracy@0.5 | 0.7350 | **0.7806** | +0.0456 |
+
+**Gold58 타깃별 A/B AUROC**
+
+| Target | Gold positive | A STRICT | B V4 | B−A |
+|---|---:|---:|---:|---:|
+| ACL | 24 | 0.8848 | 0.9007 | +0.0159 |
+| MCL | 9 | 0.7007 | 0.8639 | +0.1633 |
+| Medial Meniscus | 26 | 0.8918 | 0.9423 | +0.0505 |
+| Lateral Meniscus | 23 | 0.7739 | 0.8037 | +0.0298 |
+| Medial OA | 15 | 0.8233 | 0.9628 | +0.1395 |
+| Lateral OA | 11 | 0.7485 | 0.8569 | +0.1083 |
+| PF OA | 21 | 0.7786 | 0.8211 | +0.0425 |
+| Effusion | 35 | **0.9540** | 0.9329 | −0.0211 |
+| Synovitis | 27 | **0.6906** | 0.6762 | −0.0143 |
+| Baker's | 12 | 0.8460 | 0.9783 | +0.1322 |
+| Contusion | 19 | 0.8070 | 0.8853 | +0.0783 |
+| Fracture | 18 | **0.8361** | 0.8292 | −0.0069 |
+
+**통계 참고(탐색적):** 동일 58 UID를 짝지어 Study-level replacement bootstrap 1200회 실시한 V4−STRICT pooled macro AUROC 델타 퍼센타일 2.5–97.5% 약 **+0.014~+0.106**; AUPRC 델타 약 **+0.004~+0.137**. Best Epoch를 같은 Gold58에서 선택했으므로 **독립 검증 CI나 확증적 p-value로 해석 금지**. MCL Gold 양성 9명 등 소표본으로 지표 분산 큼.
+
+**해석 및 결정:** B는 Gold58 개발 OOF ROC 기준 12타깃 중 9개에서 우세. Effusion/Synovitis/Fracture는 A가 소폭 우세. B를 다음 Full-MRI feature-cache/MIL 우선 백본 후보로 선택하되 **A Fold0/1 체크포인트는 보존**, 후속 A/B 또는 앙상블 비교 후보로 유지한다. A/B는 label 분포뿐 아니라 4,181 vs 4,349 Study, target mask, class-balanced loss/Confidence 차이가 있어 B 우위를 단일한 'V4 라벨 품질' 인과효과로 주장 금지. Recall/F1의 임계값 최적화는 58 Gold에서 재튜닝 시 낙관편향 위험.
+
+**차단 사항/다음 작업:** 제출 ZIP에 **모델 가중치 `.pt` 바이너리 없음**. Kaggle 각 실행의 Output `fold0/best.pt` + `fold1/best.pt` 총 4개 파일 보존 여부 및 SHA를 확인하고, 이를 Add Input 모델/데이터셋으로 등록한 뒤 Fold-aware Stage2 특징 추출을 설계해야 한다. Kaggle Public LB 점수는 본 실험에서 측정하지 않음.
