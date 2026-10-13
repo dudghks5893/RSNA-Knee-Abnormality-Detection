@@ -1,7 +1,7 @@
 # S1-DINO-CBL2F-01 — 실험 계획·진행 현황 (갱신형 단일 문서)
 
-> **Current as of 2026-10-13:** `DATA_PREPARED_LOCAL / GOLD_SPLIT_VERIFIED_LOCAL / KAGGLE_PREFLIGHT_PENDING`.
-> 새 실험마다 계획서를 만들지 않고 **이 파일에서 현황·의존성·다음 한 가지 액션을 수정**한다. 실제 관측 점수는 별도 누적 EXPERIMENT_LOG에만 기록.
+> **Current as of 2026-10-13 (최신):** `A_B_STAGE1_2FOLD_TRAIN_SUCCESS / GOLD58_OOF_VERIFIED / S7_CHECKPOINT_FILES_PENDING`.
+> 새 실험마다 계획서를 만들지 않고 **이 파일에서 현황·의존성·다음 한 가지 액션을 수정**한다. 상세 실측 결과는 누적 EXPERIMENT_LOG에서 관리한다. 아래 2026-10-13 중간 단계 기록의 과거형 '미실행/대기'는 당시 스냅샷이며, 현황은 상단 최신 상태와 단계별 표를 따른다.
 
 ### 2026-10-13 — PREFLIGHT 결함 보정 후 상태
 
@@ -50,9 +50,9 @@
 
 | 단계 | 작업 | 필수 완료조건 | 상태 |
 |---|---|---|---|
-| S0 | Strict/V4 라벨·공통 Native224 cache 계약/원본 SHA | UID, 12 Target, masks, 5 Packs/190 Shards 검증 | `로컬 라벨·명세 확인`; Kaggle mount 확인 전 |
-| S1 | Gold58 별도 Kaggle Dataset 게시 | `rsna-knee-gold58-2fold-v1` 5개 파일 게시, 지정 root 마운트, 파일 SHA PASS | `PENDING_USER_UPLOAD/MOUNT` |
-| S2 | Gold58 29/29 다중 타깃 분할 검증 | 58 UID 중복0/누락0, 각 Fold×12 Target 모두 positive≥1, negative≥1, A/B 동일 Fold SHA | `LOCAL_PASS`, Kaggle `PENDING` |
+| S0 | Strict/V4 라벨·공통 Native224 cache 계약/원본 SHA | UID, 12 Target, masks, 5 Packs/190 Shards 검증 | `INPUT_MOUNT_METADATA_PASS` (190 Shard 전수 SHA는 과거 RMIL-04C00 별도 Audit 참조) |
+| S1 | Gold58 별도 Kaggle Dataset 게시 | `rsna-knee-gold58-2fold-v1` 5개 파일 게시, 지정 root 마운트, 파일 SHA PASS | `A_B_KAGGLE_MOUNT_SHA_PASS` |
+| S2 | Gold58 29/29 다중 타깃 분할 검증 | 58 UID 중복0/누락0, 각 Fold×12 Target 모두 positive≥1, negative≥1, A/B 동일 Fold SHA | `A_B_KAGGLE_SHA_AND_COVERAGE_PASS` |
 | S3 | A/B V7 PREFLIGHT Save & Run All | 양 계정 5 Input, SHA, pretrain load, 두 GPU 분리, 최소 2-step 또는 실제 GPU 실험 검증, Loss/gradient, peak VRAM, 처리량 확인 | `A/B_GPU_PREFLIGHT_PASS` |
 | S4 | 학습 시간·메모리 재평가 | 실측 GPU 처리량, microbatch 18/12/8/4, Study batch4/8 비교 필요성, 전체 예상 세션 비용, Resume 경로 | `EPOCH_RUNTIME_MEASURED` |
 | S5 | A와 B Stage1 Fold0/1 TRAIN | 각 Fold best/last checkpoint, 두 fold success, class balance/epoch log, 실패 시 보존 산출물 복구 | `A/B_2FOLD_TRAIN_PASS` |
