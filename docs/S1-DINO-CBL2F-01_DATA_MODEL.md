@@ -126,6 +126,16 @@ V4 Soft Label은 단순 0/1로 전환하거나 다수 클래스를 일괄 삭제
 - **실물 확보 상태:** 사용자 공유 review ZIP은 `.pt` 바이너리를 제외하므로 보고된 SHA값은 `training_summary.json`에 대한 신뢰이며 **실제 `.pt` 파일 바이트 검증은 미완료**. Kaggle Output에서 추출해 별도 Dataset Add Input으로 등록한 뒤 일치 확인 필요. 모델 파일을 새 GitHub 문서에 넣는 게 아니라 기존 본 데이터·모델 문서에서 registry 업데이트.
 - **성과 참조:** Gold58 DEV OOF Macro AUROC A=0.811284, B=0.871112. 세부 Target/F1/Recall 및 해석은 동일 실험 ID의 `EXPERIMENT_LOG.md` 참조.
 
+## 2026-10-13 — 2-Fold LB Test Data and Checkpoint Input contract
+
+- A Strict and B V4 are distinct Code Competition notebook submissions. For each, Fold0 and Fold1 best weights must be loaded strict, output sigmoid probabilities and then average 50:50. Gold58 is never a scoring inference input.
+- Proposed (not published/verified) checkpoint datasets: yhlucas/rsna-knee-stage1-strict-f01-best-v1 and yhlucas/rsna-knee-stage1-v4-f01-best-v1, root filenames fold0_best.pt and fold1_best.pt. The four exact SHAs are in previous Stage1 checkpoint contract section. Do not use TRAIN review ZIP as weights.
+- Raw test data is sourced from competition RSNA Knee Abnormality Detection, test.csv/test_series.csv/sample_submission.csv and test_series/<Study>/<Series>/*.dcm. Existing HDF5 Native224 V3 training cache contains only 4,407 train/Gold subjects; it cannot supply hidden test studies.
+- Preprocessing reproduces RMIL-04B Native224 V3: DICOM physical slice sort by normal dot ImagePositionPatient; 130mm center crop (pad outside -5 after normalization); MONOCHROME1 inversion; per-Series 0.5/99.5 percentile clip sampled at <=200k pixel stride; Series mean/std Zscore; clip +-5; resize OpenCV INTER_AREA (224x224); uint8 np.rint((z+5)*25.5). Use 18 Window sampler SHA 8ce97e7cebf0c75597e6bd8ea8c262bfb6596dfdcbf0975b8d31101fe125052c, epoch0, [center-1,center,center+1].
+- Original FeatureDINO model class source SHA256 b385856a8e5ecfcd81da42c417dc1ba96ca5cb4f3d345a44a162907c32ad0874 is identical in A/B training ZIPs; notebook preserves it. MetaResearch Dinov2 PyTorch Base v1 original model pinned via SHA is also needed to reconstruct the exact encoder init/config.
+- Notebook SHA A 268187b2ab0db2390a008cb627adaa0e8aa731b2ff8f35560cdaf85856d59eb1; B a0c7bd71d50f5e652f49ee1f23398be1eceb8b34b6fcc2b4195e6b60ebe04392. Static AST, nbformat, sampler parity 20 Studies/360 Windows, synthetic pixel byte parity 12 Slices/3 Triplets PASS. Full Kaggle inference and official LB UNVERIFIED.
+- T4x2 two full models running parallel GPU inference; Internet OFF; Kaggle Submission Code runtime <=9h. Output submission.csv strict shape/range/Study UID/12 columns/SHA. If a Study has corrupt DICOM, neutral fallback is logged; high fallback rate invalidates quality claims.
+
 ## 6. 변경·감사 원칙
 
 각 데이터셋의 Kaggle 게시 버전, 실제 mounted path, SHA, UID 교집합, mask, 라벨 정합성은 실측 때 이 문서에 갱신한다. QA 'PASS'와 GPU 학습 'COMPLETE'를 혼동하지 않는다. 모델 설정 변경은 이유/영향과 이전 값까지 남긴다.
