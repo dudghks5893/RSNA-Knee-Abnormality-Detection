@@ -1,6 +1,6 @@
 # S1-DINO-CBL2F-01 — 실험 계획·진행 현황 (갱신형 단일 문서)
 
-> **Current as of 2026-10-13 (최신):** `A_B_STAGE1_TRAIN_SUCCESS / GOLD58_OOF_VERIFIED / A_B_LB_V2_EXACT_PATHS_RECEIVED / REAL_MODEL_SHA_PENDING / LB_NOT_SUBMITTED`.
+> **Current as of 2026-10-13 (최신):** `A_B_STAGE1_TRAIN_SUCCESS / GOLD58_OOF_VERIFIED / A_B_PUBLIC_LB_USER_REPORTED_0.861_0.910 / STAGE2_PLANNING_PENDING`.
 > 새 실험마다 계획서를 만들지 않고 **이 파일에서 현황·의존성·다음 한 가지 액션을 수정**한다. 상세 실측 결과는 누적 EXPERIMENT_LOG에서 관리한다. 아래 2026-10-13 중간 단계 기록의 과거형 '미실행/대기'는 당시 스냅샷이며, 현황은 상단 최신 상태와 단계별 표를 따른다.
 
 ### 2026-10-13 — PREFLIGHT 결함 보정 후 상태
@@ -58,6 +58,14 @@
 - Historic Exp11B DINOv2-Base 140.50m/10 epochs (2GPU DataParallel, physical batch4, numpy mmap+prefetch) versus Stage1 up to630.70m/12 epochs (2 independent 1GPU Folds, StudyBatch1, accum4, HDF5 sync, activation checkpoint). 18 DINO Windows/Study for both.
 - State: user decision/plan change, not new GPU profiling. Existing trained A/B best checkpoints retained.
 
+### 2026-10-13 — A/B 2-Fold Public LB 결과 확인(사용자 보고)
+
+- A STRICT 2-Fold Public LB **0.861**, B V4 2-Fold Public LB **0.910** (**사용자 직접 보고**, 독립 제출 ZIP/Script ID 미수신); B−A **+0.049**.
+- 프로젝트 최고 Exp57 **0.918** 유지; B와 격차는 **−0.008**. Gold58 pooled development OOF A0.811284 vs B0.871112 결과 방향이 LB에서도 유지됐지만 서로 다른 평가 집합이며, A/B의 라벨과 Loss가 모두 달라 순수 라벨 품질 비교는 아니다.
+- S7-LB = **`LB_SCORES_USER_REPORTED_A_0.861_B_0.910`**. Code submission Script Version, 실제 `submission.csv` SHA, hidden DICOM fallback count, 사용 GPU quota는 미확인 상태.
+- **다음 한 가지 작업:** B V4 Fold0/1 encoder로 Full Native224 V3 특징 추출 및 MIL 설계에 진입하기 전에 128–256 Study 정확한 Encoder 추론/학습 비용과 30h/week GPU 예산을 측정하고, 중복 특징 추출·저장 비용을 비교해 선택. A 체크포인트는 폐기하지 않는다.
+- GPU 정책: Batch124+ / 약20GB 여유 실측 이력 우선, 무근거 안전 Batch 축소 금지, 전체 GPU 학습 실행 목표 <=4h, 예측 >=8h 본학습 금지. **Stage1 재학습은 수행하지 않음.**
+
 ## 1. 목적과 비교 축
 
 목적: 공통 Native224 MRI/Gold58 2-Fold에서 STRICT V1(엄격한 mask, 희소 클래스 보정)과 V4(soft/confidence 보정) DINOv2-Base Stage1을 비교, 품질이 확인된 Fold encoder로 전체 MRI 특징 추출 후 질환별 MIL을 학습한다. 단일 Fold 결과로 성능 단정하지 않으며 Stage1 AUROC 향상이 MIL AUROC 향상을 보장하지 않는다.
@@ -81,12 +89,12 @@
 | S5 | A와 B Stage1 Fold0/1 TRAIN | 각 Fold best/last checkpoint, 두 fold success, class balance/epoch log, 실패 시 보존 산출물 복구 | `A/B_2FOLD_TRAIN_PASS` |
 | S6 | Gold58 pooled OOF58 및 Target별 평가 | 예측 중복0/누락0, Macro AUROC/AUPRC, Recall·F1·Specificity 등; 클래스별 confusion, 근거 포함 | `POOLED_OOF58_VERIFIED_DEV` |
 | S7 | Stage1 네 모델의 full-MRI feature-cache 추출 | 모델 별·Fold 별 서로 다른 가중치, UID/Series/Slice/center, float16 1536d, 해시/용량 budget 검증 | `BLOCKED_ON_CHECKPOINT_REGISTRATION` |
-| S7-LB | A/B 2-Fold Official LB submission | 4 Checkpoints registered/hashed; hidden DICOM 9h; two valid submission.csv; Public LB both recorded | `V2_NOTEBOOKS_READY / USER_PATHS_RECEIVED / LIVE_SHA_PENDING` |\n| S7-PERF | 신규 Full TRAIN GPU 최적화 Gate | Batch124+/VRAM20GB 경험 반영; 실제 MRI 128~256 Study+Optimizer로 batch/checkpoint/I-O/2GPU 측정; 주30시간·4h 목표·8h 차단 | `REQUIRED_BEFORE_NEXT_TRAIN` |\n| S8 | Study-level Full-MRI hierarchical MIL | 질환별 Window Attention→Series Attention, 정해진 동일 Fold 분리, Pooling baseline 대비 비교 | `PLANNED` |
+| S7-LB | A/B independent 2-Fold Public LB submissions | User-reported A0.861/B0.910, check scriptVersion/CSV/hash when logs provided | `USER_REPORTED_A_0.861_B_0.910` |
 | S9 | Top-K Selector / B3A 또는 direct MIL 앙상블 | MIL 중요도 상위 Window 선별, 기존 Exp57(0.918 Public LB) 비교, 독립 제출 성공 여부 구분 | `CONDITIONAL` |
 
 ### 즉시 다음 작업 — 한 가지
 
-**S7 준비: A/B 각각 Fold0·Fold1 `best.pt` 총 4개 파일을 Kaggle Output에서 보존·등록한 뒤, 학습 summary의 SHA256와 실제 체크포인트를 검증한다.** 확인 전 Stage2 특징 추출 작업 착수 금지.
+**S7/STAGE2 GPU 효율 사전 점검:** B V4 Fold0/1 `best.pt`를 Kaggle 제출 Dataset에서 사용 가능하다는 사용자 제공 경로를 기준으로, 실제 Full Native224 특징 추출의 I/O·추론 시간과 저장 예산을 소규모 대표 Study로 먼저 측정한다. 신규 학습이 수반되면 공통 주30시간 GPU quota·4시간 목표·8시간 차단 Gate를 통과해야 한다. A 보존.
 
 ## 3. 필수 Kaggle Input / 실행 정보
 
@@ -135,6 +143,7 @@
 | 2026-10-13 | `S1-DINO-CBL2F-01`로 명명, 이 실험군의 GitHub 문서 3개 고정 | 중복 회피·누적 관리 요청 | 새 버전은 본 3개 파일 갱신 |
 | 2026-10-13 | Gold58을 R2D cache에서 전용 `rsna-knee-gold58-2fold-v1`로 분리 | 데이터셋 용도 혼란 방지 | 두 계정의 Gold Input 교체, 실제 게시 확인 대기 |
 | 2026-10-13 | A=STRICT distribution V3, B=V4 soft/conf balanced, Gold29×2 | 희소 양/음성 클래스와 Soft Label 특성 반영 | 두 실험은 라벨+Loss 차이가 동시에 존재, 통제 비교 필요 |
-| 2026-10-13 | GPU0/1 독립 Fold 및 Full-MRI MIL 후속 | 두 GPU로 한 Fold DDP 대신 2-Fold 동시 학습 | Fold당 batch4, 모델 4개 추후 feature-cache 4종 |\n| 2026-10-13 | A/B Stage1 2-Fold TRAIN 및 OOF 완료, B 우선 후보 | Gold58 pooled macro AUROC B=0.871112 > A=0.811284 (탐색적) | B 우선 Full-MRI MIL, A 유지, checkpoint Add Input 등록 필요 |
+| 2026-10-13 | GPU0/1 독립 Fold 및 Full-MRI MIL 후속 | 두 GPU로 한 Fold DDP 대신 2-Fold 동시 학습 | Fold당 batch4, 모델 4개 추후 feature-cache 4종 |
+| 2026-10-13 | A/B Stage1 2-Fold TRAIN 및 OOF 완료, B 우선 후보 | Gold58 pooled macro AUROC B=0.871112 > A=0.811284 (탐색적) | B 우선 Full-MRI MIL, A 유지, checkpoint Add Input 등록 필요 |
 
 [데이터/모델 기준](S1-DINO-CBL2F-01_DATA_MODEL.md) · [실험 누적 로그](S1-DINO-CBL2F-01_EXPERIMENT_LOG.md)
