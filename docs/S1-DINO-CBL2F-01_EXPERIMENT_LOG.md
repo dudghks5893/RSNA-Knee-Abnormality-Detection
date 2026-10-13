@@ -1,6 +1,6 @@
 # S1-DINO-CBL2F-01 — Stage1~MIL 실험 결과 누적 로그 (Append-Only)
 
-> **2026-10-13 상태: 실측 Kaggle Stage1 GPU 학습 결과 0건.** 아래의 로컬 파일 검사와 구성 설계는 **실험 완료가 아님**. 노트북 실행 및 모델 평가가 끝날 때마다 **이 파일에 날짜순으로 아래쪽에만 기록**한다. 실험별 `.md` 파일을 새로 만들지 않는다.
+ > **최신 상태 2026-10-13: A/B Stage1 2-Fold TRAIN 완료 및 Gold58 OOF 검증 완료; A/B LB V2 Notebook 준비(공식 제출 미실행).** 초기 등록 항목의 미실행 상태는 작성 당시 기록이다. 노트북 실행 및 모델 평가가 끝날 때마다 **이 파일에 날짜순으로 아래쪽에만 기록**한다. 실험별 `.md` 파일을 새로 만들지 않는다.
 
 ## 0. 기록 규칙 (고정)
 
@@ -151,3 +151,17 @@ Required Kaggle Add Input per account: (1) Competition RSNA Knee Abnormality Det
 GPU T4x2, GPU0 Fold0/GPU1 Fold1; 2 GPU parallel inference, Internet OFF, Save & Run All. Kaggle GPU code submission max 9 hours. Visible 3 Studies and ~1300 hidden Studies runtime estimate 1-10min / 2-8h+ is speculative, not measured. Per Study corruption logged with neutral fallback, final submission.csv exact schema/UID/finite probability SHA verified.
 
 STATUS: NOTEBOOKS_STATIC_QA_PASS; CHECKPOINT_DATASET_MOUNT_PENDING; REAL_KAGGLE_GPU_UNVERIFIED; OFFICIAL_PUBLIC_LB_NOT_SUBMITTED. Model best.pt binary not contained in TRAIN review ZIP. Register actual checkpoint files from completed Kaggle outputs; only then execute and score. Historical Gold58 OOF STRICT 0.811284 / V4 0.871112 are NOT LB scores.
+
+### 2026-10-13 — LB Submission V2 exact checkpoint paths (user supplied; not yet executed)
+
+- A checkpoint Dataset: `yhlucas/rsna-knee-stage1-strict-f01-best-v1`; exact files:
+  - `/kaggle/input/datasets/yhlucas/rsna-knee-stage1-strict-f01-best-v1/fold0/best.pt`
+  - `/kaggle/input/datasets/yhlucas/rsna-knee-stage1-strict-f01-best-v1/fold1/best.pt`
+- B checkpoint Dataset **owner differs**: `woniyeon/rsna-knee-stage1-v4-f01-best-v1`; exact files:
+  - `/kaggle/input/datasets/woniyeon/rsna-knee-stage1-v4-f01-best-v1/fold0/best.pt`
+  - `/kaggle/input/datasets/woniyeon/rsna-knee-stage1-v4-f01-best-v1/fold1/best.pt`
+- Newly corrected notebooks:
+  - A `A_S1-DINO-CBL2F-01_STRICT_2FOLD_LB_SUBMISSION_V2_EXACTPATH.ipynb`, SHA256 `d272241254c8222004a74dbf34def355a6093cc7ef588d5852a22e965a89bdb0`.
+  - B `B_S1-DINO-CBL2F-01_V4_2FOLD_LB_SUBMISSION_V2_EXACTPATH.ipynb`, SHA256 `2c7323124de1b5fa3a2de2463618f19b6a342a9c7e060abe8a9a0dcf0ce2cb95`.
+- Only checkpoint path owner/subfolder and first Markdown / Save Version metadata changed. Original FeatureDINO architecture, RMIL-04B V3 raw DICOM policy, 18-window sampler, 2GPU Fold probability averaging, SHA-pinned `best.pt` and pretrained weights retained.
+- **QA:** Both Notebook JSON/nbformat/6 code-cell AST PASS; exact-path assertions, checkpoint SHA literals verified in source; ZIP CRC PASS. User provided paths but live Kaggle mount and actual `best.pt` bytes are **not yet verified**. Status `NOTEBOOK_V2_STATIC_PASS / KAGGLE_INFERENCE_NOT_RUN / PUBLIC_LB_UNKNOWN`.
