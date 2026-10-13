@@ -1,6 +1,6 @@
 # S1-DINO-CBL2F-01 — 실험 계획·진행 현황 (갱신형 단일 문서)
 
-> **Current as of 2026-10-13 (최신):** `A_B_STAGE1_TRAIN_SUCCESS / GOLD58_OOF_VERIFIED / A_B_LB_NOTEBOOKS_READY / CHECKPOINT_DATASET_PENDING`.
+> **Current as of 2026-10-13 (최신):** `A_B_STAGE1_TRAIN_SUCCESS / GOLD58_OOF_VERIFIED / A_B_LB_V2_EXACT_PATHS_RECEIVED / REAL_MODEL_SHA_PENDING / LB_NOT_SUBMITTED`.
 > 새 실험마다 계획서를 만들지 않고 **이 파일에서 현황·의존성·다음 한 가지 액션을 수정**한다. 상세 실측 결과는 누적 EXPERIMENT_LOG에서 관리한다. 아래 2026-10-13 중간 단계 기록의 과거형 '미실행/대기'는 당시 스냅샷이며, 현황은 상단 최신 상태와 단계별 표를 따른다.
 
 ### 2026-10-13 — PREFLIGHT 결함 보정 후 상태
@@ -43,6 +43,12 @@
 - Then Add Input Competition test DICOM + checkpoint dataset + MetaResearch dinov2 base/1. T4x2 Internet OFF, Save & Run All. Official submission runtime <=9h; hidden decoding estimate highly uncertain. Examine neutral fallbacks and official LB.
 - Next single action: preserve 4 checkpoint binaries and publish A/B checkpoint datasets; after SHA gate submit each 2-Fold notebook and add official LB scores to cumulative experiment log.
 
+### 2026-10-13 — User-confirmed A/B exact checkpoint paths / V2 submission notebooks
+
+- A owner `yhlucas`: `rsna-knee-stage1-strict-f01-best-v1/fold0/best.pt`, `fold1/best.pt`. B owner **`woniyeon`**: `rsna-knee-stage1-v4-f01-best-v1/fold0/best.pt`, `fold1/best.pt`.
+- Revised both A/B Submission V2 notebooks, preserving Full DICOM V3 preprocessing, SHA guards, and Fold0+Fold1 probability 50:50 ensemble. Notebook SHA A `d272241254c8222004a74dbf34def355a6093cc7ef588d5852a22e965a89bdb0`; B `2c7323124de1b5fa3a2de2463618f19b6a342a9c7e060abe8a9a0dcf0ce2cb95`. Both static Python AST/nbformat PASS.
+- Current gate: actual Kaggle Add Input mount, real checkpoint SHA and two-GPU inference **not yet executed/confirmed**, Official Public LB unknown. NEXT: A/B each Save & Run All with T4×2 Internet OFF; inspect `SUBMISSION_SUCCESS`, `submission_audit.json`, fallback count, submit each version to competition, then append scores to EXPERIMENT_LOG.
+
 ## 1. 목적과 비교 축
 
 목적: 공통 Native224 MRI/Gold58 2-Fold에서 STRICT V1(엄격한 mask, 희소 클래스 보정)과 V4(soft/confidence 보정) DINOv2-Base Stage1을 비교, 품질이 확인된 Fold encoder로 전체 MRI 특징 추출 후 질환별 MIL을 학습한다. 단일 Fold 결과로 성능 단정하지 않으며 Stage1 AUROC 향상이 MIL AUROC 향상을 보장하지 않는다.
@@ -66,7 +72,7 @@
 | S5 | A와 B Stage1 Fold0/1 TRAIN | 각 Fold best/last checkpoint, 두 fold success, class balance/epoch log, 실패 시 보존 산출물 복구 | `A/B_2FOLD_TRAIN_PASS` |
 | S6 | Gold58 pooled OOF58 및 Target별 평가 | 예측 중복0/누락0, Macro AUROC/AUPRC, Recall·F1·Specificity 등; 클래스별 confusion, 근거 포함 | `POOLED_OOF58_VERIFIED_DEV` |
 | S7 | Stage1 네 모델의 full-MRI feature-cache 추출 | 모델 별·Fold 별 서로 다른 가중치, UID/Series/Slice/center, float16 1536d, 해시/용량 budget 검증 | `BLOCKED_ON_CHECKPOINT_REGISTRATION` |
-| S7-LB | A/B 2-Fold Official LB submission | 4 Checkpoints registered/hashed; hidden DICOM 9h; two valid submission.csv; Public LB both recorded | `NOTEBOOKS_READY / CHECKPOINT_DATASETS_PENDING` |\n| S8 | Study-level Full-MRI hierarchical MIL | 질환별 Window Attention→Series Attention, 정해진 동일 Fold 분리, Pooling baseline 대비 비교 | `PLANNED` |
+| S7-LB | A/B 2-Fold Official LB submission | 4 Checkpoints registered/hashed; hidden DICOM 9h; two valid submission.csv; Public LB both recorded | `V2_NOTEBOOKS_READY / USER_PATHS_RECEIVED / LIVE_SHA_PENDING` |\n| S8 | Study-level Full-MRI hierarchical MIL | 질환별 Window Attention→Series Attention, 정해진 동일 Fold 분리, Pooling baseline 대비 비교 | `PLANNED` |
 | S9 | Top-K Selector / B3A 또는 direct MIL 앙상블 | MIL 중요도 상위 Window 선별, 기존 Exp57(0.918 Public LB) 비교, 독립 제출 성공 여부 구분 | `CONDITIONAL` |
 
 ### 즉시 다음 작업 — 한 가지
