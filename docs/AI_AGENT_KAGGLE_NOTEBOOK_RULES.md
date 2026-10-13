@@ -1,3 +1,19 @@
+## 2026-10-13 — GPU 효율·주 30시간 예산: 사용자 최우선 규칙
+
+**사용자 제공 실측 경험:** 과거 Batch 124개 이상 동시 처리 가능, VRAM 약 20GB 여유. 이 기록을 잊지 말고 다음 모든 Notebook 설계에서 우선 검토한다. 이 여유가 GPU별인지 2GPU 합산인지, Batch 단위가 Study인지 Window인지는 기록상 미확정이므로 실제 장치 기준으로 확인한다. **하지만 OOM을 막연히 걱정해 Batch 1/2/4 또는 Microbatch 1로 축소하는 보수적 설계는 금지한다.**
+
+- **최적화 목표:** VRAM 절약이 아니라 처리량 최대화와 GPU 시간 최소화. 실제 MRI 128~256 Study에서 AMP, Optimizer Step을 포함한 Forward/Backward와 I/O를 벤치마크한다. Window Microbatch 18/32/64/96/124/128 이상, Physical Study Batch 1/2/4/8 등 가능한 후보를 적극 탐색한다. 크기를 줄일 때는 해당 조건에서 관찰된 실제 CUDA OOM이나 높은 Batch의 처리량 저하 증거를 기록한다.
+- **주간 GPU 예산:** 30시간 한정. A/B 계정의 잔여 할당량과 GPU 2장 사용 시 실제 차감 방식은 확인하여, 사전검증·학습·재시도·추론의 예상 비용을 예산 내로 관리한다.
+- **본학습 시간 Gate:** 신규 학습은 단일 Run **4시간 이내를 목표**로 한다. 4시간 초과가 예상되면 Full TRAIN으로 바로 진행하지 말고 Batch, 병렬화, I/O, Activation Checkpoint 등을 최적화한다. **8시간 이상 예상 시 본학습 시작 금지; 사용자 요구에 따라 10시간 이상 장시간 학습 재발 방지.** 128~256 Study 예열/실측 처리량에 검증·저장 비용을 더해 예상 최소·최대 Epoch 시간을 계산한다.
+- **실행 중 Gate:** 첫 200~500 Study와 매 Epoch 속도를 모니터링하고, 남은 GPU 예산/설정된 시간 상한을 넘을 것으로 예상되면 체크포인트를 보존하고 조기 종료한다. Resume 기능 없으면 장시간 실행 전 우선 구현·검증한다.
+- **GPU 병렬화:** 한 Fold를 2GPU DDP/DataParallel로 처리하는 방식과 GPU당 독립 Fold를 처리하는 방식의 **2-Fold 전체 소요시간/실제 quota 차감량**을 벤치마크해 더 효율적인 방식을 고른다.
+- **노트북 첫 화면 필수:** 사용자 Batch124+/VRAM20GB 경험, 실제 GPU별 peak allocated/reserved, Study Batch·Window Microbatch·Accum 구분, 초당 Study/Window, CPU/HDF5 I/O 시간, 학습 예상 시간, 주간 30시간 잔여량, 실행 가능 여부 및 Resume 상태.
+- **교훈:** Exp11B DINOv2-Base Batch4/2GPU DataParallel은 140.50분/10 Epoch(약14분/Epoch), S1-DINO-CBL2F-01은 GPU마다 독립 Fold/Study Batch1+Accum4/HDF5 순차 로딩/Activation Checkpoint로 약630분/12 Epoch(약52분/Epoch). 두 실험 모두 1 Study당 DINO 입력 18개였다. 세부 원인별 비중은 프로파일링 전 단정하지 않는다.
+
+위 규칙은 기존 GPU_BATCH_RESOURCE_MANDATORY_POLICY.md보다 최신의 우선 적용 사항이다. **과거 Batch124+ 경험은 기록하되, 현재 모델에서 같은 숫자를 검증 없이 무조건 강제하지는 않는다.**
+
+---
+
 ## 2026-10-12 — **최우선 고정 규칙: 실험당 새 GitHub 문서 생성 금지 / 이전 누적 방식 유지**
 
 사용자 명시 요청: 프로젝트 초기에 **기존 한 파일에 실험 기록을 계속 누적**했음. 최근 AI가 실험마다 별도 설계·오류·QA `.md` 파일을 만든 방식은 채택하지 않는다. 이전 문서의 **§32.2 '디버깅 파일 생성 금지'와 동일한 의도를 우선 적용**한다.
