@@ -7,7 +7,7 @@
 - S7 feature checkpoint contract는 기존 S8과 동일: Fold0 `b4e7d29d3ae0e7ff999c3fb0119dc6126ddd5d5a006c69868818bc440c895aa4`, Fold1 `966fdfe174c995bfbd8855b520440c508a6aa8539eee9cb5a5f724402b538d79`.
 - S8C Fold0 best epoch 1: `/kaggle/input/datasets/yhlucas/s8c-hier-attn-mil/fold0/best.pt`, SHA256 `1b16bd88d3a5a13d93bbfb45ac12561e516a17cbf8d34fab50204bf09a67cfa8`.
 - S8C Fold1 best epoch 3: `/kaggle/input/datasets/yhlucas/s8c-hier-attn-mil/fold1/best.pt`, SHA256 `506e73b7462195b3091b60508aa8781200f1d72c8c0469d8cea57a8b11771155`.
-- Public LB status: **PENDING**.
+- Public LB: **0.923** (`S8C-HIER-ATTN-LB-2F-V1`, 사용자 보고). S8B 0.923과 동률.
 
 ---
 ## 2026-10-16 — S7/S8 최신 Fold별 모델·영상 입력 계약
@@ -16,6 +16,7 @@
 - **S7**: 고정된 Stage1 Fold별 Encoder로 전체 4,407 Studies, 24,371 Series, 819,078 원본 Slice 중 유효 center 1..n−2에서 770,336개 3-Slice Window를 Fold별 1536-d (CLS768 + PatchMean768, fp16) 특징으로 추출.
 - **S8A**: 전체 Window→Series 내 Mean→Series Mean MIL→Fold별 sigmoid 확률 평균, Public LB **0.918**.
 - **S8B**: 전체 Window→질환별 Window Attention→Series Mean MIL→Fold별 sigmoid 확률 평균, Public LB **0.923**. **질환별 Series Attention은 미사용**.
+- **S8C**: 전체 Window→질환별 Window Attention→질환별 Series Attention→Fold별 sigmoid 확률 평균, Public LB **0.923**. S8B와 동률이므로 더 단순한 S8B를 현재 대표 기준선으로 유지.
 - **Strict FT checkpoints:** `/kaggle/input/datasets/woniyeon/rsna-knee-s1ft02-b-v4strict-2fold-best-v1/fold{0,1}/last.pt`; Fold0 SHA256 `b4e7d29d3ae0e7ff999c3fb0119dc6126ddd5d5a006c69868818bc440c895aa4`, Fold1 `966fdfe174c995bfbd8855b520440c508a6aa8539eee9cb5a5f724402b538d79`.
 - **S8A MIL** `/kaggle/input/datasets/yhlucas/s8-mil-mean/fold{0,1}/best.pt`; Fold0 SHA `7c5ff6743b1c525f47a9adb9dc8613056eba602315f465675e1b33e97378310b`; Fold1 `12cbb9fb2771305fac37c9901afcf04d3faa28de89daf6df9c1de730d4623c9b`.
 - **S8B MIL** `/kaggle/input/datasets/woniyeon/s8-mil-attn/fold{0,1}/best.pt`; Fold0 SHA `0bbe9d1b532cc933ca346e426c612abf7cbf388e991baa0875f14986e3176770`; Fold1 `e52b42565c79476ce342c75e76be078077a8c94fa88e31ee361408e6b0fd3615`.
