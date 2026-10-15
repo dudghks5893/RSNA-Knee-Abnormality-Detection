@@ -1,32 +1,6 @@
-## 2026-10-16 — S8 Full-MRI MIL A/B Kaggle Public LB 0.918 / 0.923
+# ResNet·RMIL — 누적 실험 결과
 
-**결과 상태 — 사용자 제공 Kaggle 제출 점수:** S8A Mean MIL **Public LB 0.918**, S8B 질환별 Window Attention MIL **Public LB 0.923**. 사용자 보고값을 기록하며 원격 제출 ID/Private LB는 별도 확인되지 않았다. S8B가 현재 이 프로젝트에서 확인된 최고 Public LB다. 기존 B2 Full-MRI Hierarchical MIL 0.904 대비 각각 +0.014 / +0.019, 이전 최고 Exp57 0.918 대비 S8B +0.005.
-
-| 항목 | S8A Mean | S8B Attention |
-|---|---:|---:|
-| **Kaggle Public LB (사용자 보고)** | **0.918** | **0.923** |
-| Gold58 pooled diagnostic macro AUROC (개발 검증) | 0.894883 | 0.877599 |
-| MIL Fold0 best epoch | 3 | 1 |
-| MIL Fold1 best epoch | 3 | 3 |
-| V3 공개 3 Studies / 15 Series 실행 | SUBMISSION_SUCCESS | SUBMISSION_SUCCESS |
-| V3 공개 실행 Series 실패 / Decode 실패 / fallback | 0 / 0 / 0 | 0 / 0 / 0 |
-| V3 공개 Test submission SHA256 | `2658128987db319fb2bb376235e74a74240bc4a5d742223ffc1a10286052ef06` | `b7aeba1b24f91f74e107d95e61d26dc5a7294e41f02e7953c492b2352c576c55` |
-
-**입력 및 모델 계약:** A/B 모두 130mm Native224 V3 전처리, 모든 정상 Series의 center 1..n−2에서 3-Slice Window, Strict FT DINOv2-Base Fold0/1별 CLS768+PatchMean768(1536-d) 특징 추출, Fold별 별도 S8 MIL 예측 sigmoid 후 2-Fold 확률 평균. **A**는 Window Mean → Series Mean; **B**는 질환별 Window Attention → Series Mean. B에 질환별 Series Attention은 **아직 없음**. V3 개선은 DICOM fallback, Series streaming, sample_submission 순서 고정 및 2GPU 병렬 특징 추출에 관한 것으로 정상 공개 Test 예측 CSV의 SHA는 V2와 동일했다. V1/V2 Hidden 재실행은 `Notebook Threw Exception`; 실제 비공개 traceback이 없으므로 실패 원인 단정 금지. V3의 Kaggle Public LB 수신은 실제 제출 점수 확인을 뜻하지만 Hidden 상세 처리 통계는 확인하지 못했다.
-
-**Stage1 vs S7의 Slice 범위 구분:** Strict FT 원 모델은 Fold별 학습 Study 4,378(Train 4,349 + Gold train 29; 나머지 Gold29 validation)에 대해 **Study당 18 Window, Series마다 최소 1개, 중심 20–80% 후보를 Epoch별 변화시키는 샘플러**로 Full Fine-tuning. 모든 슬라이스로 DINO를 fine-tune하지는 않았다. 이후 S7은 동일한 Fold별 Strict-FT Encoder의 가중치를 **고정**하고 Train4,349+Gold58 = 4,407 Studies, 24,371 Series, 원본 819,078 Slice에 대해 **770,336개 전체 유효 3-Slice Window 특징을 Fold별로 추출**했다. 따라서 S8이 전체 MRI 특징으로 MIL을 학습했어도 DINO의 Stage1 학습 입력은 18 Window였다.
-
-**검증 해석:** Gold58 개발 평가에서는 A(0.894883) > B(0.877599)였으나 Public LB에서는 B(0.923) > A(0.918). Gold58는 Strict FT Fold별 다른 Gold29 활용 및 MIL best epoch 선택에 반복 사용된 연구 데이터이므로 전체 파이프라인의 독립 홀드아웃으로 주장하지 않는다. Public LB 우위를 Private LB 우위로 확정하지 않는다.
-
-**재현 경로 / SHA256**
-- Strict FT encoders: `/kaggle/input/datasets/woniyeon/rsna-knee-s1ft02-b-v4strict-2fold-best-v1/fold{0,1}/last.pt`; Fold0 `b4e7d29d3ae0e7ff999c3fb0119dc6126ddd5d5a006c69868818bc440c895aa4`, Fold1 `966fdfe174c995bfbd8855b520440c508a6aa8539eee9cb5a5f724402b538d79`.
-- S8A MIL: `/kaggle/input/datasets/yhlucas/s8-mil-mean/fold{0,1}/best.pt`; Fold0 `7c5ff6743b1c525f47a9adb9dc8613056eba602315f465675e1b33e97378310b`, Fold1 `12cbb9fb2771305fac37c9901afcf04d3faa28de89daf6df9c1de730d4623c9b`.
-- S8B MIL: `/kaggle/input/datasets/woniyeon/s8-mil-attn/fold{0,1}/best.pt`; Fold0 `0bbe9d1b532cc933ca346e426c612abf7cbf388e991baa0875f14986e3176770`, Fold1 `e52b42565c79476ce342c75e76be078077a8c94fa88e31ee361408e6b0fd3615`.
-- V3 Kaggle Save & Run All (T4×2, Internet OFF) 이름: `S8-MEAN-MIL-LB-2F-V3-HIDDENFIX`, `S8-ATTN-MIL-LB-2F-V3-HIDDENFIX`.
-
-**실험 판단:** S8B(0.923)를 현재 Public LB 기준 모델로 보존. 다음 S8C의 질환별 **Window + Series Attention** 구조는 아직 **계획**이며 실제 학습/제출 결과가 아니다. 공개 LB에 대한 반복 튜닝 과적합에 주의.
-
----
+2026-10-16 분류 완료. **S1FT02 / S7 / S8는 [DINO·S 실험 로그](../DINO_S/S1-DINO-CBL2F-01_EXPERIMENT_LOG.md)로 이관**, Exp와 Specialist도 각자 폴더로 분리했다. 아래의 오래된 NEXT는 당시 기록이다.
 
 ## 2026-10-12 — RMIL-04C02 공개 Save & Run All 성공, 비공개 Code Submission Notebook Threw Exception
 
@@ -262,99 +236,7 @@ Kaggle Notebook 작성 규칙은 [AI_AGENT_KAGGLE_NOTEBOOK_RULES.md](AI_AGENT_KA
 ---
 
 
-## 1. 현재 프로젝트 기준점
 
-- Competition: RSNA Knee Abnormality Detection
-- Target: 12-label knee MRI multi-label classification
-- 현재 최고 Public LB: **0.918**
-- 현재 최고 제출: **Exp57 — 3-Fold B3A + 3-Fold Full-MRI Direct 70:30 Hybrid**
-- 기존 DINOv2 / MIL / Specialist 계보는 삭제하지 않고 역사 기록으로 보존한다.
-- 2026-10-05부터 **3D ResNet + Anatomical Segmentation + Transformer**를 별도 신규 계보로 시작한다.
-
----
-
-## 2. Exp57 — 현재 Public LB Best
-
-### 구조
-
-- B3A branch: 3-Fold ensemble
-- Full-MRI Direct branch: 3-Fold ensemble
-- 최종 probability:
-  - 0.70 × B3A 3-Fold mean
-  - 0.30 × Direct 3-Fold mean
-
-### 결과
-
-- **Public LB = 0.918**
-- 현재 프로젝트의 외부 성능 기준점으로 유지한다.
-
-### 의미
-
-향후 신규 구조는 내부 Validation 점수만으로 성공을 판단하지 않는다.
-최종적으로 Exp57의 Public LB 0.918을 넘는지가 핵심 외부 기준이다.
-
----
-
-## 3. Specialist 계보 — First-pass 완료
-
-12개 target별 독립 Specialist의 first-pass 학습은 12 / 12 완료했다.
-
-### Fixed Val best
-
-| Target | Best AUC | Status |
-|---|---:|---|
-| Medial Meniscus | 0.9937500 | PASS |
-| Synovitis | 0.9816000 | PASS |
-| Baker's | 0.9750000 | PASS |
-| ACL | 0.9609375 | PASS |
-| Effusion | 0.9593750 | PASS |
-| Contusion | 0.9540625 | PASS |
-| Medial OA | 0.9200000 | PASS |
-| MCL | 0.9043750 | PASS |
-| Lateral OA | 0.8946875 | NOT YET |
-| Lateral Meniscus | 0.8940625 | NOT YET |
-| PF OA | 0.8925000 | NOT YET |
-| Fracture | 0.8788889 | NOT YET |
-
-- Gate PASS: **8 / 12**
-- First-pass coverage: **12 / 12**
-- target-best Fixed Val simple macro: **0.93410324**
-
-주의:
-이 0.9341은 target별로 반복적으로 best checkpoint를 선택한 pseudo 기반 development score다.
-Public LB 예상치로 사용하지 않는다.
-
----
-
-## 4. SS08 — First 12-Specialist Submission
-
-### 구조
-
-- SS03 DINOv2-Base + SS05 Shared MIL: slice selection 용도
-- 최종 disease probability에 SS05 MIL direct logits는 사용하지 않음
-- Fold ensemble 없음
-- Exp57 direct branch 없음
-- Exp57 70:30 blend 없음
-- 최종 submission은 12개 Specialist sigmoid probability만 사용
-
-### 결과
-
-- **Public LB = 0.876**
-- Exp57 대비: **-0.042**
-- project best는 **0.918** 유지
-
-### 해석
-
-- pure Specialist-only submission은 현재 hidden test에서 Exp57보다 약했다.
-- Fixed Val target-best macro 0.9341과 Public LB 0.876 사이에 큰 generalization gap이 확인됐다.
-- Specialist 자체의 문제만으로 원인을 단정하지 않는다.
-  - Fold ensemble 제거
-  - Full-MRI Direct branch 제거
-  - pseudo 기반 반복 model selection
-  - hidden-test distribution 차이
-  가 동시에 섞여 있다.
-
----
 
 ## 5. 2026-10-05 — 신규 R3D 계보 결정
 
