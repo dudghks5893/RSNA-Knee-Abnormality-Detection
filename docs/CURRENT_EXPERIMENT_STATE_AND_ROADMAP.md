@@ -1,3 +1,15 @@
+## 2026-10-16 — S8 A/B LB 확정 기록과 S8C 다음 단계
+
+- **최신 Public LB (사용자 보고)**: S8A Mean MIL **0.918**, S8B 질환별 Window Attention MIL **0.923**. 기존 B2 Full-MRI MIL **0.904**, Exp57 **0.918**. 현재 확인된 최고는 **S8B 0.923**.
+- **완료:** S7 전체 4,407 Studies / 24,371 Series / 770,336개 유효 Window에 대한 Fold0·Fold1 특징 추출. S8A 및 S8B MIL 학습, 각 2-Fold V3_HIDDENFIX 공개 Kaggle 3-Study 실행 성공, 이후 사용자가 각각의 Public LB 보고.
+- **중요 구조 차이:** Stage1 Strict-FT DINO 자체는 Study당 18 Window(Series 전체에 분산, 중심 20–80%)로 Fine-tuning. S7 전체 Window **특징 추출**과 S8 전체 특징 **MIL 학습**은 DINO를 전체 Slice로 재학습했다는 뜻이 아니다.
+- **Gold58 주의:** S8A 개발 Macro 0.894883, S8B 0.877599로 Gold 순위와 Public LB 순위가 반대. Gold58는 기존 Stage1 Fold별 학습 및 MIL 모델 선택에 쓰인 반복 DEV 데이터이지 독립 최종 평가가 아니다.
+- **다음 한 가지 실험(계획/NOT RUN):** `S8C` — S8B 질환별 Window Attention을 기준으로 **질환별 Series Attention**을 추가한 계층 구조를 같은 Fold별 인코더·S7 특징·학습/평가 계약에서 통제 비교. 가능하면 Mean residual 및 질환별 attention 분포를 기록하고, Public LB/Gold58/추론 자원 비용을 구분한다. S8A/B는 수정 없이 재현 가능한 기준선으로 보존.
+- **추가 독립 실험 후보(아직 아님):** DINOv2 Stage1의 18-Window 입력 한계를 검증하기 위한 18 vs 32 vs 64-Window Fine-tuning; 이 변화는 MIL 구조 비교와 혼합하지 말 것.
+- **기록 경로 고정:** 실제 수치는 `EXPERIMENT_HISTORY.md`, 현재 진척·다음 작업은 이 파일, 노트북·GPU·기록 규칙은 `AI_AGENT_KAGGLE_NOTEBOOK_RULES.md`만 업데이트. 실험별 새로운 `.md` 파일 작성 금지. 앞서 생성했던 S8 개별 결과 문서는 삭제함.
+
+---
+
 ## 2026-10-13 — Kaggle Stage1 Notebook 1MB Source Limit 오류 및 LITE 수정본
 
 **사용자 실행 오류**: `An error occurred while committing kernel: The kernel source must be less than 1 megabytes in size.` 실제 원본 4개 `S1_*T4x2.ipynb` 각 1,142,399~1,142,419 bytes, 코드 Cell5 압축+Base64 inline `COMMON_SERIES_ZLIB_B64` 1,031,218 chars 포함; **Kaggle 노트북 소스 한도 초과 원인 확정**. 이 오류는 GPU/DDP나 V4/Strict 라벨 문제가 아니며 원본 Kaggle Kernel이 저장/커밋되지 않음.
