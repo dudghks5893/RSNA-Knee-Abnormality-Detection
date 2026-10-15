@@ -1,3 +1,16 @@
+## 2026-10-16 — S7/S8 최신 Fold별 모델·영상 입력 계약
+
+- **Stage1 Strict-FT DINOv2-Base**: Train Pseudo4,349 + Gold29 각 Fold, 다른 Gold29 검증. Study당 **18×(3 인접 Slice) Window**, 사용 가능한 모든 Series에 분산, 중심 20~80% 후보. 
+- **S7**: 고정된 Stage1 Fold별 Encoder로 전체 4,407 Studies, 24,371 Series, 819,078 원본 Slice 중 유효 center 1..n−2에서 770,336개 3-Slice Window를 Fold별 1536-d (CLS768 + PatchMean768, fp16) 특징으로 추출.
+- **S8A**: 전체 Window→Series 내 Mean→Series Mean MIL→Fold별 sigmoid 확률 평균, Public LB **0.918**.
+- **S8B**: 전체 Window→질환별 Window Attention→Series Mean MIL→Fold별 sigmoid 확률 평균, Public LB **0.923**. **질환별 Series Attention은 미사용**.
+- **Strict FT checkpoints:** `/kaggle/input/datasets/woniyeon/rsna-knee-s1ft02-b-v4strict-2fold-best-v1/fold{0,1}/last.pt`; Fold0 SHA256 `b4e7d29d3ae0e7ff999c3fb0119dc6126ddd5d5a006c69868818bc440c895aa4`, Fold1 `966fdfe174c995bfbd8855b520440c508a6aa8539eee9cb5a5f724402b538d79`.
+- **S8A MIL** `/kaggle/input/datasets/yhlucas/s8-mil-mean/fold{0,1}/best.pt`; Fold0 SHA `7c5ff6743b1c525f47a9adb9dc8613056eba602315f465675e1b33e97378310b`; Fold1 `12cbb9fb2771305fac37c9901afcf04d3faa28de89daf6df9c1de730d4623c9b`.
+- **S8B MIL** `/kaggle/input/datasets/woniyeon/s8-mil-attn/fold{0,1}/best.pt`; Fold0 SHA `0bbe9d1b532cc933ca346e426c612abf7cbf388e991baa0875f14986e3176770`; Fold1 `e52b42565c79476ce342c75e76be078077a8c94fa88e31ee361408e6b0fd3615`.
+- Kaggle T4×2, Internet OFF, V3_HIDDENFIX 일반 공개 Test 3 Studies/15 Series `SUBMISSION_SUCCESS`; 점수는 사용자 보고. Gold58 반복 개발 검증 자료이지 독립 Test가 아님.
+
+---
+
 # S1-DINO-CBL2F-01 — 데이터·모델 기준 명세 (누적 관리)
 
 - **실험 ID:** `S1-DINO-CBL2F-01` (2026-10-13 신규; 기존 GitHub 파일명/코드 검색에서 중복 미발견)
