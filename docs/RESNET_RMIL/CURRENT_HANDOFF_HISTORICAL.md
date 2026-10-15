@@ -4,7 +4,7 @@
 
 1. **[EXPERIMENT_HISTORY.md](EXPERIMENT_HISTORY.md)** — 유일한 **실험 결과 누적 기록**. RMIL-04C02 4,349명 A/B 실행 로그, 실제 Epoch 시간 및 성능, 중단·실패 상태가 2026-10-12 항목에 정리됨.
 2. **[CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md](CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md)** — 유일한 **진행 상태·다음 실험 계획 누적 기록**.
-3. **[AI_AGENT_KAGGLE_NOTEBOOK_RULES.md](AI_AGENT_KAGGLE_NOTEBOOK_RULES.md)** — 유일한 **공통 Notebook·GPU 효율·문서 작성 규칙 누적 기록**.
+3. **[AI_AGENT_KAGGLE_NOTEBOOK_RULES.md](../AI_AGENT_KAGGLE_NOTEBOOK_RULES.md)** — 유일한 **공통 Notebook·GPU 효율·문서 작성 규칙 누적 기록**.
 
 **한 줄 상태:** A ResNet34 T4×2 DDP 7 Epoch 완료, 8 진행 로그까지 확인, 1 Epoch 약46.3분, Gold58 best 0.652246 @ E5. B DINOv2 Small 1 Epoch 완료, 2 진행 로그까지 확인, 1 Epoch 약217.1분, Gold58 best 0.727655 @ E1. B Window Microbatch1 설계로 시간 초과 위험 커 사용자가 중단 의사 표현; 종료/가중치 보존 여부 미확인. 모든 결과는 Gold58 반복 DEV 검증이며 Public LB 미확인. 사용자 과거 **Batch124 이상 VRAM 여유**를 후속 실험에서 반드시 반영할 것. LAB-V6 아직 `CANDIDATE_NOT_RELEASED`.
 
@@ -16,7 +16,7 @@
 
 **사용자 직접 재강조 (네 번 이상 반복된 중요 사실):** 초기 RSNA 실험에서 GPU 메모리를 측정하면서 Batch **124 이상**으로도 메모리 여유가 있었음. **GPU는 한정된 자원이며 임의로 Window Microbatch 1 등으로 축소한 판단을 금지**. RMIL-04C02 B DINO-Small V4 K16 1 Epoch 실측 **217.15분**, A ResNet34 **46.33분**; 원인을 분해하지 않고 모든 차이를 Microbatch 때문이라고 단정하지 말 것. 과거의 Batch 124+는 모델·입력·Global/Window 기준이 이 문서만으로는 특정되지 않았으므로 현행 DINO Full FT에 대한 자동 보증은 아님. 그러나 **작은 배치를 default로 정하는 근거도 아님**. 새 장시간 Notebook 생성 전 최소 여러 Window Microbatch 실제 GPU Forward+Backward 시간·VRAM 측정 및 5~10 epoch 총비용, checkpoint resume 검증 필요. 중요한 설정은 사용자에게 사전 보고하고 승인을 얻는다.
 
-**Required:** [GPU VRAM/Batch 정책](GPU_BATCH_RESOURCE_MANDATORY_POLICY.md) / [root AI coding agent rules](../AGENTS.md). 이 지침이 이전 Notebook의 `microbatch=1` 등의 레거시 설명보다 우선함.
+**Required:** [GPU VRAM/Batch 정책](../GPU_BATCH_RESOURCE_MANDATORY_POLICY.md) / [root AI coding agent rules](../../AGENTS.md). 이 지침이 이전 Notebook의 `microbatch=1` 등의 레거시 설명보다 우선함.
 
 ---
 
@@ -388,7 +388,7 @@ Top24 **per Study** cannot replace K16/24/32 **per Series**; legacy DINO preproc
 
 **DECISION:** keep 4-window MEAN as controlled baseline. This shared attention experiment is not promoted. **IMMEDIATE NEXT: RMIL-02 (PLANNED, NOT RUN)**: CPU-only expanded actual Slice candidate cache (16/24/32 per Series) with QA, geometry/coverage and persistent artifact budget. Compare window count separately from selection policy; subsequent paired GPU ablations only once cache contract is verified. **RMIL-03** disease-specific MIL separately later. No Gold58 target-winner oracle policy.
 
-**Locked constraints:** Train300/Gold58 reused development, Exp57 Public LB **0.918** unchanged. Final C1 2.5D / C2 2D+2.5D / C3 2D+2.5D+3D are still unselected; 3/5-Fold and Exp57 blending deferred. LABEL-V6 candidate not canonical until release QA. The older RMIL-01 'UNEXECUTED' below is historical and explicitly superseded by this section. Rules: [RMIL plan](RMIL_FINAL_ARCHITECTURE_AND_EXPERIMENT_PLAN.md), [Notebook rules](AI_AGENT_KAGGLE_NOTEBOOK_RULES.md).
+**Locked constraints:** Train300/Gold58 reused development, Exp57 Public LB **0.918** unchanged. Final C1 2.5D / C2 2D+2.5D / C3 2D+2.5D+3D are still unselected; 3/5-Fold and Exp57 blending deferred. LABEL-V6 candidate not canonical until release QA. The older RMIL-01 'UNEXECUTED' below is historical and explicitly superseded by this section. Rules: [RMIL plan](RMIL_FINAL_ARCHITECTURE_AND_EXPERIMENT_PLAN.md), [Notebook rules](../AI_AGENT_KAGGLE_NOTEBOOK_RULES.md).
 
 ---
 
@@ -406,7 +406,7 @@ Top24 **per Study** cannot replace K16/24/32 **per Series**; legacy DINO preproc
 - Shared cache `rsna-knee-wide224-persistent-cache-v1` at `/kaggle/input/rsna-knee-wide224-persistent-cache-v1/R2D_SHARED224_V1`.
 - Original pretrained `rsna-knee-r3d-medicalnet-pretrained-v1`, exact file `/kaggle/input/datasets/yhlucas/rsna-knee-r3d-medicalnet-pretrained-v1/resnet_34.pth`.
 - Notebook and guide were delivered as downloadable artifacts in the chat; confirm uploaded notebook path rather than inventing a Git path. Expected `RMIL-01_results_for_review.zip`.
-- Read notebook first Markdown and [Kaggle rules](AI_AGENT_KAGGLE_NOTEBOOK_RULES.md). No Kaggle session executed as of handoff. If actual result ZIPs are supplied, audit them, THEN decide RMIL-02.
+- Read notebook first Markdown and [Kaggle rules](../AI_AGENT_KAGGLE_NOTEBOOK_RULES.md). No Kaggle session executed as of handoff. If actual result ZIPs are supplied, audit them, THEN decide RMIL-02.
 - Gold58 is repeatedly used development set; never use 11 target winners to hard-code fusion or claim independent validation.
 
 **SUPERSESSION:** Earlier entries in this handoff that refer to R3D-11, R3D-12, R3D-13 or R3D-14 as next to execute are historical. The new RMIL plan is current.
@@ -423,7 +423,7 @@ Top24 **per Study** cannot replace K16/24/32 **per Series**; legacy DINO preproc
 1. [CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md](CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md)
 2. [3D_RESNET_EXPERIMENT_PLAN.md](3D_RESNET_EXPERIMENT_PLAN.md)
 3. [EXPERIMENT_HISTORY.md](EXPERIMENT_HISTORY.md)
-4. [AI_AGENT_KAGGLE_NOTEBOOK_RULES.md](AI_AGENT_KAGGLE_NOTEBOOK_RULES.md)
+4. [AI_AGENT_KAGGLE_NOTEBOOK_RULES.md](../AI_AGENT_KAGGLE_NOTEBOOK_RULES.md)
 
 README와 Specialist / 구 5-Fold 문서의 오래된 "현재", "NEXT", "진행 중" 표현이 이 문서와 충돌하면
 **이 문서가 우선**한다.
@@ -551,8 +551,8 @@ Competition:
 
 ## 바로 다음 작업
 
-1. **Competition-aligned report label policy v2 freeze 완료**: [LABEL_RECONSTRUCTION_POLICY_V2.md](LABEL_RECONSTRUCTION_POLICY_V2.md).
-2. Qwen3-8B / Mistral-Nemo-12B Kaggle GPU reader plan은 **폐기/미실행**. 현재 실행 계약: [LABEL_V6_GPT6_CHUNKED_EXECUTION.md](LABEL_V6_GPT6_CHUNKED_EXECUTION.md).
+1. **Competition-aligned report label policy v2 freeze 완료**: [LABEL_RECONSTRUCTION_POLICY_V2.md](../LABEL_RECONSTRUCTION_POLICY_V2.md).
+2. Qwen3-8B / Mistral-Nemo-12B Kaggle GPU reader plan은 **폐기/미실행**. 현재 실행 계약: [LABEL_V6_GPT6_CHUNKED_EXECUTION.md](../LABEL_V6_GPT6_CHUNKED_EXECUTION.md).
 3. report-only 4,349 studies를 원본 `train.csv` 행 순서 그대로 **87 chunks**로 고정:
    - Chunk 001–086 = 50 studies / 600 decisions
    - Chunk 087 = 49 studies / 588 decisions
@@ -576,7 +576,7 @@ Competition:
 - 실제 Chunk 완료 시 누적 Master(.jsonl.gz) + 감사 JSON + Handoff JSON + 다음 단계 프롬프트를 묶은 `HANDOFF_BUNDLE.zip` 전달.
 - 다음 Chat에서는 **다음 Chat Pack + 직전 Handoff Bundle** 두 ZIP을 올려 SHA와 이전 12-target per UID 범위를 검증 후 다음 chunk만 append. 조기 채팅 종료 시에는 동일 Chat Pack으로 재개.
 - 단일 GPT-6 reader 결과는 candidate. 코드를 통한 구조적 PASS만으로 임상/대회 의미 정확성은 증명되지 않음. 고위험 및 샘플 감사 후 GPT-6 Astra(이용 가능 시) 검토, canonical release, 분포·class weight 확정.
-- 실행 계약: [LABEL_V6_GPT6_CHUNKED_EXECUTION.md](LABEL_V6_GPT6_CHUNKED_EXECUTION.md).
+- 실행 계약: [LABEL_V6_GPT6_CHUNKED_EXECUTION.md](../LABEL_V6_GPT6_CHUNKED_EXECUTION.md).
 
 
 ---
