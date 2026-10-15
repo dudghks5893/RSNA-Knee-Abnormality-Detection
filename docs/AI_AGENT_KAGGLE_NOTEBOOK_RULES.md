@@ -44,8 +44,8 @@
 사용자 명시 요청: 프로젝트 초기에 **기존 한 파일에 실험 기록을 계속 누적**했음. 최근 AI가 실험마다 별도 설계·오류·QA `.md` 파일을 만든 방식은 채택하지 않는다. 이전 문서의 **§32.2 '디버깅 파일 생성 금지'와 동일한 의도를 우선 적용**한다.
 
 **새 Notebook·실험이 생길 때 편집할 문서는 세 개뿐이다.**
-1. [EXPERIMENT_HISTORY.md](EXPERIMENT_HISTORY.md) — 실제 완료·중단·관측된 실험 결과, 중요한 과학적 판단, 사용자 제공 로그 검증 및 버전 이력을 **한 파일에 누적**. 결과와 예정/추정은 구분.
-2. [CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md](CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md) — 현재 모델/데이터/실험 번호, 무엇이 실행·중단·예정인지, **다음 한 가지 작업**을 한 파일에서 관리.
+1. [EXPERIMENT_HISTORY.md](RESNET_RMIL/EXPERIMENT_HISTORY.md) — 실제 완료·중단·관측된 실험 결과, 중요한 과학적 판단, 사용자 제공 로그 검증 및 버전 이력을 **한 파일에 누적**. 결과와 예정/추정은 구분.
+2. [CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md](RESNET_RMIL/CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md) — 현재 모델/데이터/실험 번호, 무엇이 실행·중단·예정인지, **다음 한 가지 작업**을 한 파일에서 관리.
 3. **이 파일 [AI_AGENT_KAGGLE_NOTEBOOK_RULES.md](AI_AGENT_KAGGLE_NOTEBOOK_RULES.md)** — Notebook 제작/검증/배포, GPU 배치·시간, 저장 복구 및 문서 규칙만 누적.
 
 `CURRENT_HANDOFF.md`는 신규 채팅 탐색용으로 위 세 파일 경로와 최신 상태를 **짧게 안내**하는 부수 파일이다. `README.md`는 저장소 진입점이다. 기존 개별 실험 설계·QA 파일은 정확한 당시 보고서를 보존하는 **archive/reference**이고 새 상태의 authoritative source가 아니다. 개별 `.md` 추가는 사용자가 명시적으로 단독 문서를 요청했거나, 형식/파일 크기상 분리가 필수인 객관적 이유를 사용자에게 설명한 경우에만 허용. 반복 디버깅에서 늘리지 말 것.
@@ -960,7 +960,7 @@ README에 current status가 있으면
 - For K16/24/32 store actual unique usable valid centers and mask; do not mark repeated / padded positions as native Window evidence. Track short Series, plane/position coverage and source provenance.
 - For controlled trials, separate **MEAN K variation** from **MEAN vs shared Attention at the same K**; only after that, separate shared Attention vs disease-specific Window Attention vs disease-specific Window+Series Attention. Use common train300/Gold58 source manifests (Gold development only), pretraining SHA, seed/budget, and target metrics.
 - CPU only for DICOM extraction/cache building; GPU T4×2 only for model training on released, auditable persisted cache. If preprocessing/runtime data are not verifiable, fail-fast or explicitly mark `BLOCKED`; do not claim completion.
-- Approved detailed procedure: [RMIL-02/03 native Window protocol](RMIL_02_03_NATIVE_WINDOW_CONTROLLED_PROTOCOL_2026-10-10.md).
+- Approved detailed procedure: [RMIL-02/03 native Window protocol](RESNET_RMIL/RMIL_02_03_NATIVE_WINDOW_CONTROLLED_PROTOCOL_2026-10-10.md).
 
 ---
 
@@ -972,13 +972,13 @@ README에 current status가 있으면
 - Cache in 256–512MB independent validated shards; **recheck available output bytes immediately before every shard**; write temp, SHA-check, atomically rename. Preserve completed shards and a useful status manifest if write must stop.
 - Do not create K16/K24/K32 duplicate pixel caches or copy a large cache into a results ZIP in the same `/kaggle/working`. Save metadata-only review ZIP; persist canonical compressed or uncompressed shards directly with manifest/SHA. `/kaggle/tmp` is ephemeral; output intended for reuse must be under persistent output or a registered input Dataset.
 - RMIL-02A records `disk_budget.json` and **does not construct new 224px image pixels**. Prepared disk-safe `RMIL-02A_Native_Slice_Preflight_DiskSafe_CPU.ipynb`, SHA256 `1516660b1d413aa384a193122593aad21d057832c4405a64be9d9e9e973204dd`; Kaggle runtime verification pending.
-- Detailed [RMIL-02/03 disk/output policy](RMIL_02_03_NATIVE_WINDOW_CONTROLLED_PROTOCOL_2026-10-10.md).
+- Detailed [RMIL-02/03 disk/output policy](RESNET_RMIL/RMIL_02_03_NATIVE_WINDOW_CONTROLLED_PROTOCOL_2026-10-10.md).
 
 ---
 
 # 30. RMIL-02A verified geometry / legacy K4 pixel parity blocker (2026-10-10)
 
-- RMIL-02A actually completed CPU metadata preflight, verified 358 Studies / 2006 Series / 66430 DICOM Slices, zero geometry errors; [full audit](RMIL-02A_COMPLETED_METADATA_AUDIT_2026-10-10.md).
+- RMIL-02A actually completed CPU metadata preflight, verified 358 Studies / 2006 Series / 66430 DICOM Slices, zero geometry errors; [full audit](RESNET_RMIL/RMIL-02A_COMPLETED_METADATA_AUDIT_2026-10-10.md).
 - Old K4 `series_centers` index formula was independently reproduced across all 2006: `np.rint(np.linspace(.1*(N-1),.9*(N-1),4)).astype(int)`; **do not equate numeric centers with pixel and orientation parity**. New RMIL-02A `uniform_spaced_valid_centers_v1` is a separate policy and cannot substitute for original K4 without an explicit control.
 - RMIL-02B0 CPU **K4 pixel parity diagnostic Notebook** prepared, not executed: `RMIL-02B0_K4_Pixel_Parity_Probe_CPU.ipynb`, SHA256 `0bf941097a3bdd5db04b4093f6dfe7e853127b5704011db5cbe98251a209804c`. It only analyzes plausible interpolation/crop/normalization combinations on a few Series; even full matching on this set does NOT release the entire 358-study cache.
 - The preferred next source is the original R2D-CACHE-01 cache-builder Python/Notebook, if obtainable; require comprehensive K4 byte parity to the SHA-pinned `R2D_SHARED224_V1`, not just sample MAE. If missing, keep the pixel pipeline blocked/diagnostic; never invent a PASS.
@@ -997,7 +997,7 @@ README에 current status가 있으면
 
 # 32. RMIL-02B0 evidence: new V2 input / new K4 rebaseline supersedes old-parity gate (2026-10-10)
 
-- Completed RMIL-02B0 K4 pixel parity diagnostic: actual uploaded ZIP SHA256 `3f7ee4b7a12db3b0297ed3d11eebce31133d4bc87adeb08687df4ece33c06a27`; CRC plus 5 SHA entries PASS, but **0/144 trial candidates** matched all tested original bytes. Never claim original RMIL-01 pixel parity. [Full audit](RMIL-02B0_COMPLETED_PARITY_AUDIT_2026-10-10.md).
+- Completed RMIL-02B0 K4 pixel parity diagnostic: actual uploaded ZIP SHA256 `3f7ee4b7a12db3b0297ed3d11eebce31133d4bc87adeb08687df4ece33c06a27`; CRC plus 5 SHA entries PASS, but **0/144 trial candidates** matched all tested original bytes. Never claim original RMIL-01 pixel parity. [Full audit](RESNET_RMIL/RMIL-02B0_COMPLETED_PARITY_AUDIT_2026-10-10.md).
 - To avoid indefinitely blocking the K ablation on missing original preprocessing code, an **explicit, alternative experimental lane** is authorized: a NEW reproducibly defined 224px native Single-Slice Series V2 CPU cache, from original DICOM for 358 frozen subjects; train a **NEW K4 baseline** on that same V2 cache, then K16 and K24 under exactly the same V2 image preprocessing, model/hyperparameter/seed split, before same-K Mean-vs-Attention. This V2 rebaseline is not the historical RMIL-01 and must not reuse RMIL-01 K4 AUROC for causal delta.
 - **V2 branch overrides the old obligatory pixel-perfect comparison to RMIL-01** for within-V2 count/attention tests ONLY. Do not say it reproduces the historical K4. Historical K4 parity requirement still applies if asserting numerical reproducibility of RMIL-01 specifically.
 - Prepared CPU notebook `RMIL-02B_Native224_SharedCache_CPU.ipynb`, SHA256 `097c72a070114caa53603180f9813ec16c3edf15ab7dc1ff84c30a279cbc080b`, syntactically validated and nested K selector tested against Slice-length N=11..320; **NOT YET run on Kaggle**. Accelerator None, Internet OFF, Save & Run All; use original competition + pinned K4 study manifest Input, no old DINO cache reuse; preserve all HDF5 shards, manifest and metadata-only review ZIP. Project saved output cap 14.0GB, ≥2GB physical reserve, per-shard SHA and atomic replacement.
