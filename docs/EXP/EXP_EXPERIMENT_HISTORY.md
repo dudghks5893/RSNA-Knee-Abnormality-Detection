@@ -1,3 +1,46 @@
+# EXP — 초기 Exp01~Exp63 실험 전문 (루트 README에서 이관)
+
+2026-10-16 분류: 기존 README의 전체 Exp 실험 내용을 보존했다. Exp57 Public LB **0.918**은 과거 최고 기록이며 현재 최고 S8B **0.923**은 [DINO·S](../DINO_S/S1-DINO-CBL2F-01_EXPERIMENT_LOG.md)에서 기록한다.
+
+## 기존 혼합 History의 Exp 관련 결과 요약 (이관)
+
+## 1. 현재 프로젝트 기준점
+
+- Competition: RSNA Knee Abnormality Detection
+- Target: 12-label knee MRI multi-label classification
+- 현재 최고 Public LB: **0.918**
+- 현재 최고 제출: **Exp57 — 3-Fold B3A + 3-Fold Full-MRI Direct 70:30 Hybrid**
+- 기존 DINOv2 / MIL / Specialist 계보는 삭제하지 않고 역사 기록으로 보존한다.
+- 2026-10-05부터 **3D ResNet + Anatomical Segmentation + Transformer**를 별도 신규 계보로 시작한다.
+
+---
+
+## 2. Exp57 — 현재 Public LB Best
+
+### 구조
+
+- B3A branch: 3-Fold ensemble
+- Full-MRI Direct branch: 3-Fold ensemble
+- 최종 probability:
+  - 0.70 × B3A 3-Fold mean
+  - 0.30 × Direct 3-Fold mean
+
+### 결과
+
+- **Public LB = 0.918**
+- 현재 프로젝트의 외부 성능 기준점으로 유지한다.
+
+### 의미
+
+향후 신규 구조는 내부 Validation 점수만으로 성공을 판단하지 않는다.
+최종적으로 Exp57의 Public LB 0.918을 넘는지가 핵심 외부 기준이다.
+
+---
+
+
+
+---
+
 # RSNA Knee Abnormality Detection — Experiment Log
 
 ## 📌 문서 시작점 — 기존 누적 방식 유지 (2026-10-12)
