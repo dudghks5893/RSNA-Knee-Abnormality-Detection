@@ -1,6 +1,20 @@
 # RSNA Knee — Rules for AI coding agents
 
-**Read first:** [GPU resource and Batch policy](docs/GPU_BATCH_RESOURCE_MANDATORY_POLICY.md), [current handoff](docs/CURRENT_HANDOFF.md), [current experiments roadmap](docs/CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md).
+**2026-10-16 이후 최우선 문서 정책:** 연구 계열을 네 폴더로 분리하여 **기존 누적 문서에만 기록**한다. 과거 단일 공통 History/Roadmap/Rules 3문서에 모두 기록하던 정책은 이 규칙으로 대체되었다.
+
+| 실험 계열 | 실제 결과 누적 | 로드맵 / 계약 |
+| --- | --- | --- |
+| Exp01~Exp63 | `docs/EXP/EXP_EXPERIMENT_HISTORY.md` | `docs/EXP/FINAL_5FOLD_PARALLEL_EXPERIMENT_PLAN.md` (역사적) |
+| Specialist SS | `docs/SPECIALIST/SPECIALIST_EXPERIMENT_LOG.md` | `docs/SPECIALIST/SPECIALIST_EXPERIMENT_ROADMAP.md` |
+| R3D, R2D, RMIL | `docs/RESNET_RMIL/EXPERIMENT_HISTORY.md` | `docs/RESNET_RMIL/CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md` |
+| S1, S1FT02, S7, S8 및 이후 S | `docs/DINO_S/S1-DINO-CBL2F-01_EXPERIMENT_LOG.md` | `docs/DINO_S/S1-DINO-CBL2F-01_ROADMAP.md`, `docs/DINO_S/S1-DINO-CBL2F-01_DATA_MODEL.md` |
+
+- RMIL-04C02의 ResNet vs DINO-Small 비교는 모델 종류가 아니라 **RMIL 실험 번호** 기준으로 ResNet·RMIL에 보관한다.
+- **새로운 실험, QA 또는 버그 수정마다 새 Markdown 보고서를 생성하지 않는다.** 해당 계열 누적 파일을 업데이트한다.
+- 공통 노트북/GPU/라벨 정책은 `docs/`에 둔다. [현재 인수인계](docs/CURRENT_HANDOFF.md), [Kaggle 규칙](docs/AI_AGENT_KAGGLE_NOTEBOOK_RULES.md), [GPU 정책](docs/GPU_BATCH_RESOURCE_MANDATORY_POLICY.md)부터 확인한다.
+- 과거 개별 보고서의 `NEXT`, `CURRENT` 등은 해당 문서 작성 당시 상태로, 현재 최신 결정과 충돌 시 과거 기록으로 취급한다.
+
+## Kaggle GPU 자원 정책
 
 ## Highest priority: limited Kaggle GPU budget
 
@@ -8,15 +22,9 @@ The user reports **previous GPU memory profiling found substantial VRAM headroom
 
 **Important:** Historic Batch>=124 is **not** a blanket guarantee for DINOv2 Full Fine-tuning K16. Test actual memory and end-to-end throughput of *this* model/input/backward before claiming a batch is safe. Keep Study Global Batch and Window Microbatch separately documented. Report choices that affect runtime/VRAM; do not silently lower batches. Profile Window microbatches upward from realistic sizes, record measured peak VRAM and steps/sec, estimate 5–10 Epoch total vs Kaggle session/time budget, verify checkpoint resumption before lengthy training. Request user review of material changes.
 
-## Documentation source-of-truth (2026-10-12: MUST FOLLOW)
 
-**Do not create one new `.md` per experiment, Notebook revision, DDP bug, or QA audit.** User explicitly prefers their original cumulative history. Always update three **existing** documents:
 
-- `docs/EXPERIMENT_HISTORY.md`: cumulative actual experiment observations, metrics, completed/failed/interrupted runs, independent QA results.
-- `docs/CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md`: cumulative latest decisions, active state, next experiment and priorities.
-- `docs/AI_AGENT_KAGGLE_NOTEBOOK_RULES.md`: cumulative notebook-delivery, testing, GPU resource and documentation rules.
-
-`docs/CURRENT_HANDOFF.md` and `README.md` are short navigation/current-state pointers. Older per-experiment QA/design Markdown documents are archived reference, **not the primary source of truth**. Create a separate document only when the user explicitly requests a standalone artifact or an unavoidable technical reason is stated and approved. Do not rely on assistant memory to choose a document: these fixed paths are authoritative. Historic Batch>=124 VRAM-headroom evidence remains mandatory.
+## 재현성·안전성 규칙
 
 ## Reproducibility and safety
 
