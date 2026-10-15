@@ -1,3 +1,16 @@
+## 2026-10-16 — 최우선 규칙: Exp / Specialist / ResNet·RMIL / DINO·S 네 폴더로 분리 (이전 3개 통합문서 정책 대체)
+
+2026-10-16 사용자 요청에 따라 실험별 기록 위치를 **4개의 계열 폴더**로 변경했다. 실험 결과는 해당 계열 기존 누적 로그, 진행상황은 계열별 Roadmap, 데이터/체크포인트 계약은 해당 계열 모델 문서로 관리한다.
+
+- Exp: [EXP_EXPERIMENT_HISTORY.md](EXP/EXP_EXPERIMENT_HISTORY.md)
+- Specialist: [SPECIALIST_EXPERIMENT_LOG.md](SPECIALIST/SPECIALIST_EXPERIMENT_LOG.md), [Roadmap](SPECIALIST/SPECIALIST_EXPERIMENT_ROADMAP.md)
+- ResNet·RMIL: [EXPERIMENT_HISTORY.md](RESNET_RMIL/EXPERIMENT_HISTORY.md), [Roadmap](RESNET_RMIL/CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md)
+- DINO·S: [S1-DINO 로그](DINO_S/S1-DINO-CBL2F-01_EXPERIMENT_LOG.md), [Roadmap](DINO_S/S1-DINO-CBL2F-01_ROADMAP.md), [Data Model](DINO_S/S1-DINO-CBL2F-01_DATA_MODEL.md)
+
+**이 아래의 2026-10-12~16 '실험을 공통 3개 파일에만 누적' 지시는 과거 변경 이력으로 보존하며 현행 규칙이 아니다.** 신규 실험마다 새로운 `.md` 문서를 생성하지 않는 원칙은 계속 유효하다. 공통 노트북/GPU 규칙은 이 파일에 유지하고, 라벨 작업 자료는 특정 실험군에 억지로 포함하지 않고 docs 상위에 유지한다. RMIL 실험 내의 DINO-Small 비교는 DINO·S가 아니라 RMIL의 실험 계보로 분류한다.
+
+---
+
 ## 2026-10-16 — 누적 3문서 운영 재확인
 
 **사용자 명시 재지시:** S8 A/B 실험 결과 기록 과정에서 개별 `docs/S8_STRICTFT_FULLMRI_MIL_AB_PUBLIC_LB_2026-10-16.md`를 생성했던 것은 기존 파일 운영 규칙 위반. 해당 단독 문서는 GitHub 기본 브랜치에서 **삭제**했으며, 앞으로 S1/S7/S8 이후 실험을 포함한 모든 새 실험의 기록 변경은 아래 **기존 누적 3개 파일만 갱신**한다.
