@@ -11,7 +11,7 @@
 현재 기준점은 [CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md](CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md)를 따른다.
 
 Kaggle Notebook 작성/복구 규칙:
-[AI_AGENT_KAGGLE_NOTEBOOK_RULES.md](AI_AGENT_KAGGLE_NOTEBOOK_RULES.md)
+[AI_AGENT_KAGGLE_NOTEBOOK_RULES.md](../AI_AGENT_KAGGLE_NOTEBOOK_RULES.md)
 
 ## 2026-10-08 — 병렬 작업 결정: 기존 V4로 R3D 선행 학습
 
@@ -243,8 +243,8 @@ R3D-10AB Fold0:
 
 ## 바로 다음 작업
 
-1. **Competition-aligned report label policy v2 freeze 완료**: [LABEL_RECONSTRUCTION_POLICY_V2.md](LABEL_RECONSTRUCTION_POLICY_V2.md).
-2. Qwen3-8B / Mistral-Nemo-12B Kaggle GPU reader plan은 **폐기/미실행**. 현재 실행 계약: [LABEL_V6_GPT6_CHUNKED_EXECUTION.md](LABEL_V6_GPT6_CHUNKED_EXECUTION.md).
+1. **Competition-aligned report label policy v2 freeze 완료**: [LABEL_RECONSTRUCTION_POLICY_V2.md](../LABEL_RECONSTRUCTION_POLICY_V2.md).
+2. Qwen3-8B / Mistral-Nemo-12B Kaggle GPU reader plan은 **폐기/미실행**. 현재 실행 계약: [LABEL_V6_GPT6_CHUNKED_EXECUTION.md](../LABEL_V6_GPT6_CHUNKED_EXECUTION.md).
 3. report-only 4,349 studies를 원본 `train.csv` 행 순서 그대로 **87 chunks**로 고정:
    - Chunk 001–086 = 50 studies / 600 decisions
    - Chunk 087 = 49 studies / 588 decisions
@@ -268,7 +268,7 @@ R3D-10AB Fold0:
 - 실제 Chunk 완료 시 누적 Master(.jsonl.gz) + 감사 JSON + Handoff JSON + 다음 단계 프롬프트를 묶은 `HANDOFF_BUNDLE.zip` 전달.
 - 다음 Chat에서는 **다음 Chat Pack + 직전 Handoff Bundle** 두 ZIP을 올려 SHA와 이전 12-target per UID 범위를 검증 후 다음 chunk만 append. 조기 채팅 종료 시에는 동일 Chat Pack으로 재개.
 - 단일 GPT-6 reader 결과는 candidate. 코드를 통한 구조적 PASS만으로 임상/대회 의미 정확성은 증명되지 않음. 고위험 및 샘플 감사 후 GPT-6 Astra(이용 가능 시) 검토, canonical release, 분포·class weight 확정.
-- 실행 계약: [LABEL_V6_GPT6_CHUNKED_EXECUTION.md](LABEL_V6_GPT6_CHUNKED_EXECUTION.md).
+- 실행 계약: [LABEL_V6_GPT6_CHUNKED_EXECUTION.md](../LABEL_V6_GPT6_CHUNKED_EXECUTION.md).
 
 
 ---
