@@ -127,6 +127,6 @@ RMIL-03 sequentially evaluates selected K: shared-window attention → **per-tar
 ## New-chat handoff
 
 1. Read **this document** for future architecture / RMIL next action.
-2. Read [completed pilot evidence](R2D_RDINO_R3D15_COMPLETED_AUDIT_2026-10-10.md), [Experiment History](EXPERIMENT_HISTORY.md), [Agent Rules](AI_AGENT_KAGGLE_NOTEBOOK_RULES.md), and the historical [Current Handoff](CURRENT_HANDOFF.md).
+2. Read [completed pilot evidence](R2D_RDINO_R3D15_COMPLETED_AUDIT_2026-10-10.md), [Experiment History](EXPERIMENT_HISTORY.md), [Agent Rules](../AI_AGENT_KAGGLE_NOTEBOOK_RULES.md), and the historical [Current Handoff](../CURRENT_HANDOFF.md).
 3. RMIL-01 has already completed. Read [RMIL-01 completed audit](RMIL-01_COMPLETED_AUDIT_2026-10-10.md); do NOT rerun it by default.
 4. Proceed to RMIL-02 CPU-only candidate-cache design/preflight; do not assume dataset exists or training has run. Do not start 3/5-Fold or Exp57 ensemble by default.
