@@ -1,3 +1,16 @@
+## 2026-10-16 — S8C Kaggle Public LB 확정: 0.923
+
+**사용자 제공 Kaggle 제출 결과:** `S8C-HIER-ATTN-LB-2F-V1` Public LB **0.923**.
+
+- S8C 구조: 질환별 Window Attention → **질환별 Series Attention** → 질환별 Linear.
+- Gold58 pooled diagnostic Macro AUROC: **0.875728**.
+- S8B Gold58 diagnostic: **0.877599**. S8C는 개발 지표에서 **-0.001871** 낮았음.
+- Public LB: **S8B 0.923 = S8C 0.923**. Series Attention 추가로 Public LB 개선은 확인되지 않음.
+- S8C는 S8B보다 구조가 복잡하지만 동일한 Public LB를 기록했으므로, **현 시점 기준 Public-LB 대표 모델은 더 단순한 S8B 0.923을 유지**하고 S8C는 동률 실험으로 보존.
+- 중요한 관찰: Gold58에서는 S8C가 소폭 하락했지만 Public LB에서는 S8B와 동률. Gold58 반복 DEV와 Public LB의 순위가 일치하지 않을 수 있다는 기존 관찰을 다시 확인.
+- 다음 연구 우선순위는 MIL 구조 추가 확장이 아니라 **V54A 맞춤 Stage1 DINO 2-Fold 학습**으로 이동.
+
+---
 ## 2026-10-16 — S8C Hierarchical Target Attention MIL 학습 완료 · Public LB 제출 대기
 
 **구조:** S8B의 질환별 Window Attention → Series Mean에서 Series pooling만 변경해 **질환별 Window Attention → 질환별 Series Attention → 질환별 Linear**로 확장. S7 Fold0/1 Full-MRI 1536-d feature cache, V4 Routed Strict supervision, Gold58 29/29, AdamW LR 2e-4, weight decay 0.01, 8 epoch, seed 등은 S8B 조건을 유지. 새 `series_query`는 0으로 초기화해 학습 시작 시 Series Mean과 동일하도록 parity gate를 통과함.
