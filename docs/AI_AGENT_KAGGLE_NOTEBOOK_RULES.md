@@ -1,3 +1,15 @@
+## 2026-10-16 — 누적 3문서 운영 재확인
+
+**사용자 명시 재지시:** S8 A/B 실험 결과 기록 과정에서 개별 `docs/S8_STRICTFT_FULLMRI_MIL_AB_PUBLIC_LB_2026-10-16.md`를 생성했던 것은 기존 파일 운영 규칙 위반. 해당 단독 문서는 GitHub 기본 브랜치에서 **삭제**했으며, 앞으로 S1/S7/S8 이후 실험을 포함한 모든 새 실험의 기록 변경은 아래 **기존 누적 3개 파일만 갱신**한다.
+
+1. `docs/EXPERIMENT_HISTORY.md` — 실제 실행·제출·실측 결과와 근거, 비교, Checkpoint SHA.
+2. `docs/CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md` — 현 기준 모델, 완료/예정 구분, 다음 작업.
+3. `docs/AI_AGENT_KAGGLE_NOTEBOOK_RULES.md` — Notebook 제작, Kaggle 실행 자원, 재현성, 문서 운영 규칙.
+
+**기존 본문과 과거 실험 기록은 보존하고 날짜순으로 누적**한다. 새 실험마다 독립 `.md`를 만들지 않는다. 단독 산출물이 필요하면 먼저 사용자에게 확인한다. `CURRENT_HANDOFF.md` 등은 안내/과거 참고 자료일 뿐 신규 S 실험의 기록 대상이 아니다.
+
+---
+
 ## 2026-10-13 — GPU 효율·주 30시간 예산: 사용자 최우선 규칙
 
 **사용자 제공 실측 경험:** 과거 Batch 124개 이상 동시 처리 가능, VRAM 약 20GB 여유. 이 기록을 잊지 말고 다음 모든 Notebook 설계에서 우선 검토한다. 이 여유가 GPU별인지 2GPU 합산인지, Batch 단위가 Study인지 Window인지는 기록상 미확정이므로 실제 장치 기준으로 확인한다. **하지만 OOM을 막연히 걱정해 Batch 1/2/4 또는 Microbatch 1로 축소하는 보수적 설계는 금지한다.**
