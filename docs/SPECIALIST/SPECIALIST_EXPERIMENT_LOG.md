@@ -163,7 +163,7 @@ Public LB 예상치로 사용하지 않는다.
 
 > **HISTORICAL SPECIALIST LINEAGE — 2026-10-08 NOTE**  
 > 이 문서는 SS 계보의 완료/과거 계획 기록이다. 현재 R3D 작업의 "NEXT"를 결정하는 문서가 아니다.  
-> 현재 작업은 [CURRENT_HANDOFF.md](CURRENT_HANDOFF.md), [CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md](CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md), [3D_RESNET_EXPERIMENT_PLAN.md](3D_RESNET_EXPERIMENT_PLAN.md)를 우선한다.  
+> 현재 작업은 [CURRENT_HANDOFF.md](../CURRENT_HANDOFF.md), [CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md](../RESNET_RMIL/CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md), [3D_RESNET_EXPERIMENT_PLAN.md](../RESNET_RMIL/3D_RESNET_EXPERIMENT_PLAN.md)를 우선한다.  
 > 아래의 "현재", "다음", "진행" 표현은 해당 시점의 역사 기록으로 해석한다.
 
 > 이 문서는 기존 shared multi-label 계보와 분리해 Specialist 계보와 관련 의사결정을 기록한다.
