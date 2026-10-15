@@ -160,7 +160,7 @@ V4 Soft Label은 단순 0/1로 전환하거나 다수 클래스를 일괄 삭제
 - V7 Stage1 physical StudyBatch1/GPU, gradaccum4, Window microbatch18, HDF5 synchronous and activation checkpoint ON were the **completed run settings**; they must not be reused without profiling as next-stage defaults.
 - User reports older Batch124+ simultaneous operation and ~20GB spare VRAM; user weekly GPU allocation 30h. Which device(s) owned that spare VRAM and whether Batch124 refers to Study/Window are unknown, but speculative OOM avoidance is not an acceptable reason to force small batches.
 - Next study benchmarks actual 128-256 MRI studies, optimizer steps, Study batch 1/2/4/8+, Window microbatch 18/32/64/96/124/128+, checkpoint ON/OFF, HDF5 prefetch, and 2GPU mode; selects measured max throughput. Full TRAIN aims <=4h, >=8h estimated blocks, weekly 30h quota is mandatory. No pretrained/label/input semantics change under this policy update.
-- References: [AI_AGENT_KAGGLE_NOTEBOOK_RULES.md](AI_AGENT_KAGGLE_NOTEBOOK_RULES.md), [GPU_BATCH_RESOURCE_MANDATORY_POLICY.md](GPU_BATCH_RESOURCE_MANDATORY_POLICY.md).
+- References: [AI_AGENT_KAGGLE_NOTEBOOK_RULES.md](../AI_AGENT_KAGGLE_NOTEBOOK_RULES.md), [GPU_BATCH_RESOURCE_MANDATORY_POLICY.md](../GPU_BATCH_RESOURCE_MANDATORY_POLICY.md).
 
 ## 2026-10-13 — 제출 모델 공식 Public LB 사용자 보고 (결과와 출처)
 
@@ -175,7 +175,7 @@ V4 Soft Label은 단순 0/1로 전환하거나 다수 클래스를 일괄 삭제
 
 - [계획 및 현재 단계](S1-DINO-CBL2F-01_ROADMAP.md)
 - [실제 실행 결과 누적 로그](S1-DINO-CBL2F-01_EXPERIMENT_LOG.md)
-- [프로젝트 공통 Kaggle Notebook 규칙](AI_AGENT_KAGGLE_NOTEBOOK_RULES.md)
+- [프로젝트 공통 Kaggle Notebook 규칙](../AI_AGENT_KAGGLE_NOTEBOOK_RULES.md)
 
 
 ## 2026-10-14 — S1FT02 Broad→Strict 재학습 입력/클래스 가중치 계약 (계획)
