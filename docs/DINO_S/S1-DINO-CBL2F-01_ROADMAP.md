@@ -1,10 +1,11 @@
-## 2026-10-16 — S8C 학습 완료, Public LB 제출 단계
+## 2026-10-16 — S8C Public LB 0.923 확정 · 다음 V54A Stage1
 
 - **완료:** S8C 질환별 Window + Series Attention 2-Fold 학습.
 - Gold58 pooled diagnostic: **0.875728**, S8B 0.877599 대비 -0.001871.
 - Series Attention entropy가 높아 대부분 uniform mean에 가까운 형태. Gold58만 보면 S8B보다 우세하지 않음.
-- **다음 즉시 작업:** S8C 제출 Notebook으로 Kaggle Public LB 확인. 기준은 S8B **0.923**.
-- 제출 결과 확인 후 S8C 채택 여부를 결정하고, 그 다음 **V54A 최적화 Stage1 DINO 2-Fold** 학습으로 이동.
+- **Public LB 결과:** `S8C-HIER-ATTN-LB-2F-V1` = **0.923**. S8B **0.923**과 동률이며 개선 없음.
+- **판단:** Series Attention 추가는 Public LB 향상을 만들지 못했고 구조만 복잡해졌으므로, 현재 대표 기준선은 더 단순한 **S8B 0.923**을 유지. S8C는 동률 실험으로 보존.
+- **다음 즉시 작업:** **V54A 최적화 Stage1 DINO 2-Fold** 학습. 새 라벨의 soft/mask/weight와 질환별 불균형에 맞춘 supervision을 적용하고, 기존 V4 Broad 0.910 / Strict FT 0.914와 비교.
 - V54A 실험은 과거 V4 Broad Stage1 0.910 및 V4 Strict FT 0.914 계보와 비교하되, 라벨별 soft/mask/confidence/class imbalance를 각 라벨 특성에 맞게 최적화하는 기존 연구 원칙을 유지.
 
 ---
@@ -21,9 +22,9 @@
 
 # DINO·S — S1FT02 → S7 → S8 누적 Roadmap
 
-**2026-10-16 최신 확인**: S7 4,407 Studies/24,371 Series/770,336개 Full MRI Window 특징 추출 완료. S8A Mean **Public LB 0.918**, S8B 질환별 Window Attention **Public LB 0.923**(사용자 보고). 현재 프로젝트 최고 기록은 S8B.
+**2026-10-16 최신 확인**: S7 4,407 Studies/24,371 Series/770,336개 Full MRI Window 특징 추출 완료. S8A Mean **0.918**, S8B Window Attention **0.923**, S8C Window+Series Attention **0.923**(모두 사용자 보고 Public LB). 최고 점수는 0.923 동률이나 대표 기준선은 더 단순한 S8B.
 
-**다음 후보(미실행)**: S8C 질환별 Window + Series Attention을 같은 S7/Strict-FT Fold별 특징으로 통제 비교. Stage1 DINO가 18 Window/Study로 Fine-tuning됐다는 점과 S7 전체 Window 특징 추출을 구분. 별도 18 vs 32 vs 64 Window Fine-tuning 실험은 S8C 효과 비교와 혼합하지 않는다. Kaggle T4x2/Internet OFF·GPU 예산 사전검증 및 Gold58 반복 DEV 주의.
+**S8C 완료:** 같은 S7/Strict-FT Fold별 특징으로 Window+Series Attention을 통제 비교했고 Public LB **0.923**으로 S8B와 동률. Stage1 DINO가 18 Window/Study로 Fine-tuning됐다는 점과 S7 전체 Window 특징 추출을 구분. 별도 18 vs 32 vs 64 Window Fine-tuning 실험은 S8C 효과 비교와 혼합하지 않는다. Kaggle T4x2/Internet OFF·GPU 예산 사전검증 및 Gold58 반복 DEV 주의.
 
 ### 이전 통합 Roadmap에서 이관한 S8·Stage1 계획 및 기록 (작성 당시 상태 주의)
 
