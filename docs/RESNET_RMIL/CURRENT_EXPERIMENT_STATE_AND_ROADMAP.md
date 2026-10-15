@@ -44,7 +44,7 @@
 
 ## 2026-10-12 — 단일 누적 기록 체계 복원 / RMIL-04C02 현재 상태 (최신)
 
-**문서 운영 결정 (사용자 의도 복원):** 실험 1개당 GitHub 보고서 파일 1개를 추가하는 방식을 **중단**한다. 실험 결과·수치·변경 근거는 기존 [`EXPERIMENT_HISTORY.md`](EXPERIMENT_HISTORY.md) **하나에 계속 누적**한다. 실험 계획/현재 상태는 **이 파일 하나에 누적**한다. Notebook 규칙과 GPU 운영 절차는 기존 [`AI_AGENT_KAGGLE_NOTEBOOK_RULES.md`](AI_AGENT_KAGGLE_NOTEBOOK_RULES.md)에 누적한다. 신규 채팅 인수인계 `CURRENT_HANDOFF.md`에는 이 3개 파일을 어디부터 봐야 하는지만 간결하게 유지한다. README는 진입점, 옛 파일·개별 QA 보고서는 **과거 참고자료**.
+**문서 운영 결정 (사용자 의도 복원):** 실험 1개당 GitHub 보고서 파일 1개를 추가하는 방식을 **중단**한다. 실험 결과·수치·변경 근거는 기존 [`EXPERIMENT_HISTORY.md`](EXPERIMENT_HISTORY.md) **하나에 계속 누적**한다. 실험 계획/현재 상태는 **이 파일 하나에 누적**한다. Notebook 규칙과 GPU 운영 절차는 기존 [`AI_AGENT_KAGGLE_NOTEBOOK_RULES.md`](../AI_AGENT_KAGGLE_NOTEBOOK_RULES.md)에 누적한다. 신규 채팅 인수인계 `CURRENT_HANDOFF.md`에는 이 3개 파일을 어디부터 봐야 하는지만 간결하게 유지한다. README는 진입점, 옛 파일·개별 QA 보고서는 **과거 참고자료**.
 
 **현재 관측:** RMIL-04C02 A ResNet34 / B DINOv2-Small, Full V4 train4349 / Gold58 dev, K16, T4×2 DDP. 현재 사용자 제공 로그 범위: A 7 Epoch 완료/8 진행, B 1 Epoch 완료/2 진행. Epoch 실제 소요: A 46.334분, B 217.147분. Best Gold58 macro AUROC A 0.652246 @ E5, B 0.727655 @ E1 (B는 1 Epoch만 평가). A/B 결과 ZIP·최종 Public LB는 미확인. B의 Microbatch1 배치 전략은 너무 느리고 **GPU 자원 사전 계측 실패**; 사용자는 B 실행 중단 의사 표시했으며 실제 중단/저장 가중치 회수 여부 확인 전.
 
@@ -58,7 +58,7 @@
 
 **사용자 직접 재강조 (네 번 이상 반복된 중요 사실):** 초기 RSNA 실험에서 GPU 메모리를 측정하면서 Batch **124 이상**으로도 메모리 여유가 있었음. **GPU는 한정된 자원이며 임의로 Window Microbatch 1 등으로 축소한 판단을 금지**. RMIL-04C02 B DINO-Small V4 K16 1 Epoch 실측 **217.15분**, A ResNet34 **46.33분**; 원인을 분해하지 않고 모든 차이를 Microbatch 때문이라고 단정하지 말 것. 과거의 Batch 124+는 모델·입력·Global/Window 기준이 이 문서만으로는 특정되지 않았으므로 현행 DINO Full FT에 대한 자동 보증은 아님. 그러나 **작은 배치를 default로 정하는 근거도 아님**. 새 장시간 Notebook 생성 전 최소 여러 Window Microbatch 실제 GPU Forward+Backward 시간·VRAM 측정 및 5~10 epoch 총비용, checkpoint resume 검증 필요. 중요한 설정은 사용자에게 사전 보고하고 승인을 얻는다.
 
-**Required:** [GPU VRAM/Batch 정책](GPU_BATCH_RESOURCE_MANDATORY_POLICY.md) / [root AI coding agent rules](../AGENTS.md). 이 지침이 이전 Notebook의 `microbatch=1` 등의 레거시 설명보다 우선함.
+**Required:** [GPU VRAM/Batch 정책](../GPU_BATCH_RESOURCE_MANDATORY_POLICY.md) / [root AI coding agent rules](../../AGENTS.md). 이 지침이 이전 Notebook의 `microbatch=1` 등의 레거시 설명보다 우선함.
 
 ---
 
@@ -397,8 +397,8 @@ K16은 K4보다 AUROC +0.003437, K24보다 +0.000454; K16/24 Window 증가로 �
 
 - 완료된 실험의 상세 기록: [EXPERIMENT_HISTORY.md](EXPERIMENT_HISTORY.md)
 - 앞으로의 R3D 실행 계획: [3D_RESNET_EXPERIMENT_PLAN.md](3D_RESNET_EXPERIMENT_PLAN.md)
-- Kaggle Notebook 작성/복구 규칙: [AI_AGENT_KAGGLE_NOTEBOOK_RULES.md](AI_AGENT_KAGGLE_NOTEBOOK_RULES.md)
-- 새 채팅 인수인계: [CURRENT_HANDOFF.md](CURRENT_HANDOFF.md)
+- Kaggle Notebook 작성/복구 규칙: [AI_AGENT_KAGGLE_NOTEBOOK_RULES.md](../AI_AGENT_KAGGLE_NOTEBOOK_RULES.md)
+- 새 채팅 인수인계: [CURRENT_HANDOFF.md](../CURRENT_HANDOFF.md)
 
 이 문서와 위 3개 문서가 과거 README / Specialist 문서의 오래된 "현재 다음" 문구보다 우선한다.
 
@@ -535,8 +535,8 @@ ALL Series
 
 ## 바로 다음 작업
 
-1. **Competition-aligned report label policy v2 freeze 완료**: [LABEL_RECONSTRUCTION_POLICY_V2.md](LABEL_RECONSTRUCTION_POLICY_V2.md).
-2. Qwen3-8B / Mistral-Nemo-12B Kaggle GPU reader plan은 **폐기/미실행**. 현재 실행 계약: [LABEL_V6_GPT6_CHUNKED_EXECUTION.md](LABEL_V6_GPT6_CHUNKED_EXECUTION.md).
+1. **Competition-aligned report label policy v2 freeze 완료**: [LABEL_RECONSTRUCTION_POLICY_V2.md](../LABEL_RECONSTRUCTION_POLICY_V2.md).
+2. Qwen3-8B / Mistral-Nemo-12B Kaggle GPU reader plan은 **폐기/미실행**. 현재 실행 계약: [LABEL_V6_GPT6_CHUNKED_EXECUTION.md](../LABEL_V6_GPT6_CHUNKED_EXECUTION.md).
 3. report-only 4,349 studies를 원본 `train.csv` 행 순서 그대로 **87 chunks**로 고정:
    - Chunk 001–086 = 50 studies / 600 decisions
    - Chunk 087 = 49 studies / 588 decisions
@@ -560,7 +560,7 @@ ALL Series
 - 실제 Chunk 완료 시 누적 Master(.jsonl.gz) + 감사 JSON + Handoff JSON + 다음 단계 프롬프트를 묶은 `HANDOFF_BUNDLE.zip` 전달.
 - 다음 Chat에서는 **다음 Chat Pack + 직전 Handoff Bundle** 두 ZIP을 올려 SHA와 이전 12-target per UID 범위를 검증 후 다음 chunk만 append. 조기 채팅 종료 시에는 동일 Chat Pack으로 재개.
 - 단일 GPT-6 reader 결과는 candidate. 코드를 통한 구조적 PASS만으로 임상/대회 의미 정확성은 증명되지 않음. 고위험 및 샘플 감사 후 GPT-6 Astra(이용 가능 시) 검토, canonical release, 분포·class weight 확정.
-- 실행 계약: [LABEL_V6_GPT6_CHUNKED_EXECUTION.md](LABEL_V6_GPT6_CHUNKED_EXECUTION.md).
+- 실행 계약: [LABEL_V6_GPT6_CHUNKED_EXECUTION.md](../LABEL_V6_GPT6_CHUNKED_EXECUTION.md).
 
 
 ---
