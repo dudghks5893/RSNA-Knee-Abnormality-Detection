@@ -1,3 +1,15 @@
+## 2026-10-16 — S8C Hierarchical MIL 모델 계약
+
+- Architecture: `TARGET_WINDOW_ATTN_TARGET_SERIES_ATTN`
+- Per Series: 1536-d S7 Window feature → LN → Linear256 → GELU → Dropout0.1 → target-specific Window Attention → [12,256].
+- Across Series: trainable `series_query[12,256]`로 target-specific Series Attention → [12,256] → target-specific linear head.
+- `series_query`는 zero-init; 초기 Series Attention은 exact uniform mean.
+- S7 feature checkpoint contract는 기존 S8과 동일: Fold0 `b4e7d29d3ae0e7ff999c3fb0119dc6126ddd5d5a006c69868818bc440c895aa4`, Fold1 `966fdfe174c995bfbd8855b520440c508a6aa8539eee9cb5a5f724402b538d79`.
+- S8C Fold0 best epoch 1: `/kaggle/input/datasets/yhlucas/s8c-hier-attn-mil/fold0/best.pt`, SHA256 `1b16bd88d3a5a13d93bbfb45ac12561e516a17cbf8d34fab50204bf09a67cfa8`.
+- S8C Fold1 best epoch 3: `/kaggle/input/datasets/yhlucas/s8c-hier-attn-mil/fold1/best.pt`, SHA256 `506e73b7462195b3091b60508aa8781200f1d72c8c0469d8cea57a8b11771155`.
+- Public LB status: **PENDING**.
+
+---
 ## 2026-10-16 — S7/S8 최신 Fold별 모델·영상 입력 계약
 
 - **Stage1 Strict-FT DINOv2-Base**: Train Pseudo4,349 + Gold29 각 Fold, 다른 Gold29 검증. Study당 **18×(3 인접 Slice) Window**, 사용 가능한 모든 Series에 분산, 중심 20~80% 후보. 
