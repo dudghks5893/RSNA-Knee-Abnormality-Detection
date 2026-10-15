@@ -61,7 +61,7 @@ User approved retesting learned shared Window Attention **at larger native-Slice
 3. **RMIL-03 target-specific Window/Series attention remains a separate unexecuted hypothesis**. Revisit only after data coverage study; no target-wise Gold58 oracle routing, no multi-fold, no Exp57 blend at this stage.
 4. **Final C1/C2/C3 architecture still UNDECIDED.** Project best Exp57 **Public LB 0.918** remains unchanged.
 
-See [active RMIL plan](RMIL_FINAL_ARCHITECTURE_AND_EXPERIMENT_PLAN.md), [Experiment History](EXPERIMENT_HISTORY.md), [current handoff](CURRENT_HANDOFF.md).
+See [active RMIL plan](RMIL_FINAL_ARCHITECTURE_AND_EXPERIMENT_PLAN.md), [Experiment History](EXPERIMENT_HISTORY.md), [current handoff](../CURRENT_HANDOFF.md).
 
 ---
 
