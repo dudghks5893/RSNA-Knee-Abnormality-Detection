@@ -1,3 +1,72 @@
+# Specialist — 실험 결과 누적 (2026-10-16 분류)
+
+통합 History에 섞여 있던 Specialist SS 계열 결과를 옮겼다. 아래의 과거 '현재' 표기는 작성 당시 상태다.
+
+## 3. Specialist 계보 — First-pass 완료
+
+12개 target별 독립 Specialist의 first-pass 학습은 12 / 12 완료했다.
+
+### Fixed Val best
+
+| Target | Best AUC | Status |
+|---|---:|---|
+| Medial Meniscus | 0.9937500 | PASS |
+| Synovitis | 0.9816000 | PASS |
+| Baker's | 0.9750000 | PASS |
+| ACL | 0.9609375 | PASS |
+| Effusion | 0.9593750 | PASS |
+| Contusion | 0.9540625 | PASS |
+| Medial OA | 0.9200000 | PASS |
+| MCL | 0.9043750 | PASS |
+| Lateral OA | 0.8946875 | NOT YET |
+| Lateral Meniscus | 0.8940625 | NOT YET |
+| PF OA | 0.8925000 | NOT YET |
+| Fracture | 0.8788889 | NOT YET |
+
+- Gate PASS: **8 / 12**
+- First-pass coverage: **12 / 12**
+- target-best Fixed Val simple macro: **0.93410324**
+
+주의:
+이 0.9341은 target별로 반복적으로 best checkpoint를 선택한 pseudo 기반 development score다.
+Public LB 예상치로 사용하지 않는다.
+
+---
+
+## 4. SS08 — First 12-Specialist Submission
+
+### 구조
+
+- SS03 DINOv2-Base + SS05 Shared MIL: slice selection 용도
+- 최종 disease probability에 SS05 MIL direct logits는 사용하지 않음
+- Fold ensemble 없음
+- Exp57 direct branch 없음
+- Exp57 70:30 blend 없음
+- 최종 submission은 12개 Specialist sigmoid probability만 사용
+
+### 결과
+
+- **Public LB = 0.876**
+- Exp57 대비: **-0.042**
+- project best는 **0.918** 유지
+
+### 해석
+
+- pure Specialist-only submission은 현재 hidden test에서 Exp57보다 약했다.
+- Fixed Val target-best macro 0.9341과 Public LB 0.876 사이에 큰 generalization gap이 확인됐다.
+- Specialist 자체의 문제만으로 원인을 단정하지 않는다.
+  - Fold ensemble 제거
+  - Full-MRI Direct branch 제거
+  - pseudo 기반 반복 model selection
+  - hidden-test distribution 차이
+  가 동시에 섞여 있다.
+
+---
+
+
+
+---
+
 # RSNA Knee — Specialist Model Experiment Log
 
 최종 업데이트: **2026-10-03**
