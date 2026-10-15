@@ -1,3 +1,93 @@
+# Specialist 2026-10-04 — 원래 루트 README의 최종 first-pass 결과 (이관)
+
+## 2026-10-04 — Specialist first-pass 완료 / SS08 제출 준비
+
+현재 최고 Public LB는 **0.918 (Exp57)** 으로 유지한다.
+새 Specialist 제출은 아직 실행/채점 전이므로 Public LB 최고값은 갱신하지 않는다.
+
+12개 target independent Specialist의 first-pass가 **12 / 12 완료**되었다.
+내부 Gate는 target별 Fixed Val ROC-AUC >= 0.90이며, Fixed Val은 pseudo 기반 development proxy이지 Public LB가 아니다.
+
+### 현재 target별 best Fixed Val
+
+| Target | Best AUC | SS05 ref | Status |
+|---|---:|---:|---|
+| Medial Meniscus | **0.9937500** | 0.958125 | **PASS** |
+| Synovitis | **0.9816000** | 0.982400 | **PASS** |
+| Baker's | **0.9750000** | 0.883125 | **PASS** |
+| ACL | **0.9609375** | 0.940000 | **PASS** |
+| Effusion | **0.9593750** | 0.952500 | **PASS** |
+| Contusion | **0.9540625** | 0.875625 | **PASS** |
+| Medial OA | **0.9200000** | 0.921250 | **PASS** |
+| MCL | **0.9043750** | 0.767500 | **PASS** |
+| Lateral OA | **0.8946875** | 0.861250 | freeze / NOT YET |
+| Lateral Meniscus | **0.8940625** | 0.760625 | freeze / NOT YET |
+| PF OA | **0.8925000** | 0.898125 | freeze / NOT YET |
+| Fracture | **0.8788889** | 0.774444 | freeze / NOT YET |
+
+Independent Gate PASS = **8 / 12**.
+First-pass coverage = **12 / 12**.
+
+12개 target best AUC의 단순 평균은 **0.93410324 = 93.41 / 100**이다.
+SS05 target macro 0.88124745 대비 내부 평균 기준 **+0.05285579 (+5.29 points)**.
+이 값은 Public LB 예상치가 아니라 Fixed Val target-best macro다.
+
+### 마지막 first-pass 결과
+
+- **SS07B-L — Lateral OA / Uniform K96 HDF5**
+  - best epoch 4
+  - best AUC **0.8946875**
+  - SS05 대비 **+0.0334375**
+  - Gate NOT YET
+  - checkpoint SHA256: ac7e1b690463ddd1a2106773d7d058d6e19f13da147e3dd761db0dbe96786621
+- **SS07B-M — Effusion / Uniform K96 HDF5**
+  - best epoch 5
+  - best AUC **0.959375**
+  - SS05 대비 **+0.006875**
+  - Gate PASS
+  - checkpoint SHA256: 47cc7ccc6d66f480f06fd260cb25307e0857fd72c67c615e058178d9b033e002
+
+### SS08 최종 제출 구조
+
+SS08 final notebook은 **12 Specialist 단독 최종 확률**을 submission.csv에 기록한다.
+
+- SS03 adapted DINOv2-Base + SS05 Shared MIL: hidden-test slice selection용
+- SS05 MIL의 disease prediction logits: 최종 제출에 사용하지 않음
+- Exp57처럼 70:30 direct/MIL blend: 사용하지 않음
+- 최종 각 target probability: 해당 target Specialist의 sigmoid probability
+- Uniform K96 targets(Lateral OA / PF OA / Effusion)은 SS06B deterministic uniform selector 사용
+- Attention targets는 SS05 attention을 selector로 사용
+- output: /kaggle/working/submission.csv
+
+즉 **MIL은 selector로만 참여하고, 최종 예측값은 12개 Specialist만 사용**한다.
+
+Persistent target cache는 **12 / 12 완료**.
+### SS08 Public LB 결과
+
+- Submission: **First 12-Specialist Submission**
+- Structure: 12 Specialist probabilities only
+- Public LB: **0.876**
+- Previous best Exp57: **0.918**
+- Delta vs Exp57: **-0.042**
+- Project best remains **0.918**
+
+핵심 해석:
+- Fixed Val target-best macro **0.9341**과 hidden-test Public LB **0.876** 사이에 큰 generalization gap이 확인됐다.
+- 이번 한 번의 제출만으로 원인을 하나로 특정할 수는 없다.
+- SS08은 Exp57과 달리 3-Fold averaging과 full-MRI direct prediction branch를 제거했기 때문에, Specialist 자체의 문제와 ensemble/direct-branch 제거 효과가 섞여 있다.
+- pseudo 기반 Fixed Val에서 반복 target별 checkpoint selection을 수행했기 때문에 selection bias 가능성도 우선 점검한다.
+- 다음 단계는 모든 Specialist를 즉시 재학습하는 것이 아니라, Exp57 강한 branch를 기준점으로 유지하며 Specialist prediction의 보완 효과를 controlled blend로 확인하는 것이다.
+
+Persistent target cache는 **12 / 12 완료**.
+
+<!-- SPECIALIST_2026_10_02_CURRENT_END -->
+
+---
+
+
+
+---
+
 # Specialist — 실험 결과 누적 (2026-10-16 분류)
 
 통합 History에 섞여 있던 Specialist SS 계열 결과를 옮겼다. 아래의 과거 '현재' 표기는 작성 당시 상태다.
