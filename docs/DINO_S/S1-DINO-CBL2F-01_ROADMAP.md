@@ -322,7 +322,7 @@
 - 배치, Loss, Gold protocol 등 중요한 변경은 날짜와 이유를 이 파일의 '결정 이력'에 계속 누적.
 - 실행 완료·부분 성공·실패·실측 시간/점수는 오직 `S1-DINO-CBL2F-01_EXPERIMENT_LOG.md`에 추가.
 - 모델·라벨 스키마/경로/입력 버전 변경은 `S1-DINO-CBL2F-01_DATA_MODEL.md`에 갱신.
-- 신규 Notebook/폴드/버그 하나마다 GitHub `.md` 신설하지 않는다. 공통 규칙은 [AI_AGENT_KAGGLE_NOTEBOOK_RULES.md](AI_AGENT_KAGGLE_NOTEBOOK_RULES.md) 참조.
+- 신규 Notebook/폴드/버그 하나마다 GitHub `.md` 신설하지 않는다. 공통 규칙은 [AI_AGENT_KAGGLE_NOTEBOOK_RULES.md](../AI_AGENT_KAGGLE_NOTEBOOK_RULES.md) 참조.
 
 ## 6. 결정 이력 (누적)
 
