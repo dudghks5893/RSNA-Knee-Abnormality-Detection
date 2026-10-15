@@ -1,3 +1,114 @@
+# RMIL 2026-10-10 — 원래 루트 README의 캐시 및 Attention 실험 기록 (이관)
+
+## 2026-10-10 — RMIL-02C 완료: K4·K16·K24 Mean 통제 비교
+
+**완료 상태:** T4×2에서 K4·K16·K24 3개 Mean 모델 모두 정상 학습·Gold58 평가·ZIP 산출 완료. 수령 ZIP 70개 항목 CRC 및 60개 산출물 SHA-256 **독립 검증 통과**. 캐시 `rmil-02b-native224-v3`의 HDF5 **16개 실제 SHA-256 Kaggle 재검사 PASS**. 358명(Train300/Gold58), 2,006 Series, 66,430 Slice, seed20261013, MedicalNet-deflated R34 2.5D+Transformer, 동일 학습 설정. 이전 RMIL-01 K4 값은 픽셀 전처리가 달라 직접 비교하지 않음.
+
+| 지표 | K4 | K16 | K24 |
+|---|---:|---:|---:|
+| Gold58 Macro AUROC | 0.574420 | **0.577856** | 0.577402 |
+| Gold58 Macro AUPRC(최적 AUROC Epoch에서) | 0.428417 | **0.432300** | 0.425870 |
+| 최고 AUROC Epoch / 전체 Epoch | 4/7 | 5/8 | 3/6 |
+| 학습 시간(분) | 20.92 | 54.53 | 55.51 |
+
+K16은 K4보다 AUROC +0.003437, K24보다 +0.000454; K16/24 Window 증가로 큰 전체 성능 개선은 관찰되지 않음. 질환별 최고 AUROC는 K4·K16·K24 각각 4/12개. K16 Effusion +0.052, K24 Medial OA +0.093(모두 K4 대비); Lateral Meniscus와 Fracture는 큰 K에서 약화. **AUPRC의 단독 최고 Epoch는 AUROC 최적 Epoch와 다르므로 지표별 서로 다른 Epoch 점수를 결합하지 않음**. Gold58 반복 소규모 개발 검증으로 유의성·일반화 증명 불가.
+
+**다음:** RMIL-02D는 우선 **K16 Mean vs K16 Shared Window Attention**으로 같은 V3 공통 캐시/윈도우/모델 계약에서 pooling 효과를 격리. K24의 질환별 이점은 탐색적으로 보존하되 전면 채택하지 않음. 실제 GPU 실행 전 Notebook 필요. [질환별 AUROC/AUPRC·Epoch·자원·무결성 전체 결과](docs/RMIL-02C_K4_K16_K24_MEAN_COMPLETED_2026-10-10.md).
+
+---
+
+## 2026-10-10 — 최신 결과: RMIL-02B 공통 영상 캐시 생성 완료
+
+**실험 결과:** RMIL-02B V3 Kaggle CPU 전체 실행 **완료** (`PASS_NEW_PREPROCESS_V3`). Train300 + Gold58 **358명**, **2,006 Series**, **66,430 Slice**의 원본 MRI로 공통 224×224 `uint8` 캐시를 생성했습니다. HDF5 **16개 샤드**, 전체 파일 크기 **3,341,400,768 bytes(약 3.34GB)**, 실제 실행 시간 **23.41분**. 개별 샤드는 Kaggle 실행 과정에서 저장 후 읽기·SHA 검증을 수행했습니다.
+
+**독립 감사:** 제공받은 `RMIL-02B_V3_results_for_review.zip` SHA-256 `f21f454542b47c99e3ef4d1503c191a5d1e006387c8d0e5e81e7cd320625fdd8`. ZIP CRC PASS, **메타데이터 7개 파일 SHA 전부 일치**, Study/Series UID 중복 0, 2,006개 Series의 실제 Slice 수·K 중첩/유효 Window·물리 정렬 재검사 오류 0. 단, **영상 HDF5 자체 바이트는 ZIP에 없으므로 독립 SHA 재계산 미완료**. 다음 학습 Notebook은 마운트된 16개 영상 샤드를 다시 SHA 검증합니다.
+
+**K별 실제 Window:** K4 **8,024**, K16 **31,838**, K24 **45,472**, K32 **53,532**(보류). **130mm FOV 바깥 배경 패딩은 24/2,006 Series**, 20% 이상 16개(모두 Axial), 최고 61.14%. 이 패딩 분포는 영상 조건상 확인된 데이터 특성으로 기록하며 임의 제외하지 않습니다.
+
+**다음 단계 — RMIL-02C:** 한글 Notebook `RMIL-02C_K4_K16_K24_Mean_Train300_T4x2_KO.ipynb` (SHA-256 `627aa87ab7327bfdb6eb6be55e6d96503f02aa5f1c03e3dd85e5e8bd708c2c18`) 준비, Kaggle GPU 실행 **전**. Add Input **3개**: 완료된 RMIL-02B V3 Notebook Output 전체(16개 HDF5 샤드 포함), 기존 `rsna-knee-wide224-persistent-cache-v1` frozen Train300/Gold58 메타데이터, `rsna-knee-r3d-medicalnet-pretrained-v1` MedicalNet R34 가중치. **T4×2, Internet OFF, Run All**. GPU0 K4→K16, GPU1 K24, 모두 MedicalNet-deflated R34 2.5D + 메타데이터 Transformer, Train300 V4 soft/conf weighted BCE, Gold58, full fine tune, Mean pooling 및 동일 optimizer/seed 사용. 코드 셀/Worker 문법과 가변 Window HDF5 합성 검사는 PASS이나 **실제 T4 실행 검증 전**이며 성능 결과는 없음. 결과 ZIP `RMIL-02C_results_for_review.zip`에 모델이 아닌 성능·예측·로그를 담고 best.pt는 Output에 각각 보존합니다.
+
+완료 캐시 자세한 검증: [RMIL-02B V3 완료 결과](docs/RMIL-02B_V3_CACHE_COMPLETED_2026-10-10.md). 기존 RMIL-01 K4는 서로 다른 영상 전처리이므로 이번 K4의 비교 기준으로 사용하지 않습니다. 코드 오류 수정 내역은 별도 GitHub 기록으로 만들지 않습니다.
+
+---
+
+## 2026-10-10 — RMIL-02B 현재 진행 상황
+
+원본 무릎 MRI **358명(Train300 + Gold58), 2,006개 Series, 66,430개 Slice**를 224×224 공통 이미지 캐시로 생성하는 단계입니다. 최신 실행용 한글 설명 Notebook: `RMIL-02B_V3_Native224_FOVSafe_SharedCache_CPU_KO.ipynb` (SHA-256 `3c73cda26e664eb0fbcbd71c9041c7eea658028c896878e03ffb437e30de7753`, 채팅에서 제공한 산출물, Kaggle 실행 결과 아직 미검증).
+
+전처리는 원본 DICOM의 물리적 순서·130mm 영역·영상 범위 밖 패딩·Series 단위 정규화로 통일합니다. 생성한 공통 캐시를 이용해 **K4·K16·K24를 동일한 모델 조건에서 비교**한 뒤 같은 K에서 Mean과 Attention을 비교합니다. 공통 이미지 캐시 예상 용량은 약 3.33GB, 전체 Notebook Output 내부 운영 상한은 14GB입니다.
+
+앞으로 실험 문서와 Notebook 설명은 **한글을 우선 사용**하며, 임시 코드 오류나 수정 과정은 별도 실험 기록으로 남기지 않습니다. [현재 진행 상태](docs/CURRENT_HANDOFF.md) · [작성 규칙](docs/AI_AGENT_KAGGLE_NOTEBOOK_RULES.md).
+
+---
+
+## 2026-10-10 — RMIL-02B0 COMPLETED; RMIL-02B New V2 cache prepared (OVERRIDES older K4 parity hard gate)
+
+**Actual artifact audit PASS**, but **K4 image parity FAIL**: ZIP SHA256 `3f7ee4b7a12db3b0297ed3d11eebce31133d4bc87adeb08687df4ece33c06a27`, CRC PASS, all 5 declared output SHA pass. Diagnostic 9 Series across 3 Studies / 144 candidate pixel transformations, ZERO exact entire-Series matches, best mean MAE 8.476386 and byte match fraction ~0.153%. No cache pixel output, no GPU; existing RMIL-01 score unchanged. **[Detailed completed RMIL-02B0 audit](RMIL-02B0_COMPLETED_PARITY_AUDIT_2026-10-10.md).**
+
+**Decision to avoid repeated uncertain cache-builder archaeology:** original R2D-CACHE-01 exact pixel implementation NOT available; freeze newly specified and reproducible **`RMIL-02B-NATIVE224-V2` preprocessing** for the same 358 Study original DICOM source instead. **A fresh `RMIL-02C-K4-NEW` training baseline is MANDATORY** before interpreting K16 and K24 count effect. Old RMIL-01 0.576370 is historical only; cannot substitute as K4 for new V2. Within new V2 cache compare K4 Mean, K16 Mean, K24 Mean (K32 conditional) from nested selected native Slice center windows, then at matched K compare Mean vs shared attention. RMIL-03 later.
+
+**Prepared new CPU notebook (NOT Kaggle-executed)** `RMIL-02B_Native224_SharedCache_CPU.ipynb`, SHA256 `097c72a070114caa53603180f9813ec16c3edf15ab7dc1ff84c30a279cbc080b`, syntax/nbformat PASS, synthetic nested selector 310 source lengths PASS. Accelerator None, Internet OFF, Save & Run All, 2 existing inputs (competition + `rsna-knee-wide224-persistent-cache-v1`); 358 studies / 2006 Series / 66430 real slices. V2 preproc exact contract spelled out in notebook and [audit](RMIL-02B0_COMPLETED_PARITY_AUDIT_2026-10-10.md), **NOT claimed historical image parity**. Output `RMIL-02B_NATIVE224_V2/shards/shard_###.h5` 220MB-target SHA/atomic, manifest and metadata-only ZIP `RMIL-02B_results_for_review.zip`; keep whole Kaggle Notebook output as next model Input. Kaggle saved output all-working total 14.0GB project cap, ≥2GB physical free. Actual pixels not yet created and GPU experiments not run.
+
+---
+
+## 2026-10-10 — RMIL-02B persistent-output disk budget FIXED
+
+Kaggle Notebook `/kaggle/working` saved-output limit **20GB** (per Kaggle docs); **project strict cap 14.0GB decimal total files**, ≥6GB reserved nominal margin and ≥2GB physical free reserve. RMIL-02A CPU Notebook revision `RMIL-02A_Native_Slice_Preflight_DiskSafe_CPU.ipynb` SHA256 `1516660b1d413aa384a193122593aad21d057832c4405a64be9d9e9e973204dd` now records `disk_budget.json`, compares source Slice storage estimate (+30% overhead +300MB) against budget, and flags impossible single-run builds. RMIL-02B will need independent 256–512MB SHA-checked atomic shards, per-shard byte checks, no repeated K caches and no second full ZIP. **Only metadata preflight Notebook was prepared; no new image cache has been executed/generated.** [Full policy](docs/RMIL_02_03_NATIVE_WINDOW_CONTROLLED_PROTOCOL_2026-10-10.md).
+
+---
+
+## 2026-10-10 — Active RMIL-02/03 native Window count and Attention protocol
+
+**Confirmed study design**: test MEAN across K4/K16/K24/K32 (K24/32 conditional on CPU feasibility), then at a fixed expanded K compare MEAN vs shared Window Attention; next RMIL-03 sequential target-specific Window and Window+Series Attention. Exp57 Full-MRI hierarchical MIL / selected Top24 / Full-MRI Direct and SS05 disease attention are historical references, not proof of isolated gains.
+
+**Immediate deliverable**: `RMIL-02A_Native_Slice_Preflight_DiskSafe_CPU.ipynb` created as chat download, JSON/syntax checked, **not executed or uploaded to GitHub**; SHA256 `1516660b1d413aa384a193122593aad21d057832c4405a64be9d9e9e973204dd`. CPU-only original DICOM geometry/count/storage preflight on pinned Train300/Gold58, requiring competition and canonical old K4 dataset. No new high-res Slice cache has been generated. Physical image and original K4 preproc parity are mandatory gates before CPU RMIL-02B and T4×2 training. Original full-native source images cannot be recreated from old D24×96 R3D or Exp16B DINO feature caches.
+
+[Full RMIL-02/03 experimental and source-audit protocol](docs/RMIL_02_03_NATIVE_WINDOW_CONTROLLED_PROTOCOL_2026-10-10.md). **RMIL-01 remains completed**, Gold58 small/reused, Exp57 best Public LB **0.918**. Final C1/C2/C3 unselected, folds/Exp57 blend deferred.
+
+---
+
+## 2026-10-10 — Latest: RMIL-01 completed, RMIL-02 CPU preflight NEXT
+
+**RMIL-01 actual received Kaggle artifacts AUDITED:** GPU0 MEAN Gold58 macro AUROC **0.57637044** / AUPRC **0.45072965**; GPU1 4-window shared ATTN **0.54429630** / **0.41589213**. Both workers PASS; review ZIP CRC and all 38 declared artifact SHA values verified. Attention − Mean **−0.03207413 AUROC**; MEAN is maintained as the controlled baseline. **Gold58 is reused development validation, not Public LB**. Details: [RMIL-01 completed audit](docs/RMIL-01_COMPLETED_AUDIT_2026-10-10.md).
+
+**CURRENT NEXT (planned, unexecuted):** RMIL-02 CPU-only actual Slice / window coverage 16/24/32 candidate cache preprocessing+SHA preflight. Separate count and selection-policy ablations; hold backbone/splits/training constant in later GPU work. RMIL-03 target-specific attention separately later. [Architecture/experiment plan](docs/RMIL_FINAL_ARCHITECTURE_AND_EXPERIMENT_PLAN.md).
+
+**Final architecture still OPEN:** C1 2.5D / C2 2D+2.5D / C3 2D+2.5D+3D. 3/5-Fold and Exp57 blend DEFERRED; project-best Public LB remains **Exp57 0.918**. Historical RMIL-01 next instructions below are superseded.
+
+---
+
+## 2026-10-10 — Current active RMIL lane (supersedes older NEXT sections below)
+
+**Project-best Public LB remains Exp57 = 0.918**, 3-Fold B3A + 3-Fold Full-MRI Direct 70:30. Completed standalone R3D-14V4 = user-reported Public LB 0.689; 11 recent R3D/R2D/RDINO Train300 Gold58 pilots have **no Public LB**.
+
+**Immediate next:** `RMIL-01` — MedicalNet-deflated R34 2.5D *MEAN vs learned Window Attention*, same canonical 358-study shared 224px cache and Train300/Gold58, two independent T4 GPU lanes, not yet executed. **RMIL-01 is not the existing EXP-01.**
+
+**Three tentative architecture candidates (no selection yet):**
+1. 2.5D CNN + disease-specific Window/Series MIL (one checkpoint, first priority).
+2. 2D+2.5D experts with proven target-wise complementary fusion (conditional).
+3. 2D+2.5D+3D experts, only if independently proven additional gain (conditional).
+
+**No 3/5-Fold or Exp57 final blend decision now.** Model count / inference budget must stay minimal; revisit after strong standalone expert evidence. LABEL-V6 is not released/canonical until independent adjudication.
+
+### READ FIRST — current canonical documents
+
+1. [RMIL final architecture candidates and experiments RMIL-01..06](docs/RMIL_FINAL_ARCHITECTURE_AND_EXPERIMENT_PLAN.md)
+2. [Audited 11 recent 300-study model results and target winners](docs/R2D_RDINO_R3D15_COMPLETED_AUDIT_2026-10-10.md)
+3. [Current state and roadmap](docs/CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md)
+4. [Current cold-start handoff](docs/CURRENT_HANDOFF.md)
+5. [Completed experiment history](docs/EXPERIMENT_HISTORY.md)
+6. [Kaggle notebook delivery rules](docs/AI_AGENT_KAGGLE_NOTEBOOK_RULES.md)
+
+**Legacy sections below are historic** and may contain old `NEXT` and prior interpretations. The above documents supersede their forward plans.
+
+---
+
+<!-- SPECIALIST_2026_10_02_CURRENT_START -->
+
+
+
+---
+
 # ResNet·RMIL — 누적 실험 결과
 
 2026-10-16 분류 완료. **S1FT02 / S7 / S8는 [DINO·S 실험 로그](../DINO_S/S1-DINO-CBL2F-01_EXPERIMENT_LOG.md)로 이관**, Exp와 Specialist도 각자 폴더로 분리했다. 아래의 오래된 NEXT는 당시 기록이다.
