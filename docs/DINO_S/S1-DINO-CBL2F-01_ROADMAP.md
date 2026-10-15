@@ -1,3 +1,13 @@
+## 2026-10-16 — S8C 학습 완료, Public LB 제출 단계
+
+- **완료:** S8C 질환별 Window + Series Attention 2-Fold 학습.
+- Gold58 pooled diagnostic: **0.875728**, S8B 0.877599 대비 -0.001871.
+- Series Attention entropy가 높아 대부분 uniform mean에 가까운 형태. Gold58만 보면 S8B보다 우세하지 않음.
+- **다음 즉시 작업:** S8C 제출 Notebook으로 Kaggle Public LB 확인. 기준은 S8B **0.923**.
+- 제출 결과 확인 후 S8C 채택 여부를 결정하고, 그 다음 **V54A 최적화 Stage1 DINO 2-Fold** 학습으로 이동.
+- V54A 실험은 과거 V4 Broad Stage1 0.910 및 V4 Strict FT 0.914 계보와 비교하되, 라벨별 soft/mask/confidence/class imbalance를 각 라벨 특성에 맞게 최적화하는 기존 연구 원칙을 유지.
+
+---
 ## 2026-10-16 — S8C Hierarchical Window+Series Attention 학습 Notebook 준비
 
 - **상태:** Notebook 제작 및 정적 QA 완료, **Kaggle GPU 학습은 아직 미실행**.
