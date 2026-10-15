@@ -1,3 +1,14 @@
+## 2026-10-16 — S8C Hierarchical Window+Series Attention 학습 Notebook 준비
+
+- **상태:** Notebook 제작 및 정적 QA 완료, **Kaggle GPU 학습은 아직 미실행**.
+- Notebook: `S8C_HIER_ATTN_MIL_F2_V1.ipynb`, SHA-256 `30f5b22a1768fca3a887a0e95f91e185cd2e27581e067352a2477e13325cadfd`, 25,283 bytes.
+- **통제 비교:** S8B의 질환별 Window Attention은 유지하고 Series Mean만 **질환별 Series Attention**으로 교체. S7 Fold별 전체 MRI 1536-d cache, V4 Routed Strict, Gold58 29/29, loss/weight, AdamW LR 2e-4, WD .01, 8 Epoch, seed `20261015+fold` 유지.
+- **초기화 통제:** S8B와 공유하는 proj/window-attn/head는 동일 seed에서 동일 초기화. 신규 `series_query[12,256]`는 zero-init하여 학습 시작 시 Series pooling이 정확히 uniform mean. Notebook 내부 synthetic parity gate가 초기 S8B/S8C logits max diff < 1e-6을 요구.
+- **실행:** Kaggle T4×2 / Internet OFF / Save & Run All / Save Version `S8-C-HIER-ATTN-MIL-F2-V1`. Fold0=GPU0, Fold1=GPU1. 완료 시 Fold별 `best.pt`, Gold58 pooled diagnostic, Series Attention entropy/max-weight QA, review/checkpoint ZIP 생성.
+- **다음:** 실제 GPU 학습 로그와 산출물을 검증한 뒤에만 EXPERIMENT_LOG에 결과를 추가하고, Fold0/1 best.pt로 S8C Public-LB 제출 Notebook을 제작한다.
+
+---
+
 # DINO·S — S1FT02 → S7 → S8 누적 Roadmap
 
 **2026-10-16 최신 확인**: S7 4,407 Studies/24,371 Series/770,336개 Full MRI Window 특징 추출 완료. S8A Mean **Public LB 0.918**, S8B 질환별 Window Attention **Public LB 0.923**(사용자 보고). 현재 프로젝트 최고 기록은 S8B.
