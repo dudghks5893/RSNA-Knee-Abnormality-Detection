@@ -1,3 +1,24 @@
+## 2026-10-16 — S8C Hierarchical Target Attention MIL 학습 완료 · Public LB 제출 대기
+
+**구조:** S8B의 질환별 Window Attention → Series Mean에서 Series pooling만 변경해 **질환별 Window Attention → 질환별 Series Attention → 질환별 Linear**로 확장. S7 Fold0/1 Full-MRI 1536-d feature cache, V4 Routed Strict supervision, Gold58 29/29, AdamW LR 2e-4, weight decay 0.01, 8 epoch, seed 등은 S8B 조건을 유지. 새 `series_query`는 0으로 초기화해 학습 시작 시 Series Mean과 동일하도록 parity gate를 통과함.
+
+**학습/검증 결과**
+- Fold0 best: epoch 1, Gold29 Macro AUROC **0.915085**
+- Fold1 best: epoch 3, Gold29 Macro AUROC **0.863470**
+- Gold58 pooled MIL diagnostic Macro AUROC: **0.875728**
+- S8B Gold58 diagnostic 0.877599 대비 **-0.001871**
+- S8B Public LB 0.923은 비교 기준이며 S8C Public LB는 아직 제출 전.
+- Gold58 per-target에서 개선: Lateral Meniscus +0.024845, PF OA +0.005148, Medial OA +0.003100, ACL +0.001225. 하락이 큰 target: Effusion -0.011180, Fracture -0.011111, Synovitis -0.009558, MCL -0.009070.
+- Series Attention은 median Series=5에서 평균 max weight가 대체로 약 0.20~0.26, normalized entropy 약 0.972~0.998로 **대체로 uniform mean에 가까움**. 따라서 Gold58 기준으로는 Series Attention이 강하게 특정 Series를 선택한 증거가 약함.
+- 다만 S8A/S8B에서도 Gold58 순위와 Public LB 순위가 뒤집힌 전례가 있어, S8C는 한 번 Public LB 제출로 확인한다.
+
+**Checkpoint**
+- Fold0 `best.pt` SHA256: `1b16bd88d3a5a13d93bbfb45ac12561e516a17cbf8d34fab50204bf09a67cfa8`
+- Fold1 `best.pt` SHA256: `506e73b7462195b3091b60508aa8781200f1d72c8c0469d8cea57a8b11771155`
+- Kaggle Dataset: `/kaggle/input/datasets/yhlucas/s8c-hier-attn-mil/fold{0,1}/best.pt`
+- 제출 Notebook 준비: `S8C_HIER_ATTN_2FOLD_PUBLIC_LB_SUBMIT_V1.ipynb` (Kaggle 실행 전)
+
+---
 # S1-DINO/S1FT02/S7/S8 — 최신 실험 결과 (2026-10-16)
 
 **사용자 보고 Public LB:** S8A Mean MIL **0.918**, S8B disease-specific Window Attention MIL **0.923**. S8B가 현재 프로젝트 최고 기록. 기존 B2 Full-MRI 0.904 대비 S8B +0.019, 과거 Exp57 0.918 대비 +0.005.
