@@ -1,6 +1,6 @@
 # RSNA Knee — 현재 인수인계 및 문서 탐색
 
-최종 갱신: **2026-10-16**. DINO·S 계보의 최신 authoritative source는 아래 3개 누적 문서다. 과거 개별 문서의 NEXT/CURRENT는 작성 당시 기록이며 최신 지시가 아니다.
+최종 갱신: **2026-10-17**. DINO·S 계보의 최신 authoritative source는 아래 3개 누적 문서다. 과거 개별 문서의 NEXT/CURRENT는 작성 당시 기록이며 최신 지시가 아니다.
 
 | 계열 | 결과 | 로드맵 |
 |---|---|---|
@@ -9,32 +9,23 @@
 | ResNet·RMIL | [R3D/RMIL History](RESNET_RMIL/EXPERIMENT_HISTORY.md) | [R3D/RMIL Roadmap](RESNET_RMIL/CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md) |
 | **DINO·S (현재)** | [실험 로그](DINO_S/S1-DINO-CBL2F-01_EXPERIMENT_LOG.md) | [Roadmap](DINO_S/S1-DINO-CBL2F-01_ROADMAP.md) · [Data/Model Contract](DINO_S/S1-DINO-CBL2F-01_DATA_MODEL.md) |
 
-## 최신 확인 결과
+## 2026-10-17 최신 상태
 
-- Stage1 V4 Broad DINOv2-Base 2-Fold: Public LB **0.910**.
-- Stage1 Broad→V4 Strict FT: Public LB **0.914**.
-- S8A Full-MRI Mean MIL: **0.918**.
-- S8B target-specific Window Attention MIL: **0.923**.
-- S8C target-specific Window+Series Attention MIL: **0.923**.
-- V54A 맞춤 Stage1 DINOv2-Base: **0.873** → 현재 V4 계열 대체하지 않음.
-- S8B/S8C가 현재 확인된 최고 Public LB **0.923** 동률. 예측 기준선은 더 단순한 S8B, selector 역할은 Series Attention을 가진 S8C.
+- Stage1 V4 Broad Base Public LB **0.910**.
+- Stage1 V4 Strict FT last Public LB **0.914**.
+- S8A **0.918**, S8B **0.923**, S8C **0.923**.
+- V54A Stage1 **0.873**.
+- **S10 Top18 Strict FT last 2F Public LB 0.923**. local pooled DEV는 epoch0/reference 0.894507 → last(epoch2) 0.893824였으나 LB는 0.923이므로 val 하락만으로 실패 판정 금지.
+- DINOv2-Small V4 Broad: Fold0 best 0.878770(E6), Fold1 0.862916(E10), Gold58 pooled DEV **0.868824 / AUPRC 0.797062**. Public LB는 아직 미확정.
+- 첫 hybrid 제출은 **S10 70% + S8C Full-MRI Direct 30%**. Exp57의 “Top-K final + 같은 selector direct” 구조를 현재 계보에 대응. 제출 노트북 준비 완료, LB 대기.
+- 다음 학습은 **S11-TOP18-MULTIVIEW-AUG-FT-V1**: S10 last에서 시작해 S9 Top18 center는 고정하고 DETAIL110/280 + ANCHOR130/224 + CONTEXT160/224를 shared DINO로 추가 FT. target별 fixed routing, mild augmentation, 2 epoch fixed. Plane/sequence routing과 K 변경은 섞지 않음.
+- S11 새 View는 기존 130mm Native224 cache에서 만들지 않고 **원본 DICOM 기반 전용 Top18 Multi-View cache**를 먼저 구축한다.
 
-## 동결된 향후 파이프라인
+## 현재 권장 파이프라인
 
-`Stage1-A Broad DINO 2F → Stage1-B Strict high-confidence FT → Stage2 Full-MRI feature → S8B predictor/S8C selector → Full-MRI Top-K → Stage3 Top-K FT → Stage3 70% + S8B 30%`.
+`Stage1-A Broad → Stage1-B Strict FT → Full-MRI feature → S8C selector/direct → S9 Top18 → S10 Top18 FT → S10 70% + S8C direct 30%`.
 
-중요: selector ranking은 Hidden Test에서도 동일하게 실행해야 하므로 **정답 label 방향을 쓰지 않는 label-free absolute contribution**으로 고정한다. 최초 Stage3는 Top18로 시작한다.
-
-## 지금 당장 할 다음 실험
-
-**Top-K selector 실행은 보류. 다음 작업은 DINOv2-Small Stage1-A 통제 실험이다.**
-
-- 실험 ID: `S1-DINO-SMALL-V4-2F-V1`.
-- V4 Routed Broad, Gold58 29/29, Native224 V3, exact 18-window sampler, Seed20261013, loss/class balance, optimizer/scheduler, max12/patience4, effective Study batch4를 Base와 동일하게 유지.
-- 유일한 과학적 변경: DINOv2-Base → DINOv2-Small. Small feature는 CLS384+PatchMean384=768-d, projection 768→256.
-- physical Study batch/Window microbatch/checkpoint는 Small에서 throughput benchmark로 다시 선택 가능하지만 effective batch4는 바꾸지 않는다.
-- MetaResearch Small model mount path/SHA는 Notebook preflight에서 실제 확인 후 기록하며 추정 SHA를 사용하지 않는다.
-- 먼저 Stage1-A Small standalone Gold58/Public LB를 확인한 다음에만 Small Strict FT 및 downstream Stage2 진행 여부를 결정한다.
+S11은 이 파이프라인의 selector/Top18/라벨을 바꾸지 않고 **영상 표현과 augmentation만 확장하는 후속 추가 FT**다.
 
 ## 재현성 필수 입력
 
