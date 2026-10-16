@@ -8,7 +8,9 @@
 - Speed-selected runtime: physical Study batch **4**, window microbatch **72**, activation checkpoint **OFF**, effective Study batch 4, AdamW fused.
 - Fold0 best epoch 5, SHA `786b5851cd57bacfe6bad1f94043f68ac477aadacf870bd51d742f12ccdd4743`.
 - Fold1 best epoch 9, SHA `73a9006f24c1b84e993ae39a4d46e36a8da8b586f698c1d4a6ff6a1e248317ad`.
-- Gold58 pooled DEV Macro AUROC **0.843255** / Macro AUPRC **0.772313**. Public LB **PENDING**.
+- Gold58 pooled DEV Macro AUROC **0.843255** / Macro AUPRC **0.772313**.
+- Public LB **0.873** (`S1-V54A-DINO-2F-LB-V1`, 사용자 보고).
+- V4 Broad 0.910 대비 -0.037, V4 Broad→Strict FT 0.914 대비 -0.041; 현 시점 주력 encoder로 채택하지 않음.
 
 ---
 ## 2026-10-16 — S8C Hierarchical MIL 모델 계약
