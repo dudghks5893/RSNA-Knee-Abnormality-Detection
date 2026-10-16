@@ -1,3 +1,58 @@
+## 2026-10-16 — 현재 파이프라인 동결 및 다음 실험: DINOv2-Small Stage1-A
+
+### 고정된 큰 흐름
+
+```text
+Stage1-A: DINO 2-Fold Broad task tuning
+    ↓
+Stage1-B: 동일 Fold 고신뢰 V4 Strict FT
+    ↓
+Stage2: Stage1-B encoder로 Full-MRI 전체 Window feature 추출
+    ↓
+Stage2 MIL: S8B predictor + S8C selector
+    ↓
+전체 데이터 Window 중요도 ranking → nested Top-K
+    ↓
+Stage3: Stage1-B를 Top-K Window로 재-FT
+    ↓
+Final: Stage3 70% + Stage2 S8B MIL 30% (probability blend)
+```
+
+### Stage별 실행 계약
+
+| Stage | 입력/라벨 | 모델·핵심 설정 | 출력/역할 |
+|---|---|---|---|
+| Stage1-A | Native224 V3 5-Pack, V4 Routed Broad 4,349, 반대 Fold Gold29 train / Gold29 val | DINO 2-Fold, 18×3-slice/Study, central20–80 sampler, Full FT, effective Study batch4, max12/patience4 | Broad Fold0/1 encoder+head |
+| Stage1-B | Stage1-A checkpoint + V4 Routed Strict, 같은 Gold split | low-LR FT, max3/patience1, V4 Strict soft/conf/mask balance, Gold BCE×3 | Refined Fold0/1 encoder. Stage2 feature extractor + Stage3 init |
+| Stage2 feature | Stage1-B Fold encoder + 4,407 Studies 전체 MRI | all valid center 1..n-2, CLS+PatchMean. Base=1536-d FP16 | Fold별 Full-MRI feature HDF5 |
+| Stage2 MIL | Fold별 Full-MRI feature + V4 Strict + Gold29 | 8 Epoch, AdamW 2e-4, WD .01. S8B=WindowAttn→SeriesMean, S8C=WindowAttn→SeriesAttn | S8B final MIL predictor, S8C selector |
+| Top-K | S8C Fold0/1 + 전체 Window feature | label-free absolute contribution percentile, Fold consensus, Series coverage + same-Series center gap≥3 | nested Top18/24/32/48/64 |
+| Stage3 | Stage1-B checkpoint + Top18 raw Windows + V4 Strict | low-LR Strict FT와 동일한 supervision; K=18 먼저 | Top-K adapted DINO Fold0/1 |
+| Final | Stage3 + S8B | 각 branch 2-Fold probability mean → 0.70×Stage3 + 0.30×S8B | 최종 12-target probability |
+
+### Selector 규칙 — 동결
+
+- S8C target contribution: `SA[s,t] × WA[s,w,t] × dot(z[s,w], head_weight[t])`.
+- 실제 selection에는 **절대 contribution magnitude**를 사용한다. 정답 label 방향은 사용하지 않는다.
+- target scale 차이를 막기 위해 Study 내부 target별 percentile rank로 변환하고, 최종 Window score는 target max, 동률 시 target mean.
+- Pseudo Train에서는 Fold0/1 score 평균. Gold58의 Stage3 validation selection은 자기 OOF MIL Fold만 사용. Hidden Test는 Fold0/1 평균.
+- 같은 Series는 center 간격≥3을 우선하고, 가능한 경우 Series별 최고 Window 1개를 먼저 확보. K를 채우지 못할 때만 gap을 2→1→0으로 완화.
+- Top18⊂Top24⊂Top32⊂Top48⊂Top64가 되도록 하나의 selection order에서 생성.
+- S8B rank agreement는 QA용으로 저장하지만 canonical Top-K score에는 섞지 않는다.
+- **현재 상태: 설계만 동결, selector 전체 실행은 보류.**
+
+### 다음 즉시 실행 — DINOv2-Small Stage1-A
+
+실험 ID 권장: `S1-DINO-SMALL-V4-2F-V1`.
+
+**통제 원칙: backbone size만 변경한다.**
+- 그대로: V4 Routed Broad, 4,349 pseudo, Gold58 29/29, Seed20261013, Native224 V3, 18 Window, exact sampler SHA, 12-target V4 loss, Gold×3, effective Study batch4, LR bands/Head LR, scheduler, max12/patience4, best=Gold29 Macro AUROC.
+- 변경: DINOv2-Base → **DINOv2-Small**. hidden 768→384, CLS+PatchMean 1536→768, 따라서 `LayerNorm(768)→Linear(768,256)`.
+- 속도 관련 physical Study batch / Window microbatch / activation-checkpoint 여부는 GPU 실측 throughput으로 자동 선택 가능하나 **effective Study batch4와 학습 수학은 유지**.
+- MetaResearch DINOv2 Small Kaggle mount의 실제 경로/SHA는 Notebook preflight에서 확인 후 기록한다. 검증 전 SHA를 추정해 고정하지 않는다.
+- 우선 **Stage1-A Small standalone Public LB**까지 확인. Small이 경쟁력 있으면 그 다음 같은 Stage1-B Strict FT와 Stage2를 Small 계보로 확장한다.
+
+---
 ## 2026-10-16 — V54A Stage1 Public LB 0.873 확정
 
 - `S1-V54A-DINO-2F-OPT-V1` Fold0/1 학습 완료.
