@@ -1,3 +1,34 @@
+## 2026-10-17 — Current best 0.926 / S11 기준선 갱신
+
+### 새 기준선
+
+- **Current best Public LB: 0.926**
+  - `70% S10 LAST 2F + 30% S8C Full-MRI Direct 2F`
+- S10 standalone: 0.923
+- S8C standalone: 0.923
+- 따라서 현재 hybrid gain은 **+0.003**.
+
+### Small 결론
+
+- DINOv2-Small V4 Broad 2F Public LB **0.899**.
+- 동일 Stage1 V4 Broad Base **0.910** 대비 **-0.011**.
+- Small은 현재 파이프라인의 주력 후보에서 제외하고 Base 유지.
+
+### S11 성공 기준
+
+S11은 S10 standalone 0.923뿐 아니라 최종 시스템 기준 **0.926**을 의식해서 평가한다.
+
+1. S11 standalone > 0.923이면 Stage3 개선 신호.
+2. S11 standalone이 0.923 부근이어도 S8C와의 blend complementarity는 별도 확인 가능.
+3. 우선 hybrid:
+   `0.70 * S11 + 0.30 * S8C Direct`
+4. 최종 목표: **Public LB > 0.926**.
+
+현재 실행 순서는 변함없음:
+`S11 Top18 Multi-View cache → S11 Base additional FT → standalone LB → S11/S8C 70:30 blend`.
+
+---
+
 ## 2026-10-17 — S10 LB 0.923 확정 / S11 Multi-View Top18 추가 FT로 전환
 
 ### 현재 기준선
