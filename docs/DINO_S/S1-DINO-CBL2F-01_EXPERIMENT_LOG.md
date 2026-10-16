@@ -1,3 +1,91 @@
+## 2026-10-17 — S10 Public LB 0.923 확정 · Small DEV 결과 · S10+S8C 70:30 제출 준비 · S11 Multi-View 계획
+
+### 확인된 결과
+
+- **S10 `S10-BASE-TOP18-STRICT-FT-V1`**
+  - Stage1-B Fold0/1 `last.pt`에서 시작, S9 S8C-only selector의 고정 Top18로 V4 Strict 추가 FT.
+  - Gold58 pooled epoch0/reference Macro AUROC **0.894507**.
+  - Fold별 epoch0 reference: Fold0 **0.923770**, Fold1 **0.882726**.
+  - 실제 학습 last(epoch2) pooled Macro AUROC **0.893824**로 reference 대비 **-0.000683**.
+  - last checkpoint SHA: Fold0 `e30d268a039dbf64a6ba082d4c85cdb1e1ed2090c70e59d9165b3cfe83083908`, Fold1 `02232b0bdcf8062564d04feda43f9fe6ea09edd1553a7025caaf19ac701ee1b3`.
+  - **사용자 보고 Public LB: 0.923.**
+  - 결론: Gold58의 미세 하락만으로 last를 실패 처리하면 안 됨. Stage1-B에서도 last의 local val이 더 낮았으나 Public LB가 더 높았던 전례가 있으며, S10도 실제 Public LB 0.923으로 확인됨.
+
+- **DINOv2-Small V4 Broad 2-Fold `S1-DINO-SMALL-V4-2F-V1`**
+  - Fold0 best epoch6 Macro AUROC **0.878770**.
+  - Fold1 best epoch10 Macro AUROC **0.862916**.
+  - Gold58 pooled DEV Macro AUROC **0.868824**, Macro AUPRC **0.797062**.
+  - checkpoint: `/kaggle/input/datasets/yhlucas/rsna-knee-checkpoint-models/S1_DINO_SMALL_V4_DUALFOLD/fold0/best.pt`, `fold1/best.pt`.
+  - standalone Public LB는 아직 본 기록 시점에 **미확정**. DEV만으로 Base 대비 최종 우열을 확정하지 않음.
+
+- 현재 사용자 보고 Public LB:
+  - Stage1 V4 Broad Base **0.910**
+  - Stage1 Broad→V4 Strict FT **0.914**
+  - S8A **0.918**
+  - S8B **0.923**
+  - S8C **0.923**
+  - V54A Stage1 **0.873**
+  - **S10 Top18 last 2F 0.923**
+  - Historical Exp57 70:30 **0.918**
+
+### Final blend 현재 판단
+
+과거 Exp57의 최고 hybrid 구조는 **Top-K final branch 70% + 같은 selector MIL의 Full-MRI direct branch 30%**였다. 따라서 현재 계보에서 구조적으로 가장 직접 대응되는 첫 blend는:
+
+```text
+P_S10 = mean(sigmoid(S10 Fold0 last), sigmoid(S10 Fold1 last))
+P_S8C_DIRECT = mean(sigmoid(S8C Fold0 direct), sigmoid(S8C Fold1 direct))
+P_FINAL = 0.70 * P_S10 + 0.30 * P_S8C_DIRECT
+```
+
+S8C는 이 제출에서 **Top18 selector + Full-MRI direct predictor** 두 역할을 함께 수행한다. S8B는 이 첫 제출에는 사용하지 않는다. `S10_LAST_70_S8C_DIRECT_30_2F_LB_SUBMISSION_V1.ipynb` 준비 완료, Public LB **대기**.
+
+### S11 계획 — `S11-TOP18-MULTIVIEW-AUG-FT-V1`
+
+목적은 S10의 Top18 선택/라벨/모델 계보를 유지하면서 **선택된 같은 center를 서로 다른 physical FOV와 resolution으로 표현**해 질환별로 필요한 공간 범위를 다르게 제공하는 것. 처음부터 재학습하지 않고 **S10 Fold0/1 last.pt에서 추가 FT**한다.
+
+고정:
+- S9 S8C-only V2 Top18 center.
+- Fold0/1, V4 Strict + opposite Gold29, class balance/loss.
+- DINOv2-Base shared weights, target attention/head 계열.
+- 18 Window/Study.
+- selector/label/Top-K는 변경하지 않음.
+
+변경:
+- 같은 Top18 center마다 3개 View 생성.
+  - ANCHOR: 130mm / 224, **S10 기존 Native224 V3와 exact parity**. 기존 padding 정책까지 유지.
+  - DETAIL: 110mm / 280. 원본 FOV가 110mm보다 작으면 가짜 padding을 만들지 않고 available FOV 전체를 사용 후 280 resize.
+  - CONTEXT: 160mm / 224. 원본 FOV가 160mm보다 작으면 available FOV 전체를 사용 후 224 resize.
+- DETAIL/CONTEXT는 requested FOV coverage를 기록. 기존 130mm/224 cache에서는 160mm 바깥 정보를 복원할 수 없으므로 **원본 DICOM에서 전용 S11 Top18 Multi-View cache를 새로 생성**.
+- 세 View가 parameter를 따로 갖지 않고 **동일 DINOv2-Base weights를 공유**. View별 12 logits를 만든 뒤 target별 fixed routing weight로 logit 결합.
+- learned router는 Gold58 과적합 위험 때문에 S11에서는 사용하지 않음.
+- augmentation은 3-slice channel에 동일 transform을 적용. horizontal flip/Cutout/MixUp/strong blur 제외.
+- Gold29는 진단값으로 저장하지만 **early-stop 판단을 강제하지 않음**. 2 epochs 고정 실행, epoch1/epoch2(last) 모두 저장.
+
+Target routing prior (DETAIL / ANCHOR / CONTEXT):
+- ACL 0.65 / 0.30 / 0.05
+- MCL 0.05 / 0.30 / 0.65
+- Medial Meniscus 0.60 / 0.35 / 0.05
+- Lateral Meniscus 0.55 / 0.40 / 0.05
+- Medial OA 0.65 / 0.30 / 0.05
+- Lateral OA 0.60 / 0.35 / 0.05
+- PF OA 0.50 / 0.40 / 0.10
+- Effusion 0.05 / 0.30 / 0.65
+- Synovitis 0.10 / 0.40 / 0.50
+- Baker's 0.00 / 0.15 / 0.85
+- Contusion 0.15 / 0.45 / 0.40
+- Fracture 0.40 / 0.45 / 0.15
+
+View별 augmentation prior:
+- DETAIL: rot±4°, translate±2%, scale 0.98–1.02, gamma 0.96–1.04, gain±4%.
+- ANCHOR: rot±6°, translate±3%, scale 0.96–1.04, gamma 0.94–1.06, gain±6%.
+- CONTEXT: rot±8°, translate±4%, scale 0.94–1.06, gamma 0.92–1.08, gain±8%.
+- 같은 3-slice Window의 세 channel에는 동일한 augmentation parameter 적용.
+- seed는 UID/Series/center/view/epoch 기반 deterministic.
+
+S11의 1차 질문은 “S8C가 고른 같은 Top18을 하나의 130mm/224 표현으로만 보는 것보다 target-specific multi-scale view + mild augmentation이 Public LB를 올리는가?”이다. Plane/sequence routing, Top-K 재선정, K32, learned gating은 S11에 섞지 않는다.
+
+---
 ## 2026-10-16 — Stage1→Stage2→Top-K→Stage3→70:30 최종 파이프라인 설계 동결 (설계 결정 / 미실행 단계 포함)
 
 사용자와 다음 DINO·S 계보를 **향후 기본 루트**로 확정했다. 이 항목은 실행 결과가 아니라 이후 실험을 같은 구조로 재현하기 위한 설계 결정이다.
