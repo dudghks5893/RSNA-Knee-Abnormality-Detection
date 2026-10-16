@@ -1,3 +1,16 @@
+## 2026-10-16 — V54A Stage1 데이터·모델 계약
+
+- Label dataset: `/kaggle/input/datasets/yhlucas/rsna-knee-v54a-label-dataset/V54A_train_labels.csv`; SHA256 `0e390e3fdd27f0974e54fa9649fdd9a50d104b9550570dfd9a0e7e659ac7c399`.
+- V54A active cells: **51,332 / 52,188**, 모든 12 target mask=0인 pseudo Study 21개는 zero-gradient라 train UID에서 제외.
+- Fold별 train: **4,328 active pseudo + Gold29 = 4,357 Studies**; validation Gold29.
+- Backbone/input: DINOv2-Base Full FT, Native224 V3, Study당 18×3-slice Window, 기존 sampler seed 20261013.
+- Supervision: V54A soft/mask/weight 그대로 + directional soft-mass imbalance correction + target-mass mild correction + fixed 12×batch denominator; Gold row binary BCE ×3.
+- Speed-selected runtime: physical Study batch **4**, window microbatch **72**, activation checkpoint **OFF**, effective Study batch 4, AdamW fused.
+- Fold0 best epoch 5, SHA `786b5851cd57bacfe6bad1f94043f68ac477aadacf870bd51d742f12ccdd4743`.
+- Fold1 best epoch 9, SHA `73a9006f24c1b84e993ae39a4d46e36a8da8b586f698c1d4a6ff6a1e248317ad`.
+- Gold58 pooled DEV Macro AUROC **0.843255** / Macro AUPRC **0.772313**. Public LB **PENDING**.
+
+---
 ## 2026-10-16 — S8C Hierarchical MIL 모델 계약
 
 - Architecture: `TARGET_WINDOW_ATTN_TARGET_SERIES_ATTN`
