@@ -1,21 +1,28 @@
 # RSNA Knee Abnormality Detection
 
-Kaggle RSNA Knee MRI 연구 결과는 다음 **4개 실험 계열 폴더**에서 관리해. 원래 이 README에 있던 초기 Exp01~Exp63 전문은 Exp 폴더로 보존·이관했어.
+Kaggle RSNA Knee MRI 연구 결과는 다음 **6개 실험 계열/Branch 폴더**에서 관리해. 원래 이 README에 있던 초기 Exp01~Exp63 전문은 Exp 폴더로 보존·이관했어.
 
 | 실험 계열 | 결과·관측 기록 | 진행 및 계획 |
 |---|---|---|
 | **01 — Exp** | [Exp 실험 전체 기록](docs/EXP/EXP_EXPERIMENT_HISTORY.md) | [Exp 시절 5-Fold 계획](docs/EXP/FINAL_5FOLD_PARALLEL_EXPERIMENT_PLAN.md) |
 | **02 — Specialist** | [Specialist 실험 로그](docs/SPECIALIST/SPECIALIST_EXPERIMENT_LOG.md) | [Specialist Roadmap](docs/SPECIALIST/SPECIALIST_EXPERIMENT_ROADMAP.md) |
 | **03 — ResNet·RMIL** | [R3D/RMIL 통합 결과](docs/RESNET_RMIL/EXPERIMENT_HISTORY.md) | [R3D/RMIL Roadmap](docs/RESNET_RMIL/CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md) |
-| **04 — DINO·S** | [S1FT02·S7·S8 누적 로그](docs/DINO_S/S1-DINO-CBL2F-01_EXPERIMENT_LOG.md) | [S 계열 Roadmap](docs/DINO_S/S1-DINO-CBL2F-01_ROADMAP.md) |
+| **04 — DINO·S / Branch-A** | [S 계열 누적 로그](docs/DINO_S/S1-DINO-CBL2F-01_EXPERIMENT_LOG.md) | [S 계열 Roadmap](docs/DINO_S/S1-DINO-CBL2F-01_ROADMAP.md) |
+| **05 — CoAtNet / Branch-B** | [CoAtNet 실험 로그](docs/COATNET/COATNET_EXPERIMENT_LOG.md) | [CoAtNet 설계/로드맵](docs/COATNET/COATNET_BRANCH_PLAN.md) |
+| **06 — ConvNeXt / Branch-C** | [ConvNeXt 실험 로그](docs/CONVNEXT/CONVNEXT_EXPERIMENT_LOG.md) | [ConvNeXt 설계/로드맵](docs/CONVNEXT/CONVNEXT_BRANCH_PLAN.md) |
 
-## 최신 확인 결과 — 2026-10-16
+## 최신 확인 결과 — 2026-10-17
 
-- S8A Mean MIL: **Public LB 0.918** (사용자 보고)
-- **S8B 질환별 Window Attention MIL: Public LB 0.923** (사용자 보고, 현재 프로젝트 최고)
-- 이전 Exp57: **0.918**, 이전 Full-MRI B2: **0.904**
-- S7은 전체 4,407 Studies, 24,371 Series에서 770,336개의 유효 Window 특징을 추출했지만, 앞단 Strict-FT DINO 인코더는 Study당 18 Window로 Fine-tuning됐어.
-- S8C 질환별 Window + Series Attention은 **다음 실험 후보**, 아직 미실행. Gold58은 반복 사용된 개발 검증 자료이므로 독립 테스트로 간주하지 않아.
+- **현재 최고 Public LB: 0.926**
+  - S10 LAST 2F 70% + S8C Full-MRI Direct 2F 30%
+- S10 standalone 0.923 / S8C standalone 0.923 → hybrid +0.003.
+- DINOv2-Small V4 Broad 2F = 0.899, Base V4 Broad = 0.910. DINO Core main backbone은 Base 유지.
+- 현재 DINO Core의 다음 실험은 S11 Multi-View 추가 FT.
+- 모델 구성은 Stage를 계속 늘리는 방식 대신 **3 Independent Experts**로 확장:
+  - Branch-A: DINO Core
+  - Branch-B: CoAtNet Wide-MRI
+  - Branch-C: ConvNeXt Anatomy (시간 허용 시)
+- 실행 우선순위: **S11 → CoAtNet Branch-B → ConvNeXt Branch-C**.
 
 ## 공통 운영 문서
 
