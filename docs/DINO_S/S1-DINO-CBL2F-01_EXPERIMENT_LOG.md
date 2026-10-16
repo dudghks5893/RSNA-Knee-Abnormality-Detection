@@ -1,3 +1,50 @@
+## 2026-10-17 — Public LB 업데이트: S10+S8C 70:30 = 0.926 / DINOv2-Small = 0.899
+
+### 새 Public LB 결과
+
+- **S10 LAST 2F 70% + S8C Full-MRI Direct 2F 30%**
+  - Public LB: **0.926**
+  - 이전 S10 standalone: **0.923**
+  - 이전 S8C standalone: **0.923**
+  - Blend 개선: **+0.003**
+  - 구조:
+    ```text
+    P_S10 = 0.5 * S10_F0_last + 0.5 * S10_F1_last
+    P_S8C_DIRECT = 0.5 * S8C_F0_direct + 0.5 * S8C_F1_direct
+    P_FINAL = 0.70 * P_S10 + 0.30 * P_S8C_DIRECT
+    ```
+  - 해석: S8C가 selector와 Full-MRI direct predictor를 동시에 담당하고, S8C가 고른 Top18을 S10이 정밀 재판독하는 Exp57-style 구조가 현재 계보에서도 실제 LB 개선으로 확인됨.
+  - 현재 프로젝트 최고 Public LB: **0.926**.
+
+- **DINOv2-Small V4 Broad 2-Fold standalone**
+  - Public LB: **0.899**
+  - Gold58 pooled DEV Macro AUROC: **0.868824**
+  - 비교 대상인 Stage1 V4 Broad DINOv2-Base Public LB **0.910** 대비 **-0.011**.
+  - 결론: 현재 데이터/학습 계약에서 Small은 Base보다 명확히 낮음. Small vs Base 재실험 우선순위는 낮추고, S11은 Base 계보를 유지.
+
+### 현재 Public LB 순위
+
+| 모델/제출 | Public LB |
+|---|---:|
+| **S10 LAST 70% + S8C Direct 30%** | **0.926** |
+| S8B Window-Attn MIL | 0.923 |
+| S8C Window+Series-Attn MIL | 0.923 |
+| S10 Top18 Strict FT last 2F | 0.923 |
+| S8A Mean MIL | 0.918 |
+| Stage1 V4 Strict FT last | 0.914 |
+| Stage1 V4 Broad Base | 0.910 |
+| DINOv2-Small V4 Broad 2F | 0.899 |
+| V54A Stage1 | 0.873 |
+
+### 다음 결정
+
+- 현재 최종 기준 제출은 **0.926 hybrid**.
+- S11 Multi-View는 이 0.926을 넘어서는 것이 목표.
+- S11 standalone이 개선되면 다음 1순위 hybrid는 `70% S11 + 30% S8C Direct`.
+- Small 계보는 당분간 중단. Base에서 데이터/FOV/augmentation 개선에 집중.
+
+---
+
 ## 2026-10-17 — S10 Public LB 0.923 확정 · Small DEV 결과 · S10+S8C 70:30 제출 준비 · S11 Multi-View 계획
 
 ### 확인된 결과
