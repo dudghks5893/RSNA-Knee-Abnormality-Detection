@@ -1,3 +1,12 @@
+## 2026-10-16 — V54A Stage1 학습 완료 · Public LB 제출 단계
+
+- `S1-V54A-DINO-2F-OPT-V1` Fold0/1 학습 완료.
+- Gold58 pooled DEV Macro AUROC **0.843255**, V4 Broad **0.871112**보다 -0.027857.
+- 속도 최적화는 성공: 두 Fold 모두 batch4 / 72 windows / checkpoint OFF, 실제 전체 wall 약 **5.05h**.
+- **다음 즉시 작업:** V54A 2-Fold checkpoint로 Kaggle Public LB 제출. 비교 기준은 V4 Broad **0.910**, V4 Broad→Strict FT **0.914**.
+- Public LB 결과를 확인한 뒤 V54A 채택/추가 튜닝 여부를 결정. Gold58 단독으로 폐기하지 않음.
+
+---
 ## 2026-10-16 — S8C Public LB 0.923 확정 · 다음 V54A Stage1
 
 - **완료:** S8C 질환별 Window + Series Attention 2-Fold 학습.
