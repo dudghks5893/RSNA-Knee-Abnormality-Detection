@@ -1,3 +1,62 @@
+## 2026-10-17 — S10/S11 데이터·모델 계약 갱신
+
+### S10 확정
+
+- `S10-BASE-TOP18-STRICT-FT-V1` last 2F Public LB **0.923** (사용자 보고).
+- S9 Top18 고정, Stage1-B last init, V4 Strict 추가 FT.
+- local pooled DEV: epoch0/reference **0.894507**, last(epoch2) **0.893824**. local 감소만으로 checkpoint를 폐기하지 않음.
+- last SHA: Fold0 `e30d268a039dbf64a6ba082d4c85cdb1e1ed2090c70e59d9165b3cfe83083908`, Fold1 `02232b0bdcf8062564d04feda43f9fe6ea09edd1553a7025caaf19ac701ee1b3`.
+
+### Final blend 우선 계약
+
+현재 첫 제출 후보는 `0.70 × S10 + 0.30 × S8C Full-MRI Direct`. S8C는 동일 full-MRI forward에서 direct probability와 label-free contribution을 모두 산출한다. S8B는 첫 blend에서는 제외하며 별도 ablation 후보로 보존.
+
+### S11 Multi-View data contract
+
+실험 ID: `S11-TOP18-MULTIVIEW-AUG-FT-V1`.
+
+**Source/selection**
+- center 위치는 S9 S8C-only V2 Top18 manifest에서 고정.
+- 4,407 Studies 기준 총 79,326 selected centers가 기준 universe.
+- 기존 `rmil-04b-full-mri-native224-v3`는 이미 130mm/224로 변환되어 160mm 바깥 정보가 없어 S11 새 View 생성 source로 사용하지 않는다.
+- 원본 competition DICOM 또는 동일 raw geometry를 보존한 source에서 새 cache 생성.
+- Series slice ordering/RescaleSlope/Intercept/MONOCHROME 처리와 UID/SID integrity는 기존 hidden-test robust loader 계약을 유지.
+
+**View**
+1. ANCHOR: 130mm / 224. 기존 S10 Native224 V3와 byte/parity를 우선 검증. 기존 130mm padding 정책 유지.
+2. DETAIL: requested 110mm / 280. original available FOV가 부족하면 padding 없이 available extent 사용.
+3. CONTEXT: requested 160mm / 224. original available FOV가 부족하면 padding 없이 available extent 사용.
+4. DETAIL/CONTEXT coverage: `min(1, min(available_h_mm, available_w_mm) / requested_fov_mm)`를 metadata에 저장.
+5. 모든 View는 3-slice `[center-1, center, center+1]`.
+
+**Normalization**
+- ANCHOR는 기존 S10 exact Native224 V3 normalization을 유지.
+- DETAIL/CONTEXT는 해당 View crop의 전체 Series를 기준으로 percentile 0.5/99.5 → clip → z-score → [-5,5] → resize → uint8.
+- preprocessing은 학습/hidden test 동일 구현을 사용.
+
+**Augmentation**
+- 3 slice channel에 동일 affine/intensity parameter.
+- DETAIL: ±4° / translate±2% / scale .98–1.02 / gamma .96–1.04 / gain±4%.
+- ANCHOR: ±6° / ±3% / .96–1.04 / gamma .94–1.06 / gain±6%.
+- CONTEXT: ±8° / ±4% / .94–1.06 / gamma .92–1.08 / gain±8%.
+- horizontal flip, Cutout, MixUp, strong blur 제외.
+- deterministic seed: StudyUID + SeriesUID + center + view + epoch.
+
+**Model/routing**
+- init S10 last same Fold.
+- 3 View가 하나의 DINOv2-Base/FeatureDINO parameter를 공유.
+- 각 View에서 12 target logits 생성 후 target별 fixed routing weight로 **logit** 결합 후 BCEWithLogits loss.
+- routing matrix:
+  ACL .65/.30/.05; MCL .05/.30/.65; Medial Meniscus .60/.35/.05; Lateral Meniscus .55/.40/.05; Medial OA .65/.30/.05; Lateral OA .60/.35/.05; PF OA .50/.40/.10; Effusion .05/.30/.65; Synovitis .10/.40/.50; Baker's 0/.15/.85; Contusion .15/.45/.40; Fracture .40/.45/.15 (DETAIL/ANCHOR/CONTEXT).
+- learned router 없음.
+
+**Training**
+- V4 Strict + opposite Gold29, S10 loss/class balance/LR 계약 유지.
+- 2 epochs fixed; early stop 없음. Gold29 metrics는 기록용.
+- epoch1/epoch2(last) 모두 저장.
+- effective Study batch4 유지. multi-view benchmark에서 physical batch/window microbatch 선택; microbatch=1 금지.
+
+---
 ## 2026-10-16 — Canonical Stage Pipeline Contract (향후 DINO·S 기본 설계)
 
 ### Stage1-A — Broad DINO 2-Fold
