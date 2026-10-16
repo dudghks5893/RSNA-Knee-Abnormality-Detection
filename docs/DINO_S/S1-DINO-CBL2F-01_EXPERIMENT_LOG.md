@@ -1,3 +1,25 @@
+## 2026-10-16 — V54A 최적화 Stage1 DINO 2-Fold 학습 완료 · Public LB 제출 대기
+
+**실험:** `S1-V54A-DINO-2F-OPT-V1` — 기존 Stage1 DINOv2-Base/Native224 V3/18 Window/Gold58 2-Fold 구조를 유지하고 V54A soft/mask/weight에 맞춘 directional soft-mass class balancing을 적용.
+
+**학습 결과**
+- Fold0: best epoch **5**, Gold29 Macro AUROC **0.845536**, 9 epochs, **246.18 min**, best SHA256 `786b5851cd57bacfe6bad1f94043f68ac477aadacf870bd51d742f12ccdd4743`.
+- Fold1: best epoch **9**, Gold29 Macro AUROC **0.839794**, 12 epochs, **302.72 min**, best SHA256 `73a9006f24c1b84e993ae39a4d46e36a8da8b586f698c1d4a6ff6a1e248317ad`.
+- Gold58 pooled DEV Macro AUROC **0.843255**, Macro AUPRC **0.772313**.
+- 기존 V4 Broad Stage1 Gold58 pooled Macro AUROC **0.871112** 대비 **-0.027857**. 따라서 Gold58 개발 지표만 보면 V54A가 V4 Broad보다 낮음. 다만 Gold58는 반복 DEV이므로 Public LB 확인 전 최종 판단하지 않음.
+
+**속도 개선**
+- 자동 benchmark가 두 Fold 모두 `study_batch=4 / window_microbatch=72 / activation_checkpoint=False / AdamW_fused`를 선택.
+- Fold0 128-Study profile 예상 12 epoch **5.83h**, Fold1 **5.76h**.
+- 실제 wall time은 두 Fold 병렬 실행에서 느린 Fold1 기준 약 **302.7분(5.05h)**. 기존 V4 Stage1 약 629–631분 대비 대략 절반 수준으로 단축.
+- Peak allocated VRAM 약 **8.42 GiB**.
+
+**Checkpoint Dataset**
+- Fold0: `/kaggle/input/datasets/woniyeon/rsna-knee-checkpoint-models/S1_V54A_DINO_DUALFOLD/fold0/best.pt`
+- Fold1: `/kaggle/input/datasets/woniyeon/rsna-knee-checkpoint-models/S1_V54A_DINO_DUALFOLD/fold1/best.pt`
+- 제출 Notebook: `S1_V54A_DINO_2FOLD_PUBLIC_LB_SUBMIT_V1.ipynb` 준비 완료, Public LB **PENDING**.
+
+---
 ## 2026-10-16 — S8C Kaggle Public LB 확정: 0.923
 
 **사용자 제공 Kaggle 제출 결과:** `S8C-HIER-ATTN-LB-2F-V1` Public LB **0.923**.
