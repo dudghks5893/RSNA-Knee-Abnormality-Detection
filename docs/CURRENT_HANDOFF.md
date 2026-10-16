@@ -9,17 +9,29 @@
 | ResNet·RMIL | [R3D/RMIL History](RESNET_RMIL/EXPERIMENT_HISTORY.md) | [R3D/RMIL Roadmap](RESNET_RMIL/CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md) |
 | **DINO·S (현재)** | [실험 로그](DINO_S/S1-DINO-CBL2F-01_EXPERIMENT_LOG.md) | [Roadmap](DINO_S/S1-DINO-CBL2F-01_ROADMAP.md) · [Data/Model Contract](DINO_S/S1-DINO-CBL2F-01_DATA_MODEL.md) |
 
-## 2026-10-17 최신 상태
+## 2026-10-17 최신 LB 업데이트
 
-- Stage1 V4 Broad Base Public LB **0.910**.
-- Stage1 V4 Strict FT last Public LB **0.914**.
-- S8A **0.918**, S8B **0.923**, S8C **0.923**.
-- V54A Stage1 **0.873**.
-- **S10 Top18 Strict FT last 2F Public LB 0.923**. local pooled DEV는 epoch0/reference 0.894507 → last(epoch2) 0.893824였으나 LB는 0.923이므로 val 하락만으로 실패 판정 금지.
-- DINOv2-Small V4 Broad: Fold0 best 0.878770(E6), Fold1 0.862916(E10), Gold58 pooled DEV **0.868824 / AUPRC 0.797062**. Public LB는 아직 미확정.
-- 첫 hybrid 제출은 **S10 70% + S8C Full-MRI Direct 30%**. Exp57의 “Top-K final + 같은 selector direct” 구조를 현재 계보에 대응. 제출 노트북 준비 완료, LB 대기.
-- 다음 학습은 **S11-TOP18-MULTIVIEW-AUG-FT-V1**: S10 last에서 시작해 S9 Top18 center는 고정하고 DETAIL110/280 + ANCHOR130/224 + CONTEXT160/224를 shared DINO로 추가 FT. target별 fixed routing, mild augmentation, 2 epoch fixed. Plane/sequence routing과 K 변경은 섞지 않음.
-- S11 새 View는 기존 130mm Native224 cache에서 만들지 않고 **원본 DICOM 기반 전용 Top18 Multi-View cache**를 먼저 구축한다.
+- **S10 LAST 70% + S8C Full-MRI Direct 30% = Public LB 0.926 (현재 최고)**.
+- S10 standalone 0.923, S8C standalone 0.923에서 **+0.003 ensemble gain** 확인.
+- 이 결과로 Exp57-style 구조인 “selector의 Full-MRI direct 예측 + selector가 고른 Top-K를 재판독한 final model” 조합이 현재 계보에서도 유효함을 확인.
+- **DINOv2-Small V4 Broad 2F = Public LB 0.899**.
+- Stage1 V4 Broad Base 0.910 대비 Small은 **-0.011**, 따라서 주력 backbone은 계속 DINOv2-Base.
+- 현재 다음 실험은 **S11-TOP18-MULTIVIEW-AUG-FT-V1**. 목표는 current best 0.926 초과.
+- S11 standalone 개선 후 첫 hybrid는 **70% S11 + 30% S8C Direct**.
+
+### 현재 Public LB
+
+| 모델/제출 | LB |
+|---|---:|
+| **S10 70 + S8C Direct 30** | **0.926** |
+| S8B | 0.923 |
+| S8C | 0.923 |
+| S10 last 2F | 0.923 |
+| S8A | 0.918 |
+| Stage1 Strict FT last | 0.914 |
+| Stage1 Broad Base | 0.910 |
+| DINOv2-Small V4 Broad 2F | 0.899 |
+| V54A Stage1 | 0.873 |
 
 ## 현재 권장 파이프라인
 
