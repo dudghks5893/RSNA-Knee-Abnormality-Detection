@@ -1,3 +1,54 @@
+## 2026-10-17 — S10 LB 0.923 확정 / S11 Multi-View Top18 추가 FT로 전환
+
+### 현재 기준선
+
+| 모델 | Public LB | 상태 |
+|---|---:|---|
+| Stage1 V4 Broad Base | 0.910 | 기준 |
+| Stage1 V4 Strict FT last | 0.914 | Stage1-B |
+| S8A Mean MIL | 0.918 | Full-MRI |
+| S8B Window-Attn MIL | 0.923 | Full-MRI direct |
+| S8C Window+Series-Attn MIL | 0.923 | selector + direct |
+| V54A Stage1 | 0.873 | 비채택 |
+| **S10 Top18 Strict FT last 2F** | **0.923** | 현재 Stage3 |
+| Exp57 historical hybrid | 0.918 | 과거 비교 기준 |
+
+S10 local pooled Macro AUROC는 epoch0/reference 0.894507, last(epoch2) 0.893824로 소폭 낮았지만 실제 Public LB는 **0.923**. 따라서 Gold58/Gold29 val은 참고값이며 last를 local val만으로 실패 처리하지 않는다.
+
+### 현재 제출 대기
+
+첫 hybrid는 Exp57 구조를 현재 계보에 맞춰 **S10 70% + S8C Full-MRI Direct 30%**로 제출. S8C가 Top18 selector와 direct predictor를 동시에 담당한다. S8B 30% blend는 후순위 대안.
+
+### 다음 즉시 실행 — S11
+
+`S11-TOP18-MULTIVIEW-AUG-FT-V1`
+
+```text
+S9 fixed Top18 centers
+   ├─ DETAIL 110mm / 280
+   ├─ ANCHOR 130mm / 224  (S10 exact image contract)
+   └─ CONTEXT 160mm / 224
+              ↓
+       shared DINOv2-Base
+              ↓
+       3 × target logits
+              ↓
+ target-wise fixed logit routing
+              ↓
+        V4 Strict loss
+```
+
+- Init: **S10 Fold0/1 last.pt**.
+- Top18/selector/labels/folds/loss는 고정.
+- 전용 Multi-View cache는 원본 DICOM에서 Top18 center만 생성. 기존 Native224 cache는 160mm 정보를 이미 잃었으므로 CONTEXT source로 사용 금지.
+- ANCHOR는 S10과 exact parity를 유지해 기존 도메인을 보존.
+- DETAIL/CONTEXT는 원본 FOV 부족 시 artificial padding을 만들지 않고 available FOV를 사용하며 coverage ratio 기록.
+- target routing은 fixed prior; learned gate 금지.
+- 2 epochs fixed, epoch1/epoch2(last) 보존. Gold29는 진단만 하고 early stop 결정권을 주지 않음.
+- GPU benchmark는 multi-view compute에 맞춰 physical Study batch/Window microbatch를 재선택하되 effective Study batch4 유지. Window microbatch=1은 사용하지 않음.
+- S11에 plane/sequence routing, K32, Top18 selector 재학습, learned router를 섞지 않는다.
+
+---
 ## 2026-10-16 — 현재 파이프라인 동결 및 다음 실험: DINOv2-Small Stage1-A
 
 ### 고정된 큰 흐름
