@@ -1,10 +1,12 @@
-## 2026-10-16 — V54A Stage1 학습 완료 · Public LB 제출 단계
+## 2026-10-16 — V54A Stage1 Public LB 0.873 확정
 
 - `S1-V54A-DINO-2F-OPT-V1` Fold0/1 학습 완료.
 - Gold58 pooled DEV Macro AUROC **0.843255**, V4 Broad **0.871112**보다 -0.027857.
 - 속도 최적화는 성공: 두 Fold 모두 batch4 / 72 windows / checkpoint OFF, 실제 전체 wall 약 **5.05h**.
-- **다음 즉시 작업:** V54A 2-Fold checkpoint로 Kaggle Public LB 제출. 비교 기준은 V4 Broad **0.910**, V4 Broad→Strict FT **0.914**.
-- Public LB 결과를 확인한 뒤 V54A 채택/추가 튜닝 여부를 결정. Gold58 단독으로 폐기하지 않음.
+- **Public LB 결과:** `S1-V54A-DINO-2F-LB-V1` = **0.873**.
+- 비교 기준: V4 Broad **0.910** 대비 **-0.037**, V4 Broad→Strict FT **0.914** 대비 **-0.041**.
+- **판단:** V54A 맞춤 Stage1 단독 모델은 현재 V4 계열보다 명확히 열세이므로 주력 encoder 교체는 보류. 기존 V4/Strict 계열과 S8B/S8C 0.923 기준선을 유지.
+- 다음 단계에서는 Full-MRI MIL selector를 활용한 중요 Window 차출 후 재-FT 축을 우선 검토.
 
 ---
 ## 2026-10-16 — S8C Public LB 0.923 확정 · 다음 V54A Stage1
