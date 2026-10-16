@@ -1,3 +1,93 @@
+## 2026-10-16 — Canonical Stage Pipeline Contract (향후 DINO·S 기본 설계)
+
+### Stage1-A — Broad DINO 2-Fold
+
+- Pixel source: `yhlucas/rmil-04b-full-mri-native224-v3`, 5 Packs. Native224 V3 / 130mm center crop / Series normalization / uint8.
+- Series/sampler: `yhlucas/stage1-dino-shared-input-manifest-v1`.
+  - `common_series_manifest.csv` SHA `e77023a00103f38dd53f6eb62fb142cf3358e0fc4acfe0b85d908c2c190939ea`.
+  - `sampler_reference.py` SHA `8ce97e7cebf0c75597e6bd8ea8c262bfb6596dfdcbf0975b8d31101fe125052c`.
+  - Study마다 18 Window, 모든 Series 최소 1개, central20–80 후보, Window=[center-1,center,center+1].
+- Broad label: `/kaggle/input/datasets/yhlucas/rsna-knee-v4-consensus-dataset/rsna_knee_pseudolabels_v4_routed_broad.csv`; known SHA `93863c59f99a70e2fd5c2d1674bc91266f3c459d398755911e033dbdac8d381c`.
+- Gold: `yhlucas/rsna-knee-gold58-2fold-v1`; manifest SHA `a3ca7df32d43ee7c683091162b1839ea8308d802bea3f2b437f4908d9cbcb079`, split SHA `6e66444e12a62c3f73670e421b939f1b286e21e496c29040754a72b1d18b4876`. Fold train = 4,349 pseudo + opposite Gold29 = 4,378, validation=own Gold29.
+- V4 pseudo weight `0.25+0.75×confidence`; pseudo-only weighted soft prevalence class balance power0.70, raw scale cap0.5..2.5, target-normalized; Gold row neutral BCE×3; fixed 12-target denominator.
+- Optimizer: AdamW β=(.9,.999), eps1e-8, WD .05 excluding bias/norm/token; LR early1e-6 / mid3e-6 / late1e-5 / head2e-4; warmup5%→linear decay; FP16 AMP; grad clip1.0.
+- max12, patience4, minimum4 epochs, best checkpoint = held-out Gold29 Macro AUROC.
+- Parallelism: Fold0 GPU0 / Fold1 GPU1 independent subprocess; effective Study batch=4/Fold. Physical batch/microbatch/checkpoint are throughput implementation details and must be benchmarked.
+- Base historical checkpoint: `woniyeon/rsna-knee-stage1-v4-f01-best-v1/fold{0,1}/best.pt`; SHA F0 `15bd9189eac7a7366239a0747e671f0f567a40a2db660e7054e2de26eb01e629`, F1 `0c3939d93d3f37daacf2625711fe751586ea354e5a64b19eb9911ed5f0eb28a5`; Public LB 0.910.
+
+### Stage1-B — High-confidence V4 Strict Fine-tuning
+
+- Init: same-fold Stage1-A best checkpoint.
+- Strict label: `/kaggle/input/datasets/yhlucas/rsna-knee-v4-consensus-dataset/rsna_knee_pseudolabels_v4_routed_strict.csv`; SHA `bfca4993e5c985d9318d732bf2a0970dd7af9b3beff1d6ff619822042bf7a2c0`.
+- Same image cache, Gold split, sampler and 18 Window semantics.
+- Strict pseudo: target mask preserved, confidence-weighted soft labels; pseudo-only soft class balancing power0.70 cap0.5..2.5 + target coverage correction power0.35; Gold neutral BCE×3; fixed 12×batch denominator.
+- max3, patience1. Fine-tune LR early1e-7 / mid3e-7 / late1e-6 / head2e-5, WD .05, AMP, grad clip1.0. Runtime benchmark may choose physical batch; effective Study batch remains4.
+- Current Base refined encoders used by S7: `/kaggle/input/datasets/woniyeon/rsna-knee-s1ft02-b-v4strict-2fold-best-v1/fold{0,1}/last.pt`; SHA F0 `b4e7d29d3ae0e7ff999c3fb0119dc6126ddd5d5a006c69868818bc440c895aa4`, F1 `966fdfe174c995bfbd8855b520440c508a6aa8539eee9cb5a5f724402b538d79`. 사용자 보고 Public LB 0.914.
+
+### Stage2 — Full-MRI feature extraction
+
+- Stage1-B encoder only; head prediction은 feature cache 생성에 사용하지 않는다.
+- 4,407 Studies / 24,371 Series / 819,078 source slices.
+- 모든 valid center `1..N-2`의 3-Slice Window: 총 **770,336 Windows/Fold**.
+- Base feature = CLS768 + PatchMean768 = 1536-d, cache precision FP16.
+- Root: `/kaggle/input/datasets/woniyeon/s7-strictft-fullmri-full4407/fold{0,1}/features.h5`.
+- Feature cache는 **backbone size와 Fold checkpoint에 종속**. DINO-Small 실험이 Stage2로 진입하면 Base S7 cache를 재사용하지 않고 Small 전용 cache를 새로 생성한다.
+
+### Stage2 — MIL Predictor / Selector
+
+Common supervision: V4 Strict valid target + weight `0.25+0.75×conf`; Gold row ×3. Executed S8 loss는 `(BCE×mask×weight).sum() / (mask×weight).sum().clamp_min(1)`. AdamW LR2e-4, WD.01, 8 epochs, batch=1 Study, seed `20261015+fold`.
+
+- **S8B predictor**: feature_dim→LN→Linear256→GELU→Dropout.1 → target-specific Window Attention → Series Mean → target-specific Linear. Public LB **0.923**.
+  - checkpoints `woniyeon/s8-mil-attn/fold{0,1}/best.pt`
+  - SHA F0 `0bbe9d1b532cc933ca346e426c612abf7cbf388e991baa0875f14986e3176770`
+  - SHA F1 `e52b42565c79476ce342c75e76be078077a8c94fa88e31ee361408e6b0fd3615`
+- **S8C selector**: target-specific Window Attention → target-specific Series Attention → target-specific Linear. Public LB **0.923**.
+  - checkpoints `yhlucas/s8c-hier-attn-mil/fold{0,1}/best.pt`
+  - SHA F0 `1b16bd88d3a5a13d93bbfb45ac12561e516a17cbf8d34fab50204bf09a67cfa8`
+  - SHA F1 `506e73b7462195b3091b60508aa8781200f1d72c8c0469d8cea57a8b11771155`
+- 역할 고정: **S8B = 최종 30% MIL predictor**, **S8C = Top-K selector**. S8C가 S8B보다 예측 점수가 높아서가 아니라 Series 중요도를 직접 표현할 수 있기 때문에 selector로 사용.
+
+### Stage2 → Top-K Selection Contract
+
+- Window target contribution:
+  `c[s,w,t] = SeriesAttn[s,t] × WindowAttn[s,w,t] × dot(ProjectedWindow[s,w], HeadWeight[t])`.
+- Selection importance는 `|c|`를 사용하여 label-free로 유지. **V4/Gold 정답 방향을 selection에 사용하지 않는다**; Hidden Test에서도 동일 알고리즘이 가능해야 한다.
+- 각 Study/target 내부 percentile rank → Window score = target별 rank 최대값; tie-break = target rank 평균.
+- Pseudo: S8C Fold0/Fold1 rank 평균. Gold Stage3 validation: 자기 OOF Fold selector만. Hidden Test: Fold0/Fold1 평균.
+- Diversity: Series coverage 우선, 같은 Series center gap≥3 NMS; 부족하면 gap2→1→0.
+- 하나의 순서에서 nested K={18,24,32,48,64}. 최초 Stage3는 **Top18**.
+- S8B score/rank agreement는 diagnostic만 저장, canonical ranking에는 미혼합.
+- 현재 상태: **설계 동결 / 전체 selector 실행 보류**.
+
+### Stage3 — Top-K DINO Fine-tuning Contract
+
+- Init: Stage1-B same-fold refined DINO checkpoint.
+- Training input: Stage2 S8C가 선택한 raw Native224 3-Slice Top18. Epoch별 random 20–80 resampling 대신 고정 Top18 manifest를 사용.
+- Supervision: Stage1-B와 동일한 V4 Strict + opposite Gold29, 동일 mask/confidence/class balance, Gold neutral BCE×3.
+- Fine-tune LR/optimizer는 Stage1-B와 동일: 1e-7/3e-7/1e-6, head2e-5, WD.05, AMP, grad clip1.0, max3/patience1, best Gold29 Macro AUROC.
+- Gold validation의 Top18은 반드시 해당 Gold Study가 MIL training validation이었던 **OOF selector Fold**에서 선택.
+- Top18이 기준 개선을 만들면 다음 실험으로 Top32를 비교. K 증가는 selector 효과와 혼합하지 않는다.
+
+### Final Inference / Blend Contract
+
+1. Stage1-B Fold encoder로 Test의 전체 valid Window feature 생성.
+2. S8B Fold0/1 → full-MRI MIL probabilities; Fold probability 50:50 mean = `p_mil`.
+3. S8C Fold0/1 → label-free selector score → Test Top-K.
+4. Stage3 Fold0/1 DINO → 선택된 Top-K 예측; Fold probability 50:50 mean = `p_stage3`.
+5. 최종: **`p_final = 0.70 × p_stage3 + 0.30 × p_mil`**.
+6. 첫 canonical 버전은 probability blend만 사용. logit blend, target별 blend weight, calibration은 별도 ablation 없이는 넣지 않는다.
+
+### DINOv2-Small Stage1-A Control Experiment
+
+- 목적: 현재 pipeline을 바꾸지 않고 **backbone size만 Base→Small**로 변경해 Stage1-A 성능을 확인.
+- 실험 ID: `S1-DINO-SMALL-V4-2F-V1`.
+- 그대로 유지: V4 Broad/Gold split/sampler/18 Windows/Native224 V3/Seed20261013/V4 class balance/Gold×3/effective Study batch4/LR bands/head LR/scheduler/max12/patience4/best metric.
+- 변경: DINOv2-Small hidden=384, 12 transformer layers, CLS384+PatchMean384=**768-d**, projection `LayerNorm768→Linear768→256`. 나머지 target attention/head 구조 동일.
+- MetaResearch DINOv2 Small pretrained Kaggle model을 사용하되 **실제 mounted path와 SHA는 preflight에서 검증 후 본 문서에 기록**. Base SHA를 Small에 재사용하지 않는다.
+- 처리량 benchmark는 Small에서 다시 수행하며 가능한 큰 physical Study batch/Window microbatch를 시험한다. 이는 속도 구현 최적화이며 effective batch4는 고정.
+- 1차 종료점: Gold58 pooled DEV + 2-Fold standalone Public LB. 결과 전에는 Strict FT/Stage2 Small을 자동 진행하지 않는다.
+
+---
 ## 2026-10-16 — V54A Stage1 데이터·모델 계약
 
 - Label dataset: `/kaggle/input/datasets/yhlucas/rsna-knee-v54a-label-dataset/V54A_train_labels.csv`; SHA256 `0e390e3fdd27f0974e54fa9649fdd9a50d104b9550570dfd9a0e7e659ac7c399`.
