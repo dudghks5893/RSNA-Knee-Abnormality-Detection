@@ -1,4 +1,4 @@
-## 2026-10-16 — V54A 최적화 Stage1 DINO 2-Fold 학습 완료 · Public LB 제출 대기
+## 2026-10-16 — V54A 최적화 Stage1 DINO 2-Fold · Public LB 0.873 확정
 
 **실험:** `S1-V54A-DINO-2F-OPT-V1` — 기존 Stage1 DINOv2-Base/Native224 V3/18 Window/Gold58 2-Fold 구조를 유지하고 V54A soft/mask/weight에 맞춘 directional soft-mass class balancing을 적용.
 
@@ -17,7 +17,10 @@
 **Checkpoint Dataset**
 - Fold0: `/kaggle/input/datasets/woniyeon/rsna-knee-checkpoint-models/S1_V54A_DINO_DUALFOLD/fold0/best.pt`
 - Fold1: `/kaggle/input/datasets/woniyeon/rsna-knee-checkpoint-models/S1_V54A_DINO_DUALFOLD/fold1/best.pt`
-- 제출 Notebook: `S1_V54A_DINO_2FOLD_PUBLIC_LB_SUBMIT_V1.ipynb` 준비 완료, Public LB **PENDING**.
+- 제출 Notebook: `S1_V54A_DINO_2FOLD_PUBLIC_LB_SUBMIT_V1.ipynb`.
+- **사용자 제공 Kaggle Public LB: 0.873**.
+- 비교: V4 Broad Stage1 **0.910** 대비 **-0.037**, V4 Broad→Strict FT **0.914** 대비 **-0.041**.
+- 결론: V54A 맞춤 Stage1 단독 모델은 현재 V4 계열을 대체하지 못함. V54A checkpoint는 실험 기록으로 보존.
 
 ---
 ## 2026-10-16 — S8C Kaggle Public LB 확정: 0.923
