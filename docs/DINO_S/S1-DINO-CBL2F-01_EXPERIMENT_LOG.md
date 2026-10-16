@@ -1,3 +1,22 @@
+## 2026-10-16 — Stage1→Stage2→Top-K→Stage3→70:30 최종 파이프라인 설계 동결 (설계 결정 / 미실행 단계 포함)
+
+사용자와 다음 DINO·S 계보를 **향후 기본 루트**로 확정했다. 이 항목은 실행 결과가 아니라 이후 실험을 같은 구조로 재현하기 위한 설계 결정이다.
+
+1. **Stage1-A Broad 2-Fold DINO**: V4 Routed Broad + Gold29/29 2-Fold로 DINO를 task-tune. Study당 18개의 3-Slice Window, 기존 central 20–80% sampler 사용.
+2. **Stage1-B High-confidence FT**: 각 Fold Stage1-A checkpoint에서 V4 Routed Strict 고신뢰 supervision으로 저 LR 추가 FT. 이후 Stage2의 feature extractor 및 Stage3 초기값으로 사용.
+3. **Stage2 Full-MRI feature + MIL**: Stage1-B Fold별 encoder를 고정해 모든 valid center(1..n-2)를 특징으로 추출. Base 기준 4,407 Studies / 24,371 Series / 770,336 Windows. 이 특징으로 MIL 학습.
+4. **Stage2 Predictor / Selector 역할 분리**: Public LB가 S8B=S8C=0.923인 현재 기준에서 **S8B(Window Attention→Series Mean)**를 단순한 최종 MIL predictor로, **S8C(Window Attention→Series Attention)**를 Full-MRI selector로 사용.
+5. **Top-K selection**: S8C의 exact per-window target contribution을 이용해 전체 Window 순위를 만들고 diversity/NMS를 적용. Top18/24/32/48/64 nested manifest를 생성하되 최초 Stage3 실험은 **K=18**로 고정하여 기존 Stage1의 18 Window와 compute를 맞춘다.
+6. **Stage3 Top-K FT**: Stage1-B Fold별 checkpoint에서 시작하여 Stage2가 고른 Top18 Window만 사용해 V4 Strict supervision으로 재-FT. 이후 K32 등은 Top18 개선 확인 후 별도 ablation.
+7. **Final inference**: Fold 내부 확률을 먼저 50:50 평균한 뒤 **Stage3 probability 70% + Stage2 S8B MIL probability 30%**로 최종 제출. 첫 canonical blend는 target별 별도 weight나 logit blend를 사용하지 않는다.
+
+**Selector 배포 정합성 수정:** 실제 Top-K 선택 점수에는 V4/Gold 정답 방향을 사용하지 않는다. Hidden Test에는 정답이 없으므로 selection은 label-free여야 한다. 기본 score는 S8C의
+`series_attention × window_attention × |dot(projected_window, target_head_weight)|`
+를 target별 Study 내 percentile로 정규화한 뒤 target max(동률 시 mean)를 사용한다. Train label은 selector 품질 진단에만 사용할 수 있고 최종 selection rule에는 넣지 않는다.
+
+**현재 즉시 실행 우선순위:** 위 Top-K/Stage3 실험은 일단 보류. 다음 한 가지 실험은 **Stage1-A의 backbone만 DINOv2-Small로 바꾸는 통제 실험**이다. V4 Broad label, Gold58 split, 18-window sampler, loss, seed, optimizer/scheduler, max epoch, best-checkpoint 기준은 Base와 동일하게 유지한다. Small은 CLS384+PatchMean384=768-d이므로 입력 projection만 768→256으로 바뀐다. 물리 Study batch/Window microbatch는 속도 최적화를 위해 실측 benchmark로 선택하되 effective Study batch=4는 고정한다.
+
+---
 ## 2026-10-16 — V54A 최적화 Stage1 DINO 2-Fold · Public LB 0.873 확정
 
 **실험:** `S1-V54A-DINO-2F-OPT-V1` — 기존 Stage1 DINOv2-Base/Native224 V3/18 Window/Gold58 2-Fold 구조를 유지하고 V54A soft/mask/weight에 맞춘 directional soft-mass class balancing을 적용.
