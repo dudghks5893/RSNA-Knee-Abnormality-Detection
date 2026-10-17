@@ -1,3 +1,21 @@
+## Current cache action — 2026-10-18
+
+C-CACHE-V3 geometry preflight PASS.
+
+Authoritative next action:
+1. Run `C_GEOM_MV320_CACHE_V4_P00.ipynb` first.
+2. Require final `C GEOM MV320 CACHE PACK PASS`.
+3. Inspect cache_summary / HDF5 size / decode failures / crop coverage.
+4. If P00 PASS, run P01~P04.
+
+Frozen storage:
+- 5 Packs, counts 882/882/881/881/881
+- dense 64×3×320×320 uint8
+- no compression
+- 8-channel window metadata
+- segmentation/anatomy external model 없음
+
+
 # Branch-C — ConvNeXt Geometry Multi-View Expert
 
 최종 갱신: 2026-10-18
