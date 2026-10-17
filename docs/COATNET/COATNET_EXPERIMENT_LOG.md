@@ -1,3 +1,30 @@
+<!-- COATNET_BASE_V3_RUNNING_2026_10_18 -->
+## 2026-10-18 — B-COAT-WIDE96-2F-BASE-V3 실제 실행 시작
+
+상태: **TRAIN_RUNNING / RESULT_PENDING**
+
+실행 Notebook:
+- `B_COATNET_WIDE96_2F_BASE_V3.ipynb`
+- SHA `bb3527a1c8b6fd6f6585295413420720d341ee4c61b8b04de25ca1ee5a6bf3f4`
+
+Scientific contract:
+- V4 Routed Broad 4,349 + opposite Gold29 train / own Gold29 val.
+- Fold0→GPU0 / Fold1→GPU1 independent, **No DDP**.
+- V4 pseudo weight `.25+.75*confidence`.
+- pseudo soft class balance power .70 / clip .5–2.5.
+- rare-positive Study sampling.
+- Wide96 Native384 cache.
+- CoAtNet RMLP2 1024-d full FT.
+- 16 fixed epochs.
+- Base checkpoint: Fold별 own Gold29 Macro AUROC `best.pt` 하나.
+
+결과가 오기 전에는 Gold29/epoch/runtime/checkpoint SHA/Public LB를 추정해 기록하지 않는다.
+
+Next after completion:
+- Base 2F standalone submission → Public LB.
+- V4 Strict FT → standalone LB.
+- Branch-A와 A+B ensemble.
+
 ## 2026-10-17 — B-COAT-WIDE96-2F-BASE-V4 notebook READY
 
 **상태: TRAIN_READY_V4 / NOT_RUN**
