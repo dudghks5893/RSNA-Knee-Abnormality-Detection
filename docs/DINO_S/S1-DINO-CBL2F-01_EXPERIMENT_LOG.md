@@ -1,3 +1,45 @@
+## 2026-10-18 — S11 standalone Public LB 0.926 / S11 70 + S8C Direct 30 제출 준비
+
+### S11 standalone 결과
+
+사용자 보고 Kaggle Public LB:
+
+- **S11 LAST 2F standalone = 0.926**
+- 비교:
+  - S10 standalone = 0.923
+  - S10 LAST 70% + S8C Direct 30% = 0.926
+  - S11 LAST 2F standalone = **0.926**
+
+해석:
+- S11 Multi-View 추가 FT가 standalone 기준 S10 대비 **+0.003** 개선.
+- S11 standalone만으로 기존 최고 hybrid 0.926과 동점.
+- 따라서 다음 canonical 제출은 S10에서 검증된 동일 구조를 적용한:
+  `0.70 × S11 LAST 2F + 0.30 × S8C Full-MRI Direct 2F`.
+
+### 새 제출 Notebook
+
+- `S11_LAST_70_S8C_DIRECT_30_2F_LB_SUBMISSION_V1.ipynb`
+- SHA256:
+  `1936890da1c28fa1e55fdaf3981cc07e71b2b2b651afbcb39b50c63068b5ff5d`
+- GPU: T4×2
+- Internet OFF
+- Save Version 권장: `S11-LAST70-S8C30-LB-V1`
+
+정상 경로:
+```text
+P_S11 = mean(S11 Fold0 LAST prob, S11 Fold1 LAST prob)
+P_S8C = mean(S8C Fold0 Direct prob, S8C Fold1 Direct prob)
+P_FINAL = 0.70 * P_S11 + 0.30 * P_S8C
+```
+
+중요:
+- S11 standalone에서 이미 hidden-test 통과한 robust DICOM / S8C selector / Multi-View reconstruction 경로를 그대로 유지.
+- S8C Direct는 selector forward와 동일 계산에서 이미 산출되는 probability를 재사용.
+- 정상 Study의 70:30 산술 오차를 <1e-12로 검증.
+- Study-level 0.5 fallback 없음.
+- Public LB는 아직 제출 전.
+
+
 ## 2026-10-17 — S11 Multi-View cache 2-Pack 실제 완료 / 학습 Notebook 준비
 
 ### Cache 실제 결과 — PASS
