@@ -144,4 +144,5 @@ S11은 이 파이프라인의 selector/Top18/라벨을 바꾸지 않고 **영상
 - logical positions: 423,072 / valid 406,966 / missing 16,106 / decode failure 0.
 - selected non-missing Series: 20,792; 실제 sort는 전부 IOP_IPP.
 - Dataset paths/SHA는 `docs/COATNET/COATNET_BRANCH_PLAN.md` 최상단에 authoritative하게 기록.
-- **다음:** 최신 B soft-label artifact의 실제 Kaggle path/SHA 고정 → Branch-B CoAtNet 16ep 본학습 notebook 생성.
+- Branch-B CoAtNet 16ep 본학습 notebook 생성 완료: `B_COATNET_WIDE96_FT_V1.ipynb`, SHA `5ba2c615cf6dad9fb573b6929ac45aa236643922e2c61df2a0b680c61b269109`.
+- **다음:** 최신 B soft-label artifact + exact CoAtNet pretrained weight를 Kaggle input에 고정 → Save & Run All.
