@@ -1,76 +1,123 @@
-<!-- CONVNEXT_V2_DESIGN_PHASE_2026_10_18 -->
-## 2026-10-18 — Branch-C 설계 재검토 단계 진입
-
-- **실제 학습/캐시 실행 결과는 아직 없음.**
-- Current state: `C-DESIGN-V2_REVIEW / NOT_RUN`.
-- Branch-A S11 standalone 0.926과 Branch-B Wide96 V3 2F training 경험을 반영해 기존 C-DESIGN-V1을 재검토한다.
-- supervision은 LABEL-V6가 아니라 **V4 Routed Broad Base**를 우선 기준으로 검토.
-- 후속 **V4 Strict FT**와 2-Fold 구조를 우선 논의.
-- exact ConvNeXt pretrained/anatomy anchor가 고정되기 전에는 실행 Notebook 생성 금지.
-- high-score ConvNeXt source bundle의 `compact_train.py`, `compact_infer.py`, `knee_anchor_bank_v2.py`, `side_common.py` 계보를 코드 기준으로 audit한 뒤 C-DESIGN-V2를 확정한다.
-
 # Branch-C ConvNeXt — Cumulative Experiment Log
 
-최종 갱신: **2026-10-17**
+최종 갱신: 2026-10-18
 
-계획은 [CONVNEXT_BRANCH_PLAN.md](CONVNEXT_BRANCH_PLAN.md), 실제 실행 결과는 이 문서에 누적한다.
+계획은 [CONVNEXT_BRANCH_PLAN.md](CONVNEXT_BRANCH_PLAN.md), 실제 실행/Notebook 상태는 이 문서에 누적한다.
 
-## Status
+## Current Status
 
-- Branch: **C — ConvNeXt Anatomy Expert**
-- Current state: **NOT_RUN**
-- Design version: **C-DESIGN-V1**
-- 실행 우선순위: Branch-B 다음
+- Branch: C — ConvNeXt Anatomy Expert
+- Design: C-DESIGN-V3 FROZEN
+- Cache Notebook: READY / STATIC_QA_PASS
+- Cache Execution: NOT_RUN
+- Training: NOT_RUN
+- Public LB: 없음
 
-## Experiment naming
+## 2026-10-18 — C-DESIGN-V3 확정
 
-```text
-C-ANATOMY-CACHE320-V1
-C-CNX-S64-FT-V1
-C-CNX-S64-MIRROR-TTA-V1
-AC-RANK-BLEND-V1
-ABC-RANK-BLEND-V1
-```
+정정:
+- Strict mask로 전체 성능이 낮아진 기존 실험은 Branch-C가 아니라 Branch-A DINO 초기 Stage1 실험이었다.
+- C는 아직 모델/전용 데이터/학습 결과가 없었다.
+- 이 결과는 C Base에서 coverage를 우선해야 한다는 참고 근거로만 사용한다.
 
-실제 실행마다 반드시 기록:
-- 날짜
-- notebook/SHA
-- Kaggle Save Version
-- input paths/SHA
-- anatomy checkpoint identity
-- GPU/CPU
+C Base:
+- V4 Routed Broad
+- 2-Fold
+- Report 4,349 + 반대 Gold29 train / own Gold29 val
+- ConvNeXt-Small full FT
+- 2.5D
+- 320 cache → 288 train/val input
+- v4 Global + anatomy-local
+- 64 windows/Study
+- target-specific spatial attention
+- target-specific Window MIL
+- OA extent / Mirror TTA는 Base 이후 분리 실험
+
+## 2026-10-18 — C-ANATOMY-CACHE320-V1 Notebook 생성
+
+상태:
+- STATIC_QA_PASS
+- KAGGLE_NOT_RUN
+
+전체 4,407 train Study를 6 Pack으로 생성하도록 고정했다.
+Pack당 약 734~735 Study이며 fixed tensor logical upper bound는 약 13.5 GiB/Pack이다.
+
+Cache:
+- windows [N,64,3,320,320] uint8
+- window_meta [N,64,12] float32
+- valid_mask [N,64]
+- study_uid
+- anchor_method
+
+Anatomy:
+- public code/anatomy dataset:
+  heliosli/rsna-orthofoundation-fold0-epoch7-20261004
+- pinning manifest:
+  heliosli/rsna-knee-compact-r7cnxfsss
+- anatomy.pt는 R7 manifest의 anchor_weights_sha256와 runtime exact match가 필요.
+- projected anchor가 없는 Series는 local selection에서 제외하고 Full FOV만 허용.
+
+Pinned reference source SHA:
+- px_cache.py:
+  b13e38a7ad3bd496f8027e02209653e224b0926db4f0853eeb0d076a2d6e2632
+- knee_anchor_bank_v2.py:
+  e564807a129dfcd3c984348917436ee6083066a4d685340587ebd1d3ea14f309
+- probe_infer.py:
+  a6cc31448019c84be5868d0a2ff1d99719b23b0f86110efc03efff3ce6bd6980
+
+Notebook SHA256:
+- P00: a176b40de512766cdb13b3fae83fd0a465294cdeaa8ee523ef47a413c5bbb206
+- P01: c3ceefa50f15391ed40f5c0b5ad35f8e0f9916380316d9cfaef5d22a67323e3d
+- P02: 0ae90a1fb8af2f77345ccab362b54756c19ee60e0592d9015975ca7250c1ad8a
+- P03: 79bbaa42478861de0b8d658280fa60e04163231bdd609fdf6eec30bf0d99f71b
+- P04: fcef4d13f4eecea801f4eeb02aeace77e05c5109d97716c49048ac5ffe04e457
+- P05: 20c8757440c23ffe9fc3bd2e7f7113b83fc7d984c4b01caaa767b265df5ea5ac
+- ZIP bundle:
+  93ec0d6c21099e6b4451f23ca3fc64a226d3c2df5f6b7831631921ed75260aed
+
+정적 검증:
+- nbformat/JSON PASS
+- 모든 Python cell compile PASS
+- 각 Notebook source < 1MB PASS
+- global /kaggle/input recursive scan 없음
+- Pack ID별 별도 Notebook이므로 수동 config 변경 없음
+- partial HDF5는 Study failure 1건이라도 있을 경우 final로 승격되지 않음
+
+Required Inputs:
+1. RSNA Knee Abnormality Detection competition
+2. heliosli/rsna-orthofoundation-fold0-epoch7-20261004
+3. heliosli/rsna-knee-compact-r7cnxfsss
+
+Runtime:
+- T4 x2 / Internet Off
+- anchor segmentation은 cuda:0 사용
+- cache rendering/writing은 CPU 중심
+- 현재 실제 runtime 미측정.
+- Notebook 첫 화면의 예상 범위는 60~180분/Pack이며 Pack00 실행 후 measured value로 교체한다.
+
+### Immediate Next
+
+P00만 먼저 Save & Run All:
+- final receipt.json
+- study_audit.csv
+- HDF5 actual size
 - runtime
-- cache/view counts
-- model config
-- checkpoint SHA
-- Gold58 DEV
-- Public LB
-- correlation with A/B
-- ensemble LB
-- next decision
+- anchor method distribution
+- global/local window total
+을 검증한다.
+
+P00 PASS 전에는 P01~P05를 무조건 대량 실행하지 않는다.
 
 ## Public LB table
 
 | Experiment | Model | Public LB | Status |
 |---|---|---:|---|
-| — | — | — | NOT_RUN |
+| C-BASE-01 | ConvNeXt-Small Anatomy 2F | — | NOT_RUN |
+| C-OA-01 | Base + OA extent aux | — | NOT_RUN |
+| C-MIRROR-01 | C anatomical mirror TTA | — | NOT_RUN |
 
 ## Cache table
 
-| Cache | Studies | Rows/Views | Packs | SHA | Status |
-|---|---:|---|---:|---|---|
-| C-ANATOMY-CACHE320-V1 | TBD | variable | preflight에서 결정 | TBD | NOT_RUN |
-
-## Decision log
-
-### 2026-10-17 — Branch-C 설계 시작
-- 시간이 허락할 경우 Branch-B 이후 진행.
-- S8C Top18 비사용.
-- Full-FOV + 100mm anatomy-centered local views.
-- thin 3D stack은 약 3.5mm slab로 변환.
-- ConvNeXt-Small full fine-tuning.
-- target-specific spatial attention + target-specific window MIL.
-- 64 windows/Study.
-- 4,349 report studies full train, Gold58 제외.
-- 16 epoch, encoder 1e-4/head 1e-3, WD .05, cosine+5% warmup.
-- standalone → mirror TTA → A+C/A+B+C rank blend로 평가.
+| Cache | Studies | Packs | Resolution | Windows | Status |
+|---|---:|---:|---:|---:|---|
+| C-ANATOMY-CACHE320-V1 | 4,407 planned | 6 | 320 | max 64 | NOTEBOOK_READY / NOT_RUN |
