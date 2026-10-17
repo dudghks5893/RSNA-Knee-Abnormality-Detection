@@ -1,3 +1,33 @@
+<!-- ACTUAL_STATUS_2026_10_18_BRANCH_C_START -->
+## 2026-10-18 — Branch A/B/C 통합 current status
+
+상세 cold-start 문서:
+- [RSNA_KNEE_BRANCH_C_START_HANDOFF_2026-10-18.md](RSNA_KNEE_BRANCH_C_START_HANDOFF_2026-10-18.md)
+
+### Branch-A
+- **S11 LAST 2F standalone Public LB = 0.926** 확정.
+- 현재 **S11 LAST 70% + S8C Full-MRI Direct 30% submission 진행 중 / LB 대기**.
+- Notebook: `S11_LAST_70_S8C_DIRECT_30_2F_LB_SUBMISSION_V1.ipynb`
+- SHA: `1936890da1c28fa1e55fdaf3981cc07e71b2b2b651afbcb39b50c63068b5ff5d`
+- 결과가 >0.926이면 Branch-A main 승격. =0.926이면 S11 standalone과 S10 hybrid 둘 다 보존. <0.926이면 S11 standalone 0.926을 유지하고 무분별한 ratio search는 하지 않는다.
+
+### Branch-B
+- **실제 실행 상태는 V3 TRAIN_RUNNING**.
+- 실행 중 Notebook: `B_COATNET_WIDE96_2F_BASE_V3.ipynb`
+- SHA: `bb3527a1c8b6fd6f6585295413420720d341ee4c61b8b04de25ca1ee5a6bf3f4`
+- Fold0→GPU0 / Fold1→GPU1 independent, DDP=false.
+- **V3를 V4가 있다는 이유로 중단하지 않는다.**
+- V4(`45f77cd...`)는 재실행 필요 시 또는 다음 유사 실험의 execution-hardening reference다.
+- Base 결과 후 순서: **2F standalone LB → V4 Strict 고신뢰 FT → Strict standalone LB → Branch-A와 A+B ensemble**.
+- Strict FT에서는 DINO precedent 때문에 `best.pt`와 `last.pt`를 둘 다 보존하는 방향을 우선 검토한다.
+
+### Branch-C
+- **NOT_RUN / DESIGN_REVIEW_ACTIVE**.
+- 기다리는 동안 바로 C-DESIGN-V2 상세 설계를 진행한다.
+- 기존 C-DESIGN-V1의 `latest B soft label`, `single full-data model`, `Branch-B 완료 후 시작` 가정은 자동 실행하지 않는다.
+- supervision은 **V4 Routed Broad Base → V4 Strict FT** 구조를 우선 검토하고, 2-Fold 여부도 A/B 경험을 반영해 재결정한다.
+- exact ConvNeXt pretrained / anatomy anchor / view/cache / spatial attention / MIL / GPU resource contract를 확정하기 전 training/cache Notebook 생성 금지.
+
 ### S11 최신 상태 — 2026-10-18
 
 - **S11 LAST 2F standalone Public LB = 0.926** (사용자 보고).
