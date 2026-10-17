@@ -1,3 +1,17 @@
+## 2026-10-18 — C-CACHE-V3 V2 PATHFIX 실제 실행 실패, V3 QUOTAFIX 준비
+
+V2 실제 실행은 128/128 Study를 약 4.7분에 geometry/header audit 완료했으나 마지막 `windows<=64` gate에서 FAIL.
+원인은 family별 모든 group 1-window seed가 32-window family budget보다 커질 수 있었던 allocator 버그.
+DICOM path/geometry failure는 0건이므로 segmentation-free design 자체는 유지한다.
+
+V3:
+- plane/view strata round-robin seed
+- total 64 hard cap
+- deterministic capacity refill
+- B cache에서 검증된 threaded specific-tag DICOM header reader 패턴 반영
+- Notebook SHA256: `5035315bd91d7db98762d2bd7eaf2710987e2c67863fc6d37960e1ee1101daa8`
+- 상태: STATIC_QA_PASS / KAGGLE_NOT_RUN
+
 ## 2026-10-18 — C-CACHE-V3 Preflight V2 PATHFIX
 
 - V1 preflight bug: Competition DICOM directory를 `train_images/`로 잘못 고정해 첫 input gate에서 실패.
