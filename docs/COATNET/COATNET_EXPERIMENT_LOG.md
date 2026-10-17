@@ -1,3 +1,37 @@
+## 2026-10-17 — B-COAT-WIDE96-FT-V2 notebook READY
+
+**상태: TRAIN_READY / NOT_RUN**
+
+Authoritative notebook:
+- `B_COATNET_WIDE96_FT_V2.ipynb`
+- SHA `bd78e9b1c1b0fd5dc65f98c2fde5d67bfb7665440eb49f5eeecdfbd918d1d14c`
+- V1: **OBSOLETE / DO_NOT_RUN**
+
+Labels:
+- V4 Routed Broad
+- path `/kaggle/input/datasets/yhlucas/rsna-knee-v4-consensus-dataset/rsna_knee_pseudolabels_v4_routed_broad.csv`
+- SHA `93863c59f99a70e2fd5c2d1674bc91266f3c459d398755911e033dbdac8d381c`
+- 4,349 Studies
+- `weight=.25+.75*confidence`
+
+Pretrained:
+- `/kaggle/input/models/blueberry808/coatnet-rmlp-2-rw-384-sw-in12k-ft-in1k/pytorch/default/1/coatnet_rmlp_2_rw_384_sw_in12k_ft_in1k.pth`
+- architecture `coatnet_rmlp_2_rw_384.sw_in12k_ft_in1k`
+- mounted SHA recorded at run time
+- backbone pretrained parameter coverage >=99%
+- feature dim **1024**
+
+Training:
+- T4×2 DDP
+- 16 epochs
+- global effective Study batch 16
+- 12 train windows / 94 dense DEV positions
+- activation checkpoint
+- window microbatch benchmark 12→8→6→4→3→2, no 1
+- Gold58 DEV only
+- epoch8~16 top3 global checkpoint parameter average
+
+
 ## 2026-10-17 — B-COAT-WIDE96-FT-V1 본학습 Notebook 생성
 
 Notebook:
@@ -230,7 +264,7 @@ S11 학습과 병렬 또는 직후:
 ## Status
 
 - Branch: **B — CoAtNet Wide-MRI Expert**
-- Current state: **CACHE_COMPLETE / TRAIN_NOT_RUN**
+- Current state: **TRAIN_READY_V2 / NOT_RUN**
 - Design version: **B-DESIGN-V1**
 - Baseline 목적 아님. 첫 실행부터 고득점 가설 설계를 사용한다.
 
