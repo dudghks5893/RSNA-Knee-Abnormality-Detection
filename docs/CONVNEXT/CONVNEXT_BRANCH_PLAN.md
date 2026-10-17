@@ -1,3 +1,51 @@
+# 2026-10-18 — C-CACHE-V3 PREFLIGHT PASS → C-CACHE-V4 5-Pack 본 캐시 동결
+
+상태: **C-DESIGN-V4 / PREFLIGHT_PASS / FULL_CACHE_5PACK_READY / FULL_CACHE_NOT_RUN**
+
+실제 실행 결과:
+- 128/128 Studies PASS, error 0
+- runtime 1.77 min
+- 64 windows/Study exact
+- Global 32 / Local 32 exact
+- max windows 64 / zero-window Study 0
+- sample Series ordering: IOP/IPP 734/734
+- external anatomy model 없음 / segmentation 없음
+- competition-only input
+
+Storage finding:
+- mean unique rendered rows = 191.211 / 192
+- mean storage ratio vs dense triplet = 0.9959
+- 즉 dedup 절감은 평균 약 0.41%뿐이며 128 Study 중 108 Study는 192/192 unique로 절감이 0이었다.
+- 따라서 V4 본 cache는 indirect unique-row/index 구조를 폐기하고 **dense [N,64,3,320,320] uint8**로 단순화한다.
+- 이는 sampling/window 의미를 바꾸는 것이 아니라 저장 형식만 단순화하는 결정이다.
+
+Pack count:
+- 4 Pack max 1,102 Studies 기준 raw pixel payload가 약 21.66 GB로 19 GB output cap 초과 → 불가.
+- 5 Pack counts = 882 / 882 / 881 / 881 / 881.
+- max Pack raw pixel payload = 17.3408256 GB (16.1499 GiB).
+- metadata + 250 MB safety allowance 포함 약 17.593 GB.
+- 따라서 **5 Pack = exact minimum feasible**.
+- 이전 preflight JSON의 6-Pack recommendation은 mean projection ×1.15 margin + 16.5 GiB/Pack heuristic에서 나온 보수값이므로 authoritative pack count에서 대체한다.
+
+Local crop correction:
+- unshifted 110 mm local crop preflight에서 mean coverage는 0.9730이지만 일부 Study의 min coverage가 0.4416까지 내려갔다.
+- V4 full cache는 zero-padding을 기본으로 하지 않는다.
+- requested local center가 FOV 밖으로 벗어나면 **110 mm crop 크기를 유지한 채 shift-to-fit**한다.
+- source FOV 자체가 110 mm보다 작을 때만 available extent를 사용하고 crop_coverage metadata에 기록한다.
+- Global은 physical aspect-ratio preserving letterbox 후 320 resize.
+
+Authoritative full-cache notebooks:
+- C_GEOM_MV320_CACHE_V4_P00.ipynb — 882 Studies
+- C_GEOM_MV320_CACHE_V4_P01.ipynb — 882
+- C_GEOM_MV320_CACHE_V4_P02.ipynb — 881
+- C_GEOM_MV320_CACHE_V4_P03.ipynb — 881
+- C_GEOM_MV320_CACHE_V4_P04.ipynb — 881
+- CPU / Internet OFF / competition input only
+- 각 Notebook은 8-Study actual-pixel sanity gate 후 full pack build, full readback QA, HDF5 SHA를 수행한다.
+- **실행 순서: P00만 먼저 실행 → PASS 확인 후 P01~P04 병렬/순차 실행.**
+
+---
+
 # 2026-10-18 — C-CACHE-V3 Preflight V2 실패 / V3 QUOTAFIX
 
 상태: **PREFLIGHT_V2_FAIL_QUOTA_ONLY / V3_READY**
