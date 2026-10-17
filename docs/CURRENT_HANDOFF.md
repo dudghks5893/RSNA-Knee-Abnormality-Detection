@@ -114,3 +114,14 @@ S11은 이 파이프라인의 selector/Top18/라벨을 바꾸지 않고 **영상
 - S8C: `yhlucas/s8c-hier-attn-mil`
 
 정확한 SHA, LR, loss, Stage별 설정은 반드시 [DINO·S Data/Model Contract](DINO_S/S1-DINO-CBL2F-01_DATA_MODEL.md)를 읽고 복원한다. 공통 Kaggle/GPU 규칙은 [AI Agent Notebook Rules](AI_AGENT_KAGGLE_NOTEBOOK_RULES.md) 및 [GPU Batch Policy](GPU_BATCH_RESOURCE_MANDATORY_POLICY.md)를 따른다.
+
+
+### Branch-B cache 상태 — 2026-10-17
+
+- CoAtNet Wide96 metadata/header PRE-FLIGHT **PASS**.
+- 4,407 Studies / 24,371 Series / selected 20,792 Series.
+- header failure 0.
+- Pack 수 **4개 확정**: 1102 / 1102 / 1102 / 1101.
+- Pack00~03 본 cache notebooks 제작/정적 QA 완료.
+- 아직 실제 HDF5 cache는 NOT_RUN.
+- 다음: Pack00~03 CPU Save & Run All → 4개 PASS 검증 → Branch-B CoAtNet 16ep training.
