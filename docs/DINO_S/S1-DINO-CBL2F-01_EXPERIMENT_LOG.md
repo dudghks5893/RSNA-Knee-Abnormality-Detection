@@ -1,3 +1,38 @@
+
+
+## 2026-10-18 — Hidden-test submission issue / diagnostic-safe resolution
+
+이 항목은 이후 모든 submission Notebook의 공통 robustness contract다.
+
+### 기존 문제
+- strict DICOM/header/slice assert가 작은 slice/Series 오류를 Study 실패로 확대할 수 있었음.
+- Study 전체 실패 시 neutral `0.5` placeholder를 넣는 fallback은 Notebook 제출 자체는 성공시켜도 실제 MRI inference 실패를 숨길 수 있었음.
+
+### 해결
+1. Series 정렬: **IOP/IPP physical position → InstanceNumber → natural filename**.
+2. 누락 가능한 header는 무조건 strict assert하지 않고 실제 사용 가능한 geometry를 우선.
+3. 개별 slice decode 실패는 nearest-valid decoded slice 등 deterministic slice rescue.
+4. bad Series는 skip하고 같은 Study의 다른 실제 Series를 계속 사용.
+5. Fold/branch 일부 실패 시 surviving real-image Fold/branch로 rescue.
+6. S8C selector가 모두 실패하는 예외에는 label-free deterministic emergency Top18만 허용.
+7. **Study-level 0.5 fallback 제거**. 실제 MRI 기반 prediction branch가 하나도 없으면 submission을 억지로 완성하지 않고 intentional FAIL.
+
+### 검증
+Diagnostic-safe Notebook:
+`S10_LAST_70_S8C_DIRECT_30_2F_LB_SUBMISSION_V3_DIAGNOSTIC_SAFE.ipynb`
+
+실제 hidden test에서 robust DICOM/Stage1/S8C selector/direct/final branch가 실제 이미지 기반으로 완료되었고,
+**Study-level neutral 0.5 fallback 0건 / Public LB 0.926**으로 정상 검증됨.
+
+S11 standalone 및 S11 70:30 Notebook은 이 hidden-tested robust path를 기반으로 작성됨.
+
+### 이후 공통 규칙
+- slice → Series → Fold → Branch 순서의 실제 이미지 rescue.
+- skipped Series / alive Fold / rescue count를 audit CSV/JSON에 기록.
+- hidden selector에 V4/Gold 정답 방향 사용 금지.
+- **Study-level 0.5 placeholder 금지.**
+- real-image prediction branch 0개면 fail-fast.
+
 <!-- S11_70_30_SUBMISSION_RUNNING_2026_10_18 -->
 ## 2026-10-18 — S11 standalone 0.926 확정 / 70:30 submission 진행 중
 
