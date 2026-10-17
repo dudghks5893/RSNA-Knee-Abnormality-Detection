@@ -1,3 +1,14 @@
+<!-- CONVNEXT_V2_DESIGN_PHASE_2026_10_18 -->
+## 2026-10-18 — Branch-C 설계 재검토 단계 진입
+
+- **실제 학습/캐시 실행 결과는 아직 없음.**
+- Current state: `C-DESIGN-V2_REVIEW / NOT_RUN`.
+- Branch-A S11 standalone 0.926과 Branch-B Wide96 V3 2F training 경험을 반영해 기존 C-DESIGN-V1을 재검토한다.
+- supervision은 LABEL-V6가 아니라 **V4 Routed Broad Base**를 우선 기준으로 검토.
+- 후속 **V4 Strict FT**와 2-Fold 구조를 우선 논의.
+- exact ConvNeXt pretrained/anatomy anchor가 고정되기 전에는 실행 Notebook 생성 금지.
+- high-score ConvNeXt source bundle의 `compact_train.py`, `compact_infer.py`, `knee_anchor_bank_v2.py`, `side_common.py` 계보를 코드 기준으로 audit한 뒤 C-DESIGN-V2를 확정한다.
+
 # Branch-C ConvNeXt — Cumulative Experiment Log
 
 최종 갱신: **2026-10-17**
