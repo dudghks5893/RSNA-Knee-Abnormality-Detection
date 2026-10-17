@@ -1,3 +1,247 @@
+# 2026-10-18 — C-DESIGN-V4 AUTHORITATIVE / Segmentation-Free Geometry Multi-View
+
+상태: **DESIGN_V4_FROZEN / V3_PREFLIGHT_READY / CACHE_NOT_RUN / TRAIN_NOT_RUN**
+
+이 섹션이 Branch-C의 최신 authoritative 설계다. 아래의 C-DESIGN-V3/V2/V1 및 anatomy-segmentation 기반 cache notebook은 과거 설계 이력으로만 보존하며 실행하지 않는다.
+
+## 1. 핵심 결정
+
+Branch-C 기본 전처리에서 **무릎 anatomy segmentation network를 완전히 제거**한다.
+
+이유:
+- 외부 reference는 참고용이지 재현 자체가 목표가 아님.
+- hidden test에서도 segmentation model을 매 Study 추가 실행하면 제출 전체 A+B+C inference latency가 증가.
+- 과거 사용자 실험에서 anatomy segmentation preprocessing이 매우 느렸음.
+- 공개 참고자료 중 CoAtNet/Raptor 및 compact v1/v2/v3 계열은 segmentation 없이도 physical crop / fixed local prior / target attention으로 동작.
+- C의 핵심 차별점은 segmentation이 아니라 **Global + geometry-local multi-view + target-specific spatial attention + Window MIL**이다.
+
+Required Input:
+- **RSNA Knee Abnormality Detection competition only**
+- 외부 anatomy.pt / cloud_code / reference manifest는 Required Input에서 제거.
+
+## 2. A/B/C 역할 분리
+
+### Branch-A — DINO Search / Selector Expert
+- Native224 / 130mm 중심 crop 기반.
+- Stage1에서 Study당 18 Window.
+- Stage2에서 전체 valid MRI Window를 feature화.
+- S8C가 target-specific Window/Series importance를 계산.
+- Top18 선택 후 S10/S11이 재판독.
+- S11 Multi-View는 **선택된 동일 Top18 center를 110/130/160mm로 확대·축소**.
+- 담당: **MRI 전체에서 어디가 중요한지 찾고 집중 재판독**.
+
+### Branch-B — CoAtNet Wide/Dense Coverage Expert
+- fixed Wide96 anatomical slot.
+- SAG fluid/non-fluid, COR fluid/non-fluid, AXIAL을 명시적으로 확보.
+- Native384, 약 140mm center crop.
+- Stack 6~94%를 넓게 sampling.
+- target-specific Window Attention.
+- 담당: **미리 많이 버리지 않고 MRI 전체를 촘촘히 읽어 miss를 줄임**.
+
+### Branch-C — ConvNeXt Geometry Multi-View Spatial Expert
+- fixed Wide96이나 S8C Top18을 재사용하지 않음.
+- 전체 Series에서 Global + geometry-local view 후보를 생성.
+- Study당 최대 64 overlapping 2.5D Window를 coverage-first로 선택.
+- 같은 slice 위치라도 Global/Center/Anterior/Posterior/Bilateral 등 **위치가 다른 관찰창**을 만들 수 있음.
+- ConvNeXt feature map에서 12 target spatial attention 후 target-specific Window MIL.
+- 담당: **각 Window 내부의 어느 해부학적 위치를 봐야 하는지 학습**.
+
+요약:
+- A = WHERE among slices?
+- B = SEE EVERYTHING densely.
+- C = WHERE inside the image / which physical view?
+
+## 3. C-DATA-V4 파이프라인
+
+Raw DICOM
+→ DICOM header/geometry parse
+→ IOP/IPP physical ordering
+→ InstanceNumber / filename fallback
+→ plane inference from IOP normal
+→ PixelSpacing 기반 physical geometry
+→ thin-stack physical slab
+→ Global + fixed physical-offset local views
+→ 320×320 uint8 rendered rows
+→ unique rendered row storage
+→ 64 overlapping 2.5D windows via index
+→ train RandomCrop 320→288 / val center crop
+→ ConvNeXt-Small
+→ target-specific Spatial Attention
+→ target-specific Window MIL
+→ 12 targets
+
+## 4. Segmentation-Free Geometry Views
+
+Local center는 모델이 찾는 것이 아니라 **DICOM patient physical coordinate**를 이용한다.
+
+DICOM patient axes:
+- X = L/R
+- Y = P/A
+- Z = F/H
+
+Plane별 기본 view:
+
+### Sagittal
+- GLOBAL
+- CENTER local
+- ANTERIOR local: patient anterior 방향 physical offset
+- POSTERIOR local: patient posterior 방향 physical offset
+
+### Coronal
+- GLOBAL
+- bilateral local pair: patient L/R 방향 ± physical offset
+- laterality가 확실할 때만 medial/lateral 의미를 부여.
+- laterality가 불확실하면 BILAT_A/B처럼 symmetric pair로만 사용하고 잘못된 hard semantic을 주지 않음.
+
+### Axial
+- GLOBAL
+- CENTER local
+- ANTERIOR local
+- POSTERIOR local
+
+초기 physical constants:
+- local FOV: **110 mm**
+- anterior/posterior offset: **30 mm**
+- coronal bilateral offset: **±30 mm**
+
+이 수치는 C-CACHE-V3 preflight에서 crop coverage를 보고 조정 가능하지만, B의 140mm 단일 center crop 구조를 복제하지 않는다.
+
+## 5. Thin-stack
+
+- median physical spacing < 1.75 mm인 thin stack은 약 3.5 mm slab로 묶음.
+- 원본 slice를 단순 stride로 버리는 방식이 아니라 slab averaging.
+- 목적: 0.4~1.5mm 3D acquisition의 near-duplicate depth가 64-window budget을 과점하지 않도록 physical depth를 정규화.
+
+## 6. 64-window selection
+
+- 최대 64 Window / Study.
+- Window = [prev, center, next].
+- overlap 유지.
+- stride 3으로 바꿔 window를 줄이지 않음.
+- Global family 약 32 / Local family 약 32를 초기 목표.
+- 모든 valid Series/View group 최소 coverage 우선.
+- 남는 quota는 group capacity에 따라 deterministic 배분.
+- group 내 center는 physical-order 전체 범위에 균등 배치.
+- 총 candidate가 64 미만이면 valid_mask 사용.
+
+C는:
+- A의 Top18 selector 결과를 사용하지 않음.
+- B의 fixed 96-slot layout을 사용하지 않음.
+
+## 7. Cache V3 저장 구조
+
+성능 입력과 저장 중복을 분리한다.
+
+학습 Window:
+- [20,21,22]
+- [21,22,23]
+- [22,23,24]
+그대로 유지.
+
+저장:
+- unique rendered rows를 한 번만 보관.
+- window_index가 각 3-channel Window를 재구성.
+
+예:
+- pixels = slice20,21,22,23,24
+- window_index = [0,1,2], [1,2,3], [2,3,4]
+
+즉 **중복 Window를 제거하지 않고 중복 파일 저장만 제거**한다.
+
+예정 schema:
+- pixels: [N_unique,320,320] uint8
+- pixel_meta: row-level metadata
+- window_index: [N_window,3] int32
+- window_meta: [N_window,12] float32
+- study_ptr / study_uid / valid_mask
+
+## 8. C-CACHE-V3 Geometry Preflight
+
+Notebook:
+`C_CACHE_V3_GEOMETRY_PREFLIGHT.ipynb`
+
+SHA256:
+`fda85064c4ce09bdd7501b985055ef90ba6ee39a54be43ea967e810a76e2e3ac`
+
+Status:
+- STATIC_QA_PASS
+- KAGGLE_NOT_RUN
+
+Required Input:
+- RSNA competition only.
+
+Preflight:
+- 128 Study deterministic spread sample.
+- DICOM IOP/IPP/PixelSpacing만 사용.
+- segmentation/network preprocessing 없음.
+- Study별 Series/plane/slab/view/window 수 측정.
+- Global vs Local window count 측정.
+- crop coverage / padding fraction 측정.
+- unique rendered rows vs duplicated triplet rows 측정.
+- 전체 4,407 Study projected cache GiB 계산.
+- 15% safety margin.
+- 16.5 GiB/Pack 목표로 recommended Pack count 출력.
+
+Outputs:
+- c_cache_v3_preflight_study_metrics.csv
+- c_cache_v3_capacity_plan.json
+- c_cache_v3_preflight_receipt.json
+
+이 preflight 결과 전에는 2/3/4/5 Pack을 임의 확정하지 않는다.
+
+## 9. C-BASE 모델 구조
+
+Backbone:
+- ConvNeXt-Small, ImageNet pretrained, full fine-tuning.
+- exact timm ID / offline checkpoint / SHA는 training notebook 전에 고정.
+
+입력:
+- 2.5D [prev, center, next].
+- cache 320, train 288 random crop, val/test 288 center crop.
+
+Spatial stage:
+- 마지막 ConvNeXt spatial feature map을 즉시 GAP하지 않음.
+- 12 learned target queries.
+- target별 spatial softmax.
+- 12 target-specific window feature 생성.
+
+Window MIL stage:
+- 최대 64 windows.
+- target-specific Window attention.
+- metadata gate: plane, view, relative position, spacing, sequence characteristics 등.
+- 최종 12 logits.
+
+## 10. Base supervision / Fold
+
+기본:
+- V4 Routed Broad 4,349 report Studies.
+- Gold58 frozen 29/29 split.
+- Fold0 train = V4 4,349 + opposite Gold29 / val own Gold29.
+- Fold1 동일 반대 구조.
+- Fold0 GPU0 / Fold1 GPU1 independent.
+- LABEL-V6 soft는 Base 기본값 아님.
+
+## 11. 후속 실험
+
+Base 이후에만 one-variable experiments:
+1. C-OA-01 — high-confidence OA extent auxiliary.
+2. C-MIRROR-01 — anatomical mirror inference TTA.
+3. resolution 288→320→384.
+4. local FOV/offset 조정.
+5. window count/density.
+6. A+B+C target-wise ensemble.
+
+## 12. 폐기 상태
+
+DO NOT RUN:
+- C_ANATOMY_CACHE320_V1_P00~P05
+- C_CACHE_V2_SIZE_PREFLIGHT
+- anatomy.pt / SKM-TEA segmentation 기반 C-DESIGN-V3 cache path
+
+과거 문서는 설계 변경 이유 추적용 archive로만 유지.
+
+---
+
 # 2026-10-18 — C-CACHE-V2 저장구조 전환 / V1 6-Pack 실행 금지
 
 상태: **C-CACHE-V2_PREFLIGHT_READY / V1_SUPERSEDED**
