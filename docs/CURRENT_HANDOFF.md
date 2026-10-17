@@ -7,17 +7,20 @@
 - CoAtNet pretrained:
   `/kaggle/input/models/blueberry808/coatnet-rmlp-2-rw-384-sw-in12k-ft-in1k/pytorch/default/1/coatnet_rmlp_2_rw_384_sw_in12k_ft_in1k.pth`
 - feature dim: **1024**
-- authoritative notebook: `B_COATNET_WIDE96_2F_BASE_V3.ipynb`
-- notebook SHA: `bb3527a1c8b6fd6f6585295413420720d341ee4c61b8b04de25ca1ee5a6bf3f4`
-- V1/V2: **DO_NOT_RUN**
+- authoritative notebook: `B_COATNET_WIDE96_2F_BASE_V4.ipynb`
+- notebook SHA: `45f77cd959d984577099b0a67f406b0e3f98296a4950d4b1a7dafeccc04f649f`
+- V1/V2/V3: **DO_NOT_RUN**
 - training mode: **Fold0→GPU0 / Fold1→GPU1 independent; DDP=false**
 - Fold0: train V4 4349 + Gold Fold1 29 / val Gold Fold0 29
 - Fold1: train V4 4349 + Gold Fold0 29 / val Gold Fold1 29
 - physical Study batch: **4→2→1 actual training-graph benchmark**
 - effective Study batch: **16 / Fold**
+- V4: real HDF5 384→320 optimizer-step resource probe + **128 real Study runtime projection**
+- V4: activation checkpoint uses **BN-safe recompute**; BatchNorm is not globally frozen
+- projected concurrent 16ep wall time > **4.0h**이면 Epoch1 전에 block
 - Base checkpoint: **Fold별 own Gold29 Macro AUROC best.pt 하나만 저장**
 - no last / no SWA / no top3 averaging in Base
-- immediate next: **V3 T4×2 Save & Run All → resource probe → two independent 16ep folds → fold0/best.pt + fold1/best.pt**
+- immediate next: **V4 T4×2 Save & Run All → real HDF5 resource probe → 128-Study runtime gate → two independent 16ep folds → fold0/best.pt + fold1/best.pt**
 
 
 # RSNA Knee — 현재 인수인계 및 문서 탐색
