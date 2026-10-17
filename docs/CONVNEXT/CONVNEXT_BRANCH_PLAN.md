@@ -1,3 +1,35 @@
+<!-- CONVNEXT_DESIGN_REVIEW_ACTIVE_2026_10_18 -->
+## 2026-10-18 — C-DESIGN-V2 상세 재설계 시작
+
+상태: **NOT_RUN / DESIGN_REVIEW_ACTIVE**
+
+사용자 결정:
+- S11 70:30 submission과 Branch-B V3 training 결과를 기다리는 동안 **Branch-C 상세 설계를 먼저 진행**한다.
+- 현재 C-DESIGN-V1을 바로 training/cache Notebook으로 구현하지 않는다.
+
+C-DESIGN-V1에서 재검토가 필요한 오래된 가정:
+1. `latest B soft-label dataset` → 실제 모델 evidence상 **V4 Routed Broad 우선**으로 수정 검토.
+2. `single full-data model` → A/B의 2-Fold 경험을 반영해 **2-Fold Base 여부 재결정**.
+3. `Branch-B 완료 후 시작` → 결과를 기다리는 동안 **설계/코드 audit은 지금 시작**.
+4. Base 이후 **V4 Strict high-confidence FT**를 C에도 적용할지 검토.
+5. Base checkpoint policy와 Strict FT의 `best/last` 보존 정책 재결정.
+
+다음 채팅의 설계 Gate:
+- high-score ConvNeXt reference code 실제 audit
+- exact timm ConvNeXt model/pretrained checkpoint identity
+- anatomy anchor checkpoint/source/license/SHA/offline mount
+- Global/Local/PF/posterior view set
+- thin-stack 3.5mm slab implementation
+- 320 cache / 288 input / 64-window budget 재검증
+- target-specific spatial attention + Window MIL exact architecture
+- V4 Broad Base / V4 Strict FT / 2-Fold 여부
+- class balancing / rare-positive sampler
+- actual T4×2 physical Study batch + Window microbatch throughput benchmark
+- 4h target / 8h no-go runtime gate
+- CPU cache / GPU train 분리
+
+위 항목 동결 전에는 Branch-C cache/training Notebook을 생성하지 않는다.
+
 # Branch-C ConvNeXt Anatomy Expert — Authoritative Design & Roadmap
 
 최종 갱신: **2026-10-17**  
