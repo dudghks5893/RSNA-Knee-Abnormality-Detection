@@ -1,3 +1,49 @@
+## 2026-10-18 — C-BASE-01 ConvNeXt Geometry64 2F training notebook READY
+
+상태: **CACHE_COMPLETE / TRAIN_NOTEBOOK_READY / TRAIN_NOT_RUN**
+
+Authoritative training notebook:
+- `C_CONVNEXT_GEOM64_2F_BASE_V1.ipynb`
+- SHA256: `d95f4921d7587089c803c0bef0ec15e384fa6d78774ecdc0506c556bf69e74eb`
+- source 43,250 bytes (<1MB)
+- nbformat PASS / all code AST PASS / embedded worker AST PASS
+
+Scientific contract:
+- Backbone: `convnext_small.fb_in22k_ft_in1k`
+- official timm pretrained `model.safetensors`
+- pretrained bytes: 200,928,946
+- pretrained SHA256: `2457488bec2ffcb2061b9e3fdd63360114549615e3e35ef6dc5c5efe549cbbc9`
+- C-CACHE-V4 exact 5 HDF5 paths/SHA gate
+- 64 windows/Study, 320 cache → 288 train/val
+- target-specific spatial attention on final ConvNeXt feature map
+- target-specific Window MIL + 8-channel metadata attention gate
+- V4 Routed Broad 4,349 + opposite Gold29 train / own Gold29 val
+- Fold0 GPU0 / Fold1 GPU1 independent, No DDP
+- 16 fixed epochs / no early stopping
+- Base checkpoint = Fold own-Gold29 Macro AUROC best.pt only
+- encoder LR 1e-4 / head LR 1e-3 / AdamW WD .05 / warmup5% / cosine / FP16 / clip5 / seed42
+- rare-positive Study sampler: MCL3, Fracture2.5, Contusion2, Baker1.5, PF OA1.5
+
+Mandatory execution gate before Epoch1:
+- exact T4×2
+- real HDF5 optimizer-step probe
+- physical Study batch 2→1
+- Window chunk 64→48→32→24→16→12→8→6→4→2; chunk1 forbidden
+- 128 real train Studies per Fold benchmark
+- full own-Gold29 validation timing
+- both probes run concurrently to include I/O contention
+- projected 16ep wall time +10% margin >4h → fail-fast before full training
+
+Required new model input:
+- official timm/Hugging Face `timm/convnext_small.fb_in22k_ft_in1k`
+- exact safetensors SHA above; random-init/alternative backbone fallback forbidden.
+
+Immediate next:
+1. Kaggle Add Input에서 exact ConvNeXt Small pretrained model을 attach.
+2. T4×2 / Internet OFF / Save & Run All.
+3. probe PASS 및 projected <=4h이면 Notebook이 자동으로 Fold0/Fold1 본학습 시작.
+4. projected >4h 또는 input path gate fail이면 full train은 시작하지 않고 probe/input 결과를 공유해 수정.
+
 ## 2026-10-18 — C-CACHE-V4 5-Pack FULL CACHE COMPLETE / TRAIN READY
 
 - Final audit: [C_CACHE_V4_FINAL_AUDIT.md](C_CACHE_V4_FINAL_AUDIT.md)
