@@ -116,6 +116,25 @@ S11은 이 파이프라인의 selector/Top18/라벨을 바꾸지 않고 **영상
 정확한 SHA, LR, loss, Stage별 설정은 반드시 [DINO·S Data/Model Contract](DINO_S/S1-DINO-CBL2F-01_DATA_MODEL.md)를 읽고 복원한다. 공통 Kaggle/GPU 규칙은 [AI Agent Notebook Rules](AI_AGENT_KAGGLE_NOTEBOOK_RULES.md) 및 [GPU Batch Policy](GPU_BATCH_RESOURCE_MANDATORY_POLICY.md)를 따른다.
 
 
+
+### S11 상태 — 2026-10-17
+
+- hidden-test diagnostic-safe 0.926 제출 **정상 제출 + Public LB 0.926** 확인.
+  - 따라서 기존 robust DICOM / Stage1 / S8C selector path가 hidden에서도 실제 이미지 기반 예측으로 완료됨.
+  - Study-level neutral 0.5 placeholder는 사용되지 않음.
+- S11 Multi-View 2Fold training **COMPLETE**.
+  - Fold0 LAST Gold29 AUC 0.921638
+  - Fold1 LAST Gold29 AUC 0.864267
+  - pooled Gold58 DEV Epoch1 0.892728 / Epoch2(LAST) 0.887924
+- S11 LAST checkpoint SHA:
+  - F0 `2c962f22a1ebc55de81ee674c0f8e9b2c69001f028bc3db19dd6b114aa8f2dec`
+  - F1 `6647156f1bad9ed073b135ebea9c5bd4452d9483a17186c69a1dd04d22ae40bf`
+- S11 LAST 2F standalone submission notebook generated; local SHA:
+  `8704eb57f9a6e19b0befa842c8de9d3e9ce8ab3590575548fddec851a8e06739`.
+- **Immediate next:** S11 LAST standalone Public LB → if useful, `S11 70 + S8C Direct 30`.
+- Epoch1 is locally stronger than LAST on pooled Gold58 DEV and remains a follow-up submission candidate if retained.
+
+
 ### Branch-B cache 상태 — 2026-10-17
 
 - CoAtNet Wide96 metadata/header PRE-FLIGHT **PASS**.
