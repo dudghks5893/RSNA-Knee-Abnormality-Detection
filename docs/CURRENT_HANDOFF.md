@@ -1,3 +1,24 @@
+## 2026-10-18 Branch-C cache latest
+
+C-CACHE-V3 segmentation-free geometry preflight completed:
+- PASS 128/128, 1.77 min
+- exact 64 windows = Global32 + Local32
+- no external anatomy/segmentation
+- dedup ratio 0.9959 → storage dedup is not useful
+
+Final cache storage decision:
+- C-CACHE-V4 dense windows
+- shape per Study: 64×3×320×320 uint8
+- 5 Packs: 882/882/881/881/881
+- 5 Pack is the minimum that stays below the 19 GB output cap
+- local crop uses 110 mm shift-to-fit; source FOV<110 mm only uses available extent
+
+Next:
+- Run P00 first: `C_GEOM_MV320_CACHE_V4_P00.ipynb`
+- If final `C GEOM MV320 CACHE PACK PASS`, continue P01~P04.
+- Do not run old V1/V2/V3 full-cache notebooks.
+
+
 ## 2026-10-18 — C-CACHE-V3 Preflight V2 PATHFIX
 
 - V1 preflight bug: Competition DICOM directory를 `train_images/`로 잘못 고정해 첫 input gate에서 실패.
