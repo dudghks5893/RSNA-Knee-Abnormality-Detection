@@ -1,3 +1,47 @@
+# 2026-10-18 — C-CACHE-V2 저장구조 전환 / V1 6-Pack 실행 금지
+
+상태: **C-CACHE-V2_PREFLIGHT_READY / V1_SUPERSEDED**
+
+사용자와 검토 후 C cache 저장구조를 수정한다.
+
+- 학습/추론 Window 선택은 변경하지 않는다.
+- 기존 C-BASE 64-window contract는 그대로 유지한다.
+- `[20,21,22] / [21,22,23] / [22,23,24]` 같은 overlapping 2.5D Window를 그대로 사용한다.
+- 제거하는 것은 **디스크에 반복 저장되는 동일 rendered slice의 복사본뿐**이다.
+- V2는 `unique_pixels [N_unique,320,320]` + `window_index [N_window,3]`로 exact reconstruction한다.
+- Preflight에서 old duplicated-triplet tensor와 V2 reconstruction을 `np.array_equal`로 전 Study 검증한다.
+- 따라서 stride를 3으로 바꾸거나 Window 수를 줄이는 방식은 사용하지 않는다.
+
+공개 참고자료 근거:
+- public `px_cache.py`는 `one row per (series, view, slice)`의 per-slice 저장 방식을 사용한다.
+- 따라서 V2는 reference의 저장 철학과도 더 가깝다.
+- 단, 우리 C는 전체 rendered rows를 모두 보관하지 않고 **선택된 C-BASE 64 windows를 재구성하는 데 실제 필요한 unique rows만 저장**하는 것을 목표로 한다.
+- 이 선택은 C-BASE 입력을 바꾸지 않지만, 향후 64보다 더 dense한 window 실험은 별도 cache가 필요할 수 있다.
+
+### Pack 수 결정 방식
+
+기존 V1의 6-Pack은 `64×3×320×320` triplet을 매 Study 고정 저장하는 hard upper-bound에서 정한 값이므로 **실행하지 않는다**.
+
+새 V2:
+1. 128 Study를 전체 UID 구간에서 deterministic하게 샘플.
+2. 실제 anatomy/local preprocessing과 64-window selector 실행.
+3. Study별 unique rendered rows와 실제 V2 payload MiB 측정.
+4. old triplet tensor와 V2 reconstruction bit-identical 검증.
+5. 전체 4,407 Study projected GiB 계산.
+6. projection에 15% margin 적용.
+7. Kaggle output 안전 목표 `16.5 GiB / Pack` 기준 최소 Pack 수 추천.
+8. 이 결과를 확인한 후에만 full-cache Pack Notebook을 생성한다.
+
+Preflight Notebook:
+- `C_CACHE_V2_SIZE_PREFLIGHT.ipynb`
+- SHA256: `b87c93434caca77bfa8d0c7413dce8f864a0bb769d8133f41b30b7d18f5eb039`
+- Static QA: PASS
+- Kaggle execution: NOT_RUN
+
+기존 `C_ANATOMY_CACHE320_V1_P00~P05.ipynb`는 **SUPERSEDED / DO NOT RUN**.
+
+---
+
 # Branch-C ConvNeXt Anatomy Expert — C-DESIGN-V3
 
 최종 갱신: 2026-10-18  
