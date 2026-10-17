@@ -1,3 +1,19 @@
+### S11 최신 상태 — 2026-10-18
+
+- **S11 LAST 2F standalone Public LB = 0.926** (사용자 보고).
+- S10 standalone 0.923 대비 **+0.003**.
+- 기존 최고 `S10 70 + S8C Direct 30 = 0.926`과 standalone으로 동점.
+- 다음 제출: **`0.70 × S11 LAST 2F + 0.30 × S8C Full-MRI Direct 2F`**.
+- 제출 notebook:
+  `S11_LAST_70_S8C_DIRECT_30_2F_LB_SUBMISSION_V1.ipynb`
+- notebook SHA:
+  `1936890da1c28fa1e55fdaf3981cc07e71b2b2b651afbcb39b50c63068b5ff5d`
+- 정상 경로는 S11/S8C 각각 Fold0/1 probability mean 후 70:30 probability blend.
+- S11 standalone hidden-test inference 경로를 그대로 유지하며 S8C Direct는 selector forward에서 이미 계산되는 값을 재사용.
+- Study-level neutral 0.5 fallback 없음.
+- **Immediate next: Kaggle T4×2 / Internet OFF / Save & Run All → Public LB 확인.**
+
+
 ### Branch-B training 상태 — 2026-10-17
 
 - Wide96 Native384 cache 4 Pack: **COMPLETE / PASS**
