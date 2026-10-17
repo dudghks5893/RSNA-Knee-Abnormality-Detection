@@ -1,3 +1,16 @@
+<!-- S11_70_30_SUBMISSION_RUNNING_2026_10_18 -->
+## 2026-10-18 — S11 standalone 0.926 확정 / 70:30 submission 진행 중
+
+- 사용자 보고 **S11 LAST 2F standalone Public LB = 0.926**.
+- S10 standalone 0.923 대비 +0.003이며, 기존 최고 S10 70% + S8C Direct 30% = 0.926과 standalone으로 동점.
+- 현재 제출 진행 중:
+  `P_FINAL = 0.70 × S11 LAST 2F + 0.30 × S8C Full-MRI Direct 2F`.
+- Notebook: `S11_LAST_70_S8C_DIRECT_30_2F_LB_SUBMISSION_V1.ipynb`
+- SHA: `1936890da1c28fa1e55fdaf3981cc07e71b2b2b651afbcb39b50c63068b5ff5d`
+- **상태: SUBMISSION_RUNNING / PUBLIC_LB_PENDING**.
+- LB >0.926이면 Branch-A main으로 승격. =0.926이면 S11 standalone과 기존 S10 hybrid 둘 다 보존. <0.926이면 S11 standalone 0.926 유지.
+- 이 30%는 사진 30%가 아니라, S8C가 전체 MRI feature로 생성한 Full-MRI Direct probability의 최종 blend weight다.
+
 ## 2026-10-18 — S11 standalone Public LB 0.926 / S11 70 + S8C Direct 30 제출 준비
 
 ### S11 standalone 결과
