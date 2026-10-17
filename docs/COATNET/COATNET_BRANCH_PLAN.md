@@ -1,3 +1,24 @@
+<!-- COATNET_V3_ACTUAL_RUNNING_2026_10_18 -->
+## 2026-10-18 — Actual execution override: V3 TRAIN_RUNNING
+
+**실제 현재 상태가 이 섹션보다 우선한다.**
+
+- 사용자가 이미 `B_COATNET_WIDE96_2F_BASE_V3.ipynb`를 Kaggle에서 실행함.
+- V3 SHA: `bb3527a1c8b6fd6f6585295413420720d341ee4c61b8b04de25ca1ee5a6bf3f4`
+- 상태: **BASE_V3 / TRAIN_RUNNING**
+- GPU0=Fold0 / GPU1=Fold1 independent, DDP=false.
+- V4(`B_COATNET_WIDE96_2F_BASE_V4.ipynb`, SHA `45f77cd...`)는 audit 개선본이지만 **정상 진행 중인 V3를 중단시키는 근거가 아니다**.
+- V3의 known execution caveat(synthetic 320 resource probe, BN running-stat freeze, 128-real-Study runtime gate 없음)는 Fold/label/cache/loss 무효 사유가 아니다. 정상 train loop가 진행되면 끝까지 보존한다.
+
+Base 완료 후:
+1. Fold0/1 best, history, Gold29, runtime, actual batch 검증.
+2. **Base best 2F standalone Public LB**.
+3. same-fold Base best init으로 **V4 Strict high-confidence FT** 설계.
+4. Strict FT에서는 `best.pt` + `last.pt` 보존을 우선 검토.
+5. Strict standalone LB.
+6. 최종 Branch-B serving candidate 선택.
+7. 현재 Branch-A best와 **A+B rank/probability ensemble** 평가.
+
 ## 2026-10-17 — V3 audit correction / V4 authoritative
 
 상태: **CACHE_COMPLETE / TRAIN_READY_V4 / NOT_RUN**
