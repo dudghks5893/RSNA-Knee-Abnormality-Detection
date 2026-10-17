@@ -645,3 +645,89 @@ Branch-B는 **Wide/Dense MRI coverage expert** 역할을 유지한다.
 를 읽는다.
 
 현재 바로 다음 작업은 **Branch-B cache를 만들기 전에 최신 B soft-label artifact/path/SHA와 raw competition DICOM 입력을 고정하고, 96×384 cache의 실제 Pack 설계를 만드는 것**이다.
+
+
+---
+
+## 2026-10-17 — Wide96 Cache PRE-FLIGHT 실제 PASS / Pack00~03 본 Cache 준비
+
+### PRE-FLIGHT 실제 결과
+
+실행 Notebook:
+`B_COATNET_WIDE96_CACHE_PREFLIGHT_V1.ipynb`
+
+상태:
+`B_COAT_WIDE96_CACHE_PREFLIGHT_PASS`
+
+검증:
+- Studies: **4,407**
+- Series: **24,371**
+- selected non-missing Series: **20,792**
+- DICOM header audit fail: **0**
+- 140mm FOV audit: PASS
+- global slot manifest SHA256:
+  `2ae3c83c45c7efa46e393d0c23fb266850479830ebca329c3c74c19ff9165f5e`
+- global pack partition SHA256:
+  `c934b45a305f8e3339a1934332ecd61b32de35160cd8fceb6206ed704752a55c`
+- review ZIP SHA256:
+  `ee5c14fdb47091f6388c35d546be9c42d387d5666582b9dbd722685ce307032a`
+
+Slot coverage:
+- SAG_FLUID: 4,407 present / 0 missing
+- SAG_NONFLUID: 4,288 present / 119 missing
+- COR_FLUID: 4,407 present / 0 missing
+- COR_NONFLUID: 3,283 present / 1,124 missing
+- AXIAL_ANY: 4,407 present / 0 missing
+- Studies with >=1 missing Slot: **1,241**
+
+140mm severe shortage(`coverage_min < .8`):
+- SAG_FLUID 0%
+- SAG_NONFLUID 0%
+- COR_FLUID 0%
+- COR_NONFLUID ~0.03%
+- AXIAL ~0.91%
+
+### Pack 수 확정
+
+```text
+Pack00 = 1,102 Studies
+Pack01 = 1,102 Studies
+Pack02 = 1,102 Studies
+Pack03 = 1,101 Studies
+```
+
+각 최대 raw volume 약 15.60GB, 10% + 300MB reserve 포함 약 17.46GB로 19GB safety cap 내.
+
+따라서 **4 Pack canonical**로 확정. 5 Pack으로 늘리지 않는다.
+
+### 본 Cache Notebook
+
+- `B_COATNET_WIDE96_CACHE_PACK_00_V1.ipynb`
+  SHA `3804039ba53432ad9c4549eb1736fda3b7b475161b14e59df30f61255139e96c`
+- `B_COATNET_WIDE96_CACHE_PACK_01_V1.ipynb`
+  SHA `63d2947640898236117ced84859366b82d89faf85dd44d44b50d81d24ca9ade3`
+- `B_COATNET_WIDE96_CACHE_PACK_02_V1.ipynb`
+  SHA `be77d686a5a92ef3ba059ee8712e5013d7b5a95f7a8ab9e4bdca547184e3de17`
+- `B_COATNET_WIDE96_CACHE_PACK_03_V1.ipynb`
+  SHA `8849b7900e733792f170f3cb60560281f0589143de2bcddbe51f9fc211ef57bb`
+- Bundle ZIP SHA:
+  `a32b6d45f13f2e25cfedf7ffe9b06e472333e87379e081053c0e5ca75e928f65`
+
+각 notebook은 PRE-FLIGHT manifest/partition을 다시 결정적으로 생성한 뒤 위 SHA와 byte-exact 일치해야만 pixel cache를 시작한다.
+
+Cache output:
+- `volume [NStudy,96,384,384] uint8`
+- `valid_mask [NStudy,96] uint8`
+- missing Slot = zero + mask 0
+- selected-slice p2/p98
+- 140mm center crop
+- cv2 INTER_AREA → 384
+- compression 없음
+- Study별 SHA + 전체 HDF5 full readback QA
+- review ZIP은 HDF5 제외
+
+### 다음 단계
+
+Pack00~03를 CPU Kaggle에서 실행. 각 Pack이
+`B COAT WIDE96 CACHE PACK PASS`
+를 출력한 후에만 4개 HDF5를 training input으로 등록하고 CoAtNet 16-epoch full-data training notebook을 만든다.
