@@ -1,3 +1,67 @@
+## 2026-10-17 — B-CACHE-96S384-V1 4-Pack 실제 생성 완료
+
+**실행 상태: PASS / CACHE_COMPLETE**
+
+실제 Kaggle HDF5:
+- P00: `/kaggle/input/datasets/yhlucas/b-coat-wide96-cache-pack-00/B_COAT_WIDE96_CACHE_PACK_00/coat_wide96_native384_pack00.h5`
+  - 1,102 Studies
+  - 14.535 GiB
+  - SHA `304028610a451f598255c6a18c07c4b531f8d9fdabb0fa265695c8a24d326c6f`
+- P01: `/kaggle/input/datasets/woniyeon/b-coat-wide96-cache-pack-01/B_COAT_WIDE96_CACHE_PACK_01/coat_wide96_native384_pack01.h5`
+  - 1,102 Studies
+  - 14.535 GiB
+  - SHA `1d8bc3003517ec34c7c1ba70b398a6525136f40ed12503c95bd6a5b6a5595eb1`
+- P02: `/kaggle/input/datasets/yhlucas/b-coat-wide96-cache-pack-02/B_COAT_WIDE96_CACHE_PACK_02/coat_wide96_native384_pack02.h5`
+  - 1,102 Studies
+  - 14.535 GiB
+  - SHA `ee49f1891c5d10e116d0b9ebab8e860ceddfa70639b3dfa959d5a3416c63be86`
+- P03: `/kaggle/input/datasets/woniyeon/b-coat-wide96-cache-pack-03/B_COAT_WIDE96_CACHE_PACK_03/coat_wide96_native384_pack03.h5`
+  - 1,101 Studies
+  - 14.522 GiB
+  - SHA `5f37b844659f5e3faa389f64c1b7194f2e3b71e7589cbe9378767ce3d7a4f2f1`
+
+전체:
+- 4,407 Studies
+- 96 slices/Study
+- logical positions 423,072
+- valid slices 406,966
+- missing slices 16,106
+- Studies with >=1 missing slot 1,241
+- decode failure 0
+- selected non-missing Series 20,792
+- selected Series sort method: IOP_IPP 20,792 / 20,792
+- physical cache size 약 58.127 GiB
+
+생성 contract:
+- 26 SAG fluid
+- 22 SAG non-fluid
+- 18 COR fluid
+- 12 COR non-fluid
+- 18 AXIAL
+- 2~98% wide span
+- selected valid slices p2/p98 intensity mapping
+- modality LUT + MONOCHROME1 inversion
+- 140mm center crop
+- cv2.INTER_AREA → 384×384
+- HDF5 `volume [N,96,384,384] uint8`
+- HDF5 `valid_mask [N,96] uint8`
+- compression 없음
+
+Global reproducibility:
+- selected slot manifest SHA `2ae3c83c45c7efa46e393d0c23fb266850479830ebca329c3c74c19ff9165f5e`
+- pack partition SHA `c934b45a305f8e3339a1934332ecd61b32de35160cd8fceb6206ed704752a55c`
+
+Full-readback QA:
+- P00 PASS
+- P01 PASS
+- P02 PASS
+- P03 PASS
+
+Decision:
+- **B-CACHE-96S384-V1은 학습 입력으로 승인.**
+- 다음은 최신 B soft-label artifact path/SHA 고정 후 CoAtNet 16ep full-data training.
+
+
 ## 2026-10-17 — Branch-B cache PRE-FLIGHT Notebook 준비
 
 Notebook:
@@ -125,7 +189,7 @@ S11 학습과 병렬 또는 직후:
 ## Status
 
 - Branch: **B — CoAtNet Wide-MRI Expert**
-- Current state: **NOT_RUN**
+- Current state: **CACHE_COMPLETE / TRAIN_NOT_RUN**
 - Design version: **B-DESIGN-V1**
 - Baseline 목적 아님. 첫 실행부터 고득점 가설 설계를 사용한다.
 
@@ -163,7 +227,7 @@ AB-RANK-BLEND-V1
 
 | Cache | Studies | Shape/Rows | Packs | SHA | Status |
 |---|---:|---|---:|---|---|
-| B-CACHE-96S384-V1 | TBD | 96×384×384 / Study | 4~5 예정 | TBD | NOT_RUN |
+| B-CACHE-96S384-V1 | **4,407** | **96×384×384 / Study** | **4** | per-Pack SHA 고정 | **PASS / CACHE_COMPLETE** |
 
 ## Checkpoint table
 
@@ -209,4 +273,4 @@ Artifacts:
 - P03 `8849b7900e733792f170f3cb60560281f0589143de2bcddbe51f9fc211ef57bb`
 - ZIP `a32b6d45f13f2e25cfedf7ffe9b06e472333e87379e081053c0e5ca75e928f65`
 
-**다음:** CPU에서 Pack00~03 실제 cache 생성 및 review 검증. Training은 아직 NOT_RUN.
+**완료:** Pack00~03 실제 cache 생성 및 full-readback 검증 PASS. **다음:** 최신 B soft-label path/SHA 고정 → CoAtNet 16ep training.
