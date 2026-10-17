@@ -1,6 +1,26 @@
+## 2026-10-17 — B-COAT-WIDE96-2F-BASE-V4 notebook READY
+
+**상태: TRAIN_READY_V4 / NOT_RUN**
+
+Authoritative notebook:
+- `B_COATNET_WIDE96_2F_BASE_V4.ipynb`
+- SHA `45f77cd959d984577099b0a67f406b0e3f98296a4950d4b1a7dafeccc04f649f`
+- V1/V2/V3: **DO_NOT_RUN**
+
+Audit fixes over V3:
+- actual HDF5 384→320 optimizer-step resource probe
+- normal training-mode BN preserved; checkpoint recompute cannot double-update running stats
+- PB 4→2→1 + Window chunk 12→8→6→4→3→2
+- 128 real Study optimizer-inclusive benchmark per Fold
+- full Gold29 dense-validation timing included
+- 16ep wall-time projection + 10% margin
+- >4h projected concurrent wall time → fail-fast before Epoch1
+- independent Fold0/GPU0 + Fold1/GPU1, No DDP
+- Fold별 `best.pt` only
+
 ## 2026-10-17 — B-COAT-WIDE96-2F-BASE-V3 notebook READY
 
-**상태: TRAIN_READY_V3 / NOT_RUN**
+**상태: TRAIN_READY_V4 / NOT_RUN**
 
 Authoritative notebook:
 - `B_COATNET_WIDE96_2F_BASE_V3.ipynb`
@@ -285,7 +305,7 @@ S11 학습과 병렬 또는 직후:
 ## Status
 
 - Branch: **B — CoAtNet Wide-MRI Expert**
-- Current state: **TRAIN_READY_V3 / NOT_RUN**
+- Current state: **TRAIN_READY_V4 / NOT_RUN**
 - Design version: **B-DESIGN-V1**
 - Baseline 목적 아님. 첫 실행부터 고득점 가설 설계를 사용한다.
 
