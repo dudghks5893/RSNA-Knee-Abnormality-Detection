@@ -181,3 +181,32 @@ AB-RANK-BLEND-V1
 - masked confidence-weighted soft BCE + class balance + rare-positive sampling.
 - 16 epoch fixed, all-data single model, top-3 epoch parameter averaging.
 - standalone → mirror TTA → Branch-A rank blend 순으로 평가.
+
+
+## 2026-10-17 — B-CACHE-96S384-V1 PRE-FLIGHT PASS
+
+**실행 상태:** PASS
+
+PRE-FLIGHT:
+- 4,407 Studies / 24,371 Series
+- selected Series 20,792
+- header failures 0
+- Pack split = 1,102 / 1,102 / 1,102 / 1,101
+- total raw = 62,384,504,832 bytes
+- max Pack raw = 15,599,665,152 bytes
+- anticipated max Pack incl. reserve = 17,459,631,667 bytes
+- output cap = 19,000,000,000 bytes
+
+Artifacts:
+- selected slot manifest SHA: `2ae3c83c45c7efa46e393d0c23fb266850479830ebca329c3c74c19ff9165f5e`
+- partition SHA: `c934b45a305f8e3339a1934332ecd61b32de35160cd8fceb6206ed704752a55c`
+- preflight review ZIP SHA: `ee5c14fdb47091f6388c35d546be9c42d387d5666582b9dbd722685ce307032a`
+
+본 cache notebooks prepared:
+- P00 `3804039ba53432ad9c4549eb1736fda3b7b475161b14e59df30f61255139e96c`
+- P01 `63d2947640898236117ced84859366b82d89faf85dd44d44b50d81d24ca9ade3`
+- P02 `be77d686a5a92ef3ba059ee8712e5013d7b5a95f7a8ab9e4bdca547184e3de17`
+- P03 `8849b7900e733792f170f3cb60560281f0589143de2bcddbe51f9fc211ef57bb`
+- ZIP `a32b6d45f13f2e25cfedf7ffe9b06e472333e87379e081053c0e5ca75e928f65`
+
+**다음:** CPU에서 Pack00~03 실제 cache 생성 및 review 검증. Training은 아직 NOT_RUN.
