@@ -1,5 +1,46 @@
 # Branch-C ConvNeXt — Cumulative Experiment Log
 
+## 2026-10-18 — C-DESIGN-V4 / Segmentation-Free Geometry Multi-View 전환
+
+상태:
+- DESIGN_V4_FROZEN
+- C-CACHE-V3 PREFLIGHT READY
+- CACHE_NOT_RUN / TRAIN_NOT_RUN
+
+핵심 변경:
+- anatomy segmentation network 제거.
+- 외부 heliosli anatomy/code/manifest Dataset을 Required Input에서 제거.
+- RSNA competition DICOM만으로 C preprocessing 구성.
+- Global + CENTER + ANTERIOR/POSTERIOR + CORONAL BILATERAL physical views.
+- local crop는 DICOM IOP/PixelSpacing 기반 physical offset.
+- 64 overlapping 2.5D Window 유지.
+- 저장은 unique rendered rows + window_index.
+- B의 fixed Wide96/140mm center crop과 A의 S8C Top18을 사용하지 않음.
+- C의 차별화는 target-specific spatial attention + geometry multi-view + Window MIL.
+
+새 Preflight:
+- Notebook: `C_CACHE_V3_GEOMETRY_PREFLIGHT.ipynb`
+- SHA256: `fda85064c4ce09bdd7501b985055ef90ba6ee39a54be43ea967e810a76e2e3ac`
+- Input: RSNA Knee competition only
+- 128 Study deterministic spread sample
+- Static QA PASS
+- Kaggle NOT_RUN
+- 출력: crop coverage, Global/Local distribution, unique-row storage ratio, projected total GiB, recommended Pack count
+
+폐기:
+- C_ANATOMY_CACHE320_V1_P00~P05
+- C_CACHE_V2_SIZE_PREFLIGHT
+- segmentation-based C-DESIGN-V3 cache path
+모두 DO_NOT_RUN.
+
+Immediate next:
+- C_CACHE_V3_GEOMETRY_PREFLIGHT Save & Run All
+- capacity_plan + receipt 확인
+- 그 결과로 full-cache Pack 수 확정
+- full-cache Pack Notebook 생성
+
+
+
 ## 2026-10-18 — C-CACHE-V2 preflight로 전환
 
 **V1 6-Pack Notebook은 SUPERSEDED / DO NOT RUN.**
