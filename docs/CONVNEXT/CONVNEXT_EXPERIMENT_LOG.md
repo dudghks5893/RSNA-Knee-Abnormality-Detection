@@ -1,5 +1,37 @@
 # Branch-C ConvNeXt — Cumulative Experiment Log
 
+## 2026-10-18 — C-CACHE-V2 preflight로 전환
+
+**V1 6-Pack Notebook은 SUPERSEDED / DO NOT RUN.**
+
+이유:
+- V1은 Study당 64개 2.5D triplet을 그대로 저장해 overlapping Window 사이의 동일 slice가 디스크에 반복 저장될 수 있었다.
+- 성능에 영향을 주는 Window 중복을 제거하는 것이 아니라, 저장 중복만 제거하기로 결정했다.
+
+V2 contract:
+- C-BASE의 64 Window 선택은 완전히 동일.
+- unique rendered pixels를 한 번 저장.
+- 각 Window는 3개의 pixel-row index로 재구성.
+- old triplet representation과 `np.array_equal` bit-parity를 preflight에서 검사.
+- stride/window sampling 변경 없음.
+
+새 Notebook:
+- `C_CACHE_V2_SIZE_PREFLIGHT.ipynb`
+- SHA256 `b87c93434caca77bfa8d0c7413dce8f864a0bb769d8133f41b30b7d18f5eb039`
+- 128 Study deterministic spread sample
+- Output: study metrics / capacity plan / receipt
+- safe pack target: 16.5 GiB
+- full 4,407 projected size에 15% margin 적용 후 권장 Pack 수 산출
+- STATIC_QA_PASS / KAGGLE_NOT_RUN
+
+Immediate next:
+1. V2 preflight Save & Run All.
+2. `c_cache_v2_capacity_plan.json` 확인.
+3. 추천 Pack 수로 full-cache Notebook 생성.
+4. Pack00 실제 build QA 후 나머지 Pack 실행.
+
+
+
 최종 갱신: 2026-10-18
 
 계획은 [CONVNEXT_BRANCH_PLAN.md](CONVNEXT_BRANCH_PLAN.md), 실제 실행/Notebook 상태는 이 문서에 누적한다.
