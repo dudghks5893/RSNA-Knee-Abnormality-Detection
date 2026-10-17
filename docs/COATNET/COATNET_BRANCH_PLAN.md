@@ -1,3 +1,81 @@
+## 2026-10-17 — Branch-B training input 최종 수정 / V2 authoritative
+
+상태: **CACHE_COMPLETE / TRAIN_READY_V2**
+
+### Supervision 최종 선택
+
+Branch-B CoAtNet은 LABEL-V6 B가 아니라, 기존 비교에서 실제 성능이 가장 좋았던 **V4 Routed Broad**를 사용한다.
+
+정확한 Kaggle path:
+
+```text
+/kaggle/input/datasets/yhlucas/rsna-knee-v4-consensus-dataset/rsna_knee_pseudolabels_v4_routed_broad.csv
+```
+
+SHA256:
+
+```text
+93863c59f99a70e2fd5c2d1674bc91266f3c459d398755911e033dbdac8d381c
+```
+
+Contract:
+- 4,349 report/pseudo Studies
+- 12 targets
+- 각 target마다 `target` + `target__conf`
+- all target mask = 1
+- supervision weight = **0.25 + 0.75 × confidence**
+- class-balance = pseudo-only confidence-weighted soft prevalence, power .70, clip .5–2.5
+- Gold58은 train에 넣지 않고 DEV gate only
+
+### CoAtNet pretrained weight
+
+사용자가 Kaggle input에 추가한 exact path:
+
+```text
+/kaggle/input/models/blueberry808/coatnet-rmlp-2-rw-384-sw-in12k-ft-in1k/pytorch/default/1/coatnet_rmlp_2_rw_384_sw_in12k_ft_in1k.pth
+```
+
+Architecture:
+
+```text
+coatnet_rmlp_2_rw_384.sw_in12k_ft_in1k
+```
+
+- random-init fallback 금지
+- notebook 실행 시 mounted .pth SHA를 계산해 run_config에 기록
+- checkpoint wrapper/prefix 정규화 후 backbone key+shape 매칭
+- pretrained parameter element coverage >= 99% 필수
+- CoAtNet backbone `num_features = 1024` 강제 검증
+
+### Authoritative training notebook
+
+`B_COATNET_WIDE96_FT_V2.ipynb`
+
+SHA256:
+
+`bd78e9b1c1b0fd5dc65f98c2fde5d67bfb7665440eb49f5eeecdfbd918d1d14c`
+
+V1은 **OBSOLETE / DO_NOT_RUN**.
+
+V2:
+- T4×2 DDP
+- 16 fixed epochs
+- physical Study batch 1/GPU
+- grad accumulation 8/rank
+- global effective Study batch 16
+- 12 stochastic windows/Study
+- 94 dense DEV positions
+- backbone LR 4e-5
+- head LR 2e-3
+- WD .06
+- cosine + warmup 5%
+- FP16
+- activation checkpoint
+- real training-graph window microbatch benchmark: 12→8→6→4→3→2
+- microbatch1 금지
+- epoch8~16 Gold58 Macro AUROC top3 equal parameter average → `swa_top3.pt`
+
+
 ## 2026-10-17 — B-COAT-WIDE96-FT-V1 본학습 Notebook 생성
 
 Notebook:
@@ -41,7 +119,7 @@ Notebook은 둘을 임의 대체하지 않는다.
 
 ## 2026-10-17 — B-CACHE-96S384-V1 실제 생성 완료 / 4-Pack Dataset 고정
 
-상태: **CACHE_COMPLETE / TRAIN_NOT_RUN**
+상태: **CACHE_COMPLETE / TRAIN_READY_V2**
 
 Branch-B CoAtNet용 Wide96 Native384 본 cache 4개 Pack의 실제 Kaggle 생성 및 full-readback QA가 모두 완료되었다.
 
@@ -392,21 +470,15 @@ backbone뿐 아니라 입력 표현까지 달라 ensemble diversity를 확보한
 - 같은 Study가 train/Gold 양쪽에 들어가면 즉시 중단
 
 ### 라벨
-주 라벨은 **최신 검증 완료 B soft-label dataset**을 사용한다.
+주 라벨은 **V4 Routed Broad**를 사용한다.
 
-중요:
-- 현재 이 문서 작성 시점에는 해당 최종 artifact의 Kaggle dataset path/SHA가 고정되지 않았다.
-- 실행 노트북 생성 전에 반드시 실제 파일을 붙이고:
-  - row count
-  - Study UID universe
-  - 12 target columns
-  - label / confidence / mask schema
-  - SHA-256
-  를 문서와 notebook gate에 고정한다.
-- 임의로 V4나 다른 pseudo label로 대체하지 않는다.
+- path: `/kaggle/input/datasets/yhlucas/rsna-knee-v4-consensus-dataset/rsna_knee_pseudolabels_v4_routed_broad.csv`
+- SHA: `93863c59f99a70e2fd5c2d1674bc91266f3c459d398755911e033dbdac8d381c`
+- 4,349 Studies × 12 targets
+- `weight = 0.25 + 0.75 × confidence`
+- Gold58은 학습 제외, DEV gate only
 
-### Soft-label
-- hard 0/1로 재이산화하지 않는다.
+hard 0/1로 재이산화하지 않는다.
 - ambiguity를 확률로 유지한다.
 - `mask=0`은 loss에서 완전히 제외한다.
 - confidence/weight가 존재하면 그대로 loss weight에 포함한다.
