@@ -57,11 +57,17 @@ S11 standalone 및 S11 70:30 Notebook은 이 hidden-tested robust path를 기반
 - Strict FT에서는 DINO precedent 때문에 `best.pt`와 `last.pt`를 둘 다 보존하는 방향을 우선 검토한다.
 
 ### Branch-C
-- **NOT_RUN / DESIGN_REVIEW_ACTIVE**.
-- 기다리는 동안 바로 C-DESIGN-V2 상세 설계를 진행한다.
-- 기존 C-DESIGN-V1의 `latest B soft label`, `single full-data model`, `Branch-B 완료 후 시작` 가정은 자동 실행하지 않는다.
-- supervision은 **V4 Routed Broad Base → V4 Strict FT** 구조를 우선 검토하고, 2-Fold 여부도 A/B 경험을 반영해 재결정한다.
-- exact ConvNeXt pretrained / anatomy anchor / view/cache / spatial attention / MIL / GPU resource contract를 확정하기 전 training/cache Notebook 생성 금지.
+- **C-DESIGN-V4 FROZEN / SEGMENTATION-FREE / PREFLIGHT_READY / NOT_RUN**.
+- 역할: ConvNeXt **Geometry Multi-View Spatial Expert**.
+- A의 S8C Top18과 B의 fixed Wide96을 재사용하지 않는다.
+- DICOM IOP/IPP/PixelSpacing만으로 Global + Center + Anterior/Posterior + Coronal bilateral local views를 생성한다.
+- anatomy segmentation model / anatomy.pt / 외부 reference dataset은 실행 dependency에서 제거.
+- Study당 최대 64 overlapping 2.5D Window, unique rendered row + window_index cache.
+- target-specific spatial attention → target-specific Window MIL.
+- supervision 기본값: V4 Routed Broad + frozen Gold58 2-Fold.
+- 현재 실행 Notebook: `C_CACHE_V3_GEOMETRY_PREFLIGHT.ipynb`
+- SHA: `fda85064c4ce09bdd7501b985055ef90ba6ee39a54be43ea967e810a76e2e3ac`
+- Immediate next: 128-Study geometry/capacity preflight → 실제 GB 기준 Pack 수 확정 → full cache build.
 
 ### S11 최신 상태 — 2026-10-18
 
@@ -161,8 +167,9 @@ Branch-B — CoAtNet Wide-MRI Expert
   → standalone
   → A+B rank blend
 
-Branch-C — ConvNeXt Anatomy Expert (시간 허용 시)
-Full-FOV + 100mm anatomy local views
+Branch-C — ConvNeXt Geometry Multi-View Expert (시간 허용 시)
+Segmentation-free DICOM geometry
+  → Global + physical-offset Local Views
   → thin-stack physical slab
   → ConvNeXt-Small
   → target-specific spatial attention
@@ -175,7 +182,7 @@ Full-FOV + 100mm anatomy local views
 - B/C 모두 S8C Top18을 입력으로 사용하지 않는다.
 - 목적은 같은 예측을 반복하는 모델 수 증가가 아니라 **오류 다양성**이다.
 - Branch-B는 **Wide/Dense MRI coverage expert**.
-- Branch-C는 **Anatomy-local + spatial-localization expert**.
+- Branch-C는 **Geometry Multi-View + spatial-localization expert**.
 - 최종 결합은 probability 단순 평균보다 **per-target percentile-rank ensemble**을 우선 검토한다.
 - 현재 첫 실행 우선순위는 **S11 → Branch-B → Branch-C**.
 - Branch-B/C는 안전 baseline이 목적이 아니며, 처음부터 고득점 가설 설정을 사용한다.
