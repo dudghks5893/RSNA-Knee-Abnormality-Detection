@@ -2,15 +2,22 @@
 
 - Wide96 Native384 cache 4 Pack: **COMPLETE / PASS**
 - supervision: **V4 Routed Broad**, 4,349 Studies, SHA `93863c59f99a70e2fd5c2d1674bc91266f3c459d398755911e033dbdac8d381c`
-- V4 weight: `0.25 + 0.75×confidence`
+- V4 pseudo weight: `0.25 + 0.75×confidence`
 - LABEL-V6 B는 Branch-B 학습에 사용하지 않음
-- CoAtNet pretrained input:
+- CoAtNet pretrained:
   `/kaggle/input/models/blueberry808/coatnet-rmlp-2-rw-384-sw-in12k-ft-in1k/pytorch/default/1/coatnet_rmlp_2_rw_384_sw_in12k_ft_in1k.pth`
-- CoAtNet feature dim: **1024**
-- authoritative notebook: `B_COATNET_WIDE96_FT_V2.ipynb`
-- notebook SHA: `bd78e9b1c1b0fd5dc65f98c2fde5d67bfb7665440eb49f5eeecdfbd918d1d14c`
-- V1: **DO_NOT_RUN**
-- immediate next: **V2 T4×2 Save & Run All → cache/model/label gates → 16ep training → swa_top3.pt**
+- feature dim: **1024**
+- authoritative notebook: `B_COATNET_WIDE96_2F_BASE_V3.ipynb`
+- notebook SHA: `bb3527a1c8b6fd6f6585295413420720d341ee4c61b8b04de25ca1ee5a6bf3f4`
+- V1/V2: **DO_NOT_RUN**
+- training mode: **Fold0→GPU0 / Fold1→GPU1 independent; DDP=false**
+- Fold0: train V4 4349 + Gold Fold1 29 / val Gold Fold0 29
+- Fold1: train V4 4349 + Gold Fold0 29 / val Gold Fold1 29
+- physical Study batch: **4→2→1 actual training-graph benchmark**
+- effective Study batch: **16 / Fold**
+- Base checkpoint: **Fold별 own Gold29 Macro AUROC best.pt 하나만 저장**
+- no last / no SWA / no top3 averaging in Base
+- immediate next: **V3 T4×2 Save & Run All → resource probe → two independent 16ep folds → fold0/best.pt + fold1/best.pt**
 
 
 # RSNA Knee — 현재 인수인계 및 문서 탐색
