@@ -138,9 +138,10 @@ S11은 이 파이프라인의 selector/Top18/라벨을 바꾸지 않고 **영상
 ### Branch-B cache 상태 — 2026-10-17
 
 - CoAtNet Wide96 metadata/header PRE-FLIGHT **PASS**.
-- 4,407 Studies / 24,371 Series / selected 20,792 Series.
-- header failure 0.
-- Pack 수 **4개 확정**: 1102 / 1102 / 1102 / 1101.
-- Pack00~03 본 cache notebooks 제작/정적 QA 완료.
-- 아직 실제 HDF5 cache는 NOT_RUN.
-- 다음: Pack00~03 CPU Save & Run All → 4개 PASS 검증 → Branch-B CoAtNet 16ep training.
+- Wide96 Native384 실제 HDF5 cache **4 Pack 전부 PASS / CACHE_COMPLETE**.
+- Study split: **1102 / 1102 / 1102 / 1101 = 4,407 Studies**.
+- HDF5 structure: `volume [N,96,384,384] uint8` + `valid_mask [N,96]`.
+- logical positions: 423,072 / valid 406,966 / missing 16,106 / decode failure 0.
+- selected non-missing Series: 20,792; 실제 sort는 전부 IOP_IPP.
+- Dataset paths/SHA는 `docs/COATNET/COATNET_BRANCH_PLAN.md` 최상단에 authoritative하게 기록.
+- **다음:** 최신 B soft-label artifact의 실제 Kaggle path/SHA 고정 → Branch-B CoAtNet 16ep 본학습 notebook 생성.
