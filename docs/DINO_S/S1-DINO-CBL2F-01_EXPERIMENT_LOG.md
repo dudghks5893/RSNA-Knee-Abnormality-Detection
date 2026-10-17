@@ -570,3 +570,31 @@ STATUS: NOTEBOOKS_STATIC_QA_PASS; CHECKPOINT_DATASET_MOUNT_PENDING; REAL_KAGGLE_
 - B V4 Routed Strict: both fold best Epoch0 (NO improvement), pretrained original hashes Fold0 `15bd9189eac7a7366239a0747e671f0f567a40a2db660e7054e2de26eb01e629`, Fold1 `0c3939d93d3f37daacf2625711fe751586ea354e5a64b19eb9911ed5f0eb28a5`; two Epochs each, study batch 2; pooled OOF **0.8711117400** identical to original; AUPRC **0.8002062131**. Redundant B public LB rerun under identical inference.
 - A vs original B per-target strongest deterioration Baker's −0.070652, Lateral OA −0.052225, Synovitis −0.035843; gains PF OA +0.020592, Fracture +0.020833, Medial OA +0.012403. A/B differ in class balancing, sample coverage and physical batch (A F0=4, others=2): NOT a perfectly controlled pure-label isolation.
 - Original Exp57 public LB **0.918**, B Broad current public LB **0.910** remain historical bests. FT02 neither shows Gold58 OOF improvement; no new Public LB values yet. Next action: preserve Kaggle A output; optionally submit A 2Fold to obtain independent LB, skip redundant B submission; then proceed to MIL.
+
+
+### 2026-10-17 — Hidden diagnostic 0.926 PASS + S11 training complete + LAST standalone submission V1
+
+- **Hidden-test diagnostic-safe current-best submission succeeded and scored Public LB 0.926.**
+  - This confirms the V3 path completed hidden inference using real MRI predictions without a Study-level neutral 0.5 placeholder.
+  - Preserve the robust DICOM/selector rescue policy as the submission base for later models.
+- **S11-TOP18-MULTIVIEW-AUG-FT-V1 training completed successfully on both folds.**
+  - Input: same S9 Top18 centers, three views DETAIL 110mm/280 + ANCHOR 130mm/224 + CONTEXT 160mm/224, fixed target-wise logit routing.
+  - Fold0 baseline 0.9245717053 → Epoch1 0.9241358719 → Epoch2/LAST 0.9216381693.
+  - Fold1 baseline 0.8640914381 → Epoch1 0.8671120150 → Epoch2/LAST 0.8642667234.
+  - Pooled Gold58 DEV:
+    - Epoch1 Macro AUROC **0.8927280586**, AUPRC 0.8157347896
+    - Epoch2/LAST Macro AUROC **0.8879242486**, AUPRC 0.8063957619
+  - Gold58 is repeated DEV only; no early-stop/checkpoint cherry-pick was used.
+- S11 LAST checkpoint SHA:
+  - Fold0 `2c962f22a1ebc55de81ee674c0f8e9b2c69001f028bc3db19dd6b114aa8f2dec`
+  - Fold1 `6647156f1bad9ed073b135ebea9c5bd4452d9483a17186c69a1dd04d22ae40bf`
+- User-provided Kaggle checkpoint paths:
+  - `/kaggle/input/rsna-knee-checkpoint-models/S11_TOP18_MULTIVIEW_AUG_FT_V1/fold0/last.pt`
+  - `/kaggle/input/rsna-knee-checkpoint-models/S11_TOP18_MULTIVIEW_AUG_FT_V1/fold1/last.pt`
+- Created **S11 LAST 2F standalone LB submission V1**.
+  - Local notebook SHA256: `8704eb57f9a6e19b0befa842c8de9d3e9ce8ab3590575548fddec851a8e06739`
+  - Formula: `0.5*sigmoid(S11_F0_LAST) + 0.5*sigmoid(S11_F1_LAST)`.
+  - Hidden inference reuses the already hidden-tested Stage1/S8C selector + robust DICOM path, then reconstructs exact S11 DETAIL/ANCHOR/CONTEXT views for selected Top18.
+  - No Study-level 0.5 fallback. One S11 fold may rescue the other; if both S11 folds fail, notebook intentionally fails.
+- **Next:** submit S11 LAST standalone first. If competitive, test `70% S11 + 30% S8C Direct`. Epoch1 has better Gold58 DEV than LAST and remains a separate candidate if its checkpoint is retained.
+
