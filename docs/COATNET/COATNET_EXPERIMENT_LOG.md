@@ -1,3 +1,28 @@
+## 2026-10-18 — B V3 NaN 중단 / V5 STABLE-ES 준비
+
+상태: **V3 ABORTED / V5 NOTEBOOK READY**
+
+V3 실제 실행 결과:
+- Fold0 Epoch1 step600부터 train loss NaN, Epoch1 validation에서 `ValueError: Input contains NaN`로 worker 종료.
+- Fold1은 계속 진행되어 Gold29 Macro AUROC가 Epoch8 **0.896024**까지 개선됐으나, 2-Fold run은 Fold0 부재로 무효이므로 사용자가 실행 중단.
+- V3는 early stopping이 없고 16 fixed epochs였음.
+- V3 checkpoint policy 자체는 올바르게 **own Gold29 Macro AUROC best.pt only / no last / no SWA**였음.
+
+대체 Notebook:
+- `B_COATNET_WIDE96_2F_BASE_V5_STABLE_ES.ipynb`
+- local SHA256 `425ef5c973de1b04513592706416c63ec439d551783f28df7b92f5e8620aa0a5`
+
+V5 변경:
+- max16 epochs
+- own Gold29 Macro AUROC early stopping
+- min epochs 6 / patience 3
+- best.pt only 유지; last/epoch/SWA 없음
+- CoAtNet backbone AMP + MIL/head FP32
+- head LR 2e-3 → **1e-3**
+- non-finite logits/loss/gradient fail-fast
+- one Fold failure → sibling Fold 즉시 terminate
+- 목적: V3 NaN 재발 방지 + 한 Fold 실패 시 GPU 낭비 방지
+
 <!-- COATNET_BASE_V3_RUNNING_2026_10_18 -->
 ## 2026-10-18 — B-COAT-WIDE96-2F-BASE-V3 실제 실행 시작
 
