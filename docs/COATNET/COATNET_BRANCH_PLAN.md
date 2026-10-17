@@ -1,6 +1,71 @@
+## 2026-10-17 — Branch-B Base 학습 구조 교정 / V3 authoritative
+
+상태: **CACHE_COMPLETE / TRAIN_READY_V3 / NOT_RUN**
+
+사용자 최종 결정에 따라 V1/V2의 `single all-data model + T4×2 DDP + SWA` 설계는 폐기한다.
+
+Authoritative notebook:
+- `B_COATNET_WIDE96_2F_BASE_V3.ipynb`
+- SHA256 `bb3527a1c8b6fd6f6585295413420720d341ee4c61b8b04de25ca1ee5a6bf3f4`
+- V1/V2: **OBSOLETE / DO_NOT_RUN**
+
+### Base 2-Fold contract
+
+```text
+GPU0 → Fold0 독립 모델
+Train = V4 Broad 4,349 + Gold Fold1 29
+Val   = Gold Fold0 29
+→ fold0/best.pt
+
+GPU1 → Fold1 독립 모델
+Train = V4 Broad 4,349 + Gold Fold0 29
+Val   = Gold Fold1 29
+→ fold1/best.pt
+```
+
+- **DDP 사용 안 함**
+- 두 GPU는 서로 다른 Fold 모델을 동시에 학습
+- 각 Fold train = 4,378 Studies
+- 각 Fold val = own Gold29
+- V4 pseudo 4,349는 양 Fold 공통
+- opposite Gold29는 binary BCE ×3
+- own Gold29는 checkpoint selection용 validation
+
+### Physical Study batch
+
+Study batch=1 고정 폐기.
+
+각 GPU에서 실제 CoAtNet forward + backward + AdamW step으로:
+- PB4: window chunk 12→8→6→4→3→2
+- 실패 시 PB2 동일 검사
+- 실패 시 PB1 동일 검사
+- microbatch1 금지
+
+두 GPU가 모두 통과하는 가장 큰 공통 physical batch를 사용한다.
+
+Fold별 effective Study batch는 16으로 고정:
+- PB4 → grad accumulation 4
+- PB2 → grad accumulation 8
+- PB1 → grad accumulation 16
+
+### Base checkpoint policy
+
+초기 Base 모델은 Fold별 **best checkpoint 하나만 유지**한다.
+
+- 16 fixed epochs
+- early stopping 없음
+- 기준: own Gold29 Macro AUROC
+- best 갱신 시 같은 `best.pt` atomic overwrite
+- 저장: `fold0/best.pt`, `fold1/best.pt`
+- 저장하지 않음: epoch별 model checkpoint, `last.pt`, SWA, top3 parameter averaging
+- epoch별 metric/history CSV는 유지
+
+향후 Fine-tuning Stage에서는 목적에 따라 `last.pt` 사용 여부를 별도로 정한다.
+
+
 ## 2026-10-17 — Branch-B training input 최종 수정 / V2 authoritative
 
-상태: **CACHE_COMPLETE / TRAIN_READY_V2**
+상태: **CACHE_COMPLETE / TRAIN_READY_V3**
 
 ### Supervision 최종 선택
 
@@ -49,31 +114,27 @@ coatnet_rmlp_2_rw_384.sw_in12k_ft_in1k
 
 ### Authoritative training notebook
 
-`B_COATNET_WIDE96_FT_V2.ipynb`
+`B_COATNET_WIDE96_2F_BASE_V3.ipynb`
 
 SHA256:
 
-`bd78e9b1c1b0fd5dc65f98c2fde5d67bfb7665440eb49f5eeecdfbd918d1d14c`
+`bb3527a1c8b6fd6f6585295413420720d341ee4c61b8b04de25ca1ee5a6bf3f4`
 
-V1은 **OBSOLETE / DO_NOT_RUN**.
+V1/V2는 **OBSOLETE / DO_NOT_RUN**.
 
-V2:
-- T4×2 DDP
-- 16 fixed epochs
-- physical Study batch 1/GPU
-- grad accumulation 8/rank
-- global effective Study batch 16
+V3:
+- Fold0→GPU0 / Fold1→GPU1 독립 학습, **No DDP**
+- Fold f train = V4 Broad 4,349 + opposite Gold29
+- Fold f validation = own Gold29
+- 16 fixed epochs / no early stop
+- physical Study batch 4→2→1 real training-graph benchmark
+- effective Study batch/Fold = 16
 - 12 stochastic windows/Study
-- 94 dense DEV positions
-- backbone LR 4e-5
-- head LR 2e-3
-- WD .06
-- cosine + warmup 5%
-- FP16
-- activation checkpoint
-- real training-graph window microbatch benchmark: 12→8→6→4→3→2
-- microbatch1 금지
-- epoch8~16 Gold58 Macro AUROC top3 equal parameter average → `swa_top3.pt`
+- 94 dense validation positions
+- backbone LR 4e-5 / head LR 2e-3 / WD .06
+- cosine + warmup 5% / FP16
+- Fold별 own Gold29 Macro AUROC best만 `best.pt`
+- no last / no SWA / no top3 averaging
 
 
 ## 2026-10-17 — B-COAT-WIDE96-FT-V1 본학습 Notebook 생성
@@ -119,7 +180,7 @@ Notebook은 둘을 임의 대체하지 않는다.
 
 ## 2026-10-17 — B-CACHE-96S384-V1 실제 생성 완료 / 4-Pack Dataset 고정
 
-상태: **CACHE_COMPLETE / TRAIN_READY_V2**
+상태: **CACHE_COMPLETE / TRAIN_READY_V3**
 
 Branch-B CoAtNet용 Wide96 Native384 본 cache 4개 Pack의 실제 Kaggle 생성 및 full-readback QA가 모두 완료되었다.
 
@@ -464,10 +525,12 @@ backbone뿐 아니라 입력 표현까지 달라 ensemble diversity를 확보한
 
 ## 3. 학습 데이터 / 라벨 정책
 
-### Study universe
-- **Report studies 4,349개**: 학습
-- **Gold58**: 학습 금지, model/checkpoint/SWA selection용 clean gate
-- 같은 Study가 train/Gold 양쪽에 들어가면 즉시 중단
+### Study universe / 2-Fold
+- **V4 Report/Pseudo 4,349개**: 양 Fold 공통 학습
+- **Gold58**: 29/29 두 Fold로 분할
+- Fold0 train = pseudo 4,349 + Gold Fold1 29 / val = Gold Fold0 29
+- Fold1 train = pseudo 4,349 + Gold Fold0 29 / val = Gold Fold1 29
+- 각 Fold validation Gold29는 해당 Fold train에서 완전 제외
 
 ### 라벨
 주 라벨은 **V4 Routed Broad**를 사용한다.
@@ -732,9 +795,9 @@ Study sampling multiplier:
 |---|---|
 | Epoch | **16 fixed** |
 | Early stopping | **없음** |
-| Physical Study batch | **1** |
-| Grad accumulation | **16** |
-| Effective Study batch | **16** |
+| Physical Study batch | **4→2→1 실측 benchmark** |
+| Grad accumulation | **16 / selected physical batch** |
+| Effective Study batch | **16 / Fold** |
 | Train windows | **12 / Study** |
 | Val windows | **94 / Study** |
 | Backbone LR | **4.0e-5** |
@@ -749,10 +812,11 @@ Study sampling multiplier:
 | GPU target | Kaggle T4×2 |
 
 GPU 사용:
-- Fold training이 아니라 단일 all-pseudo model이므로 두 GPU를 억지 DDP로 묶지 않는다.
-- 가장 먼저 2×T4에서 **data/preprocess + model execution 분리 또는 model parallel 가능성**을 benchmark한다.
-- reproducibility가 흔들리면 1 GPU training + 다른 GPU auxiliary/cache job이 우선.
-- effective batch 16은 유지한다.
+- **Fold0 → GPU0, Fold1 → GPU1 독립 학습**
+- **DDP 사용 안 함**
+- physical Study batch는 각 GPU에서 4→2→1 순으로 실제 training graph benchmark
+- 두 GPU가 모두 가능한 가장 큰 공통 physical batch 사용
+- effective batch는 Fold별 16 유지
 
 ---
 
@@ -760,12 +824,13 @@ GPU 사용:
 
 Gold58은 반복된 dev gate이므로 절대 독립 test라고 부르지 않는다.
 
-- every epoch checkpoint 저장
-- epoch 8~16을 후보로 함
-- Gold58 Macro AUROC 기준 global top-3 epoch 선택
-- top-3 state를 **equal-weight parameter averaging(SWA-style serving checkpoint)** 으로 합친다.
-- target별로 서로 다른 epoch를 cherry-pick하지 않는다.
-- 최종 Branch-B serving checkpoint는 **1개**로 유지한다.
+- Base stage는 **Fold별 best checkpoint 하나만 저장**
+- 기준: 해당 Fold의 held-out Gold29 Macro AUROC
+- best 갱신 시 같은 `best.pt`를 overwrite
+- epoch별 model checkpoint 저장 안 함
+- Base stage `last.pt` 저장 안 함
+- SWA/top3 parameter averaging 안 함
+- 최종 Base checkpoints: `fold0/best.pt`, `fold1/best.pt`
 
 보조 지표:
 - per-target AUROC
@@ -857,8 +922,8 @@ Branch-B는 **Wide/Dense MRI coverage expert** 역할을 유지한다.
 3. Branch-B 96-slice cache preflight
 4. exact output byte 계산 → 4/5 pack 확정
 5. cache build + integrity QA
-6. CoAtNet 16ep full-data training
-7. Gold58 epoch/SWA selection
+6. CoAtNet 16ep independent 2-Fold Base training
+7. Fold별 Gold29 best checkpoint selection
 8. standalone inference notebook
 9. Public LB
 10. anatomical mirror TTA submission
