@@ -1,3 +1,21 @@
+## 2026-10-18 — C-CACHE-V3 Preflight V2 PATHFIX
+
+- V1 preflight bug: Competition DICOM directory를 `train_images/`로 잘못 고정해 첫 input gate에서 실패.
+- 실제 competition layout은 `train_series/` DICOM directory를 사용한다. 공개 inference 참고에서도 test side는 `test_series/`를 사용.
+- 수정 Notebook: `C_CACHE_V3_GEOMETRY_PREFLIGHT_V2_PATHFIX.ipynb`
+- SHA256: `cb9fedf405984c7ab8cd84d5172b69c272543e6e75d3dfe564d50064213f632b`
+- Input root resolver:
+  1. `/kaggle/input/competitions/rsna-knee-abnormality-detection`
+  2. `/kaggle/input/rsna-knee-abnormality-detection`
+- DICOM root resolver: `train_series/` 우선, `train_images/`는 compatibility fallback만 허용.
+- 전체 `/kaggle/input` recursive scan 금지.
+- 선택된 competition root / DICOM root는 실행 로그와 receipt에 기록.
+- 기존 `C_CACHE_V3_GEOMETRY_PREFLIGHT.ipynb`는 **OBSOLETE / DO_NOT_RUN**.
+- 설계(Global+geometry local, max64 overlapping 2.5D, unique-row storage)는 변경 없음.
+
+
+---
+
 # Branch-C ConvNeXt — Cumulative Experiment Log
 
 ## 2026-10-18 — C-DESIGN-V4 / Segmentation-Free Geometry Multi-View 전환
