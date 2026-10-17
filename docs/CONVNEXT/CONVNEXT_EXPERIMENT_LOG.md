@@ -1,3 +1,20 @@
+## 2026-10-18 — C Base checkpoint/early-stop policy 수정
+
+상태: **TRAIN_NOTEBOOK_READY_V3 / NOT_RUN**
+
+대체 Notebook:
+- `C_CONVNEXT_GEOM64_2F_BASE_V3_ES_STABLE.ipynb`
+- local SHA256 `3800699a9dba69947ebeb4e989ee31a46b874c37e23d4194fbfad174f547451a`
+
+변경:
+- 기존 V2는 max16 fixed, no early stop이었음.
+- V3는 max16 + own Gold29 Macro AUROC early stopping.
+- min epochs 6 / patience 3.
+- Fold별 `best.pt` 하나만 보존.
+- no `last.pt`, no epoch checkpoints, no SWA.
+- non-finite logits/loss/gradient fail-fast.
+- one Fold failure → sibling Fold terminate.
+
 ## 2026-10-18 — C-BASE-01 ConvNeXt Geometry64 2F training notebook READY
 
 상태: **CACHE_COMPLETE / TRAIN_NOTEBOOK_READY / TRAIN_NOT_RUN**
