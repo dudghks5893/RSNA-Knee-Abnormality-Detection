@@ -1,3 +1,158 @@
+## 2026-10-17 — B-CACHE-96S384-V1 실제 생성 완료 / 4-Pack Dataset 고정
+
+상태: **CACHE_COMPLETE / TRAIN_NOT_RUN**
+
+Branch-B CoAtNet용 Wide96 Native384 본 cache 4개 Pack의 실제 Kaggle 생성 및 full-readback QA가 모두 완료되었다.
+
+### 실제 Dataset 경로
+
+```text
+Pack00
+/kaggle/input/datasets/yhlucas/b-coat-wide96-cache-pack-00/B_COAT_WIDE96_CACHE_PACK_00/coat_wide96_native384_pack00.h5
+
+Pack01
+/kaggle/input/datasets/woniyeon/b-coat-wide96-cache-pack-01/B_COAT_WIDE96_CACHE_PACK_01/coat_wide96_native384_pack01.h5
+
+Pack02
+/kaggle/input/datasets/yhlucas/b-coat-wide96-cache-pack-02/B_COAT_WIDE96_CACHE_PACK_02/coat_wide96_native384_pack02.h5
+
+Pack03
+/kaggle/input/datasets/woniyeon/b-coat-wide96-cache-pack-03/B_COAT_WIDE96_CACHE_PACK_03/coat_wide96_native384_pack03.h5
+```
+
+### Pack별 실제 결과
+
+| Pack | Studies | HDF5 size | HDF5 SHA256 | Valid slices | Missing slices | Missing-slot Studies | Decode failures |
+|---|---:|---:|---|---:|---:|---:|---:|
+| 00 | 1,102 | 14.535 GiB | `304028610a451f598255c6a18c07c4b531f8d9fdabb0fa265695c8a24d326c6f` | 102,012 | 3,780 | 289 | 0 |
+| 01 | 1,102 | 14.535 GiB | `1d8bc3003517ec34c7c1ba70b398a6525136f40ed12503c95bd6a5b6a5595eb1` | 101,558 | 4,234 | 327 | 0 |
+| 02 | 1,102 | 14.535 GiB | `ee49f1891c5d10e116d0b9ebab8e860ceddfa70639b3dfa959d5a3416c63be86` | 101,746 | 4,046 | 313 | 0 |
+| 03 | 1,101 | 14.522 GiB | `5f37b844659f5e3faa389f64c1b7194f2e3b71e7589cbe9378767ce3d7a4f2f1` | 101,650 | 4,046 | 312 | 0 |
+| **TOTAL** | **4,407** | **58.127 GiB** | — | **406,966** | **16,106** | **1,241** | **0** |
+
+총 logical slice positions:
+`4,407 × 96 = 423,072`.
+
+따라서:
+- valid = **406,966**
+- zero/mask missing = **16,106**
+- decode failure = **0**
+- missing은 DICOM decode 오류가 아니라 구조적으로 해당 second-Series Slot이 없는 경우다.
+
+### 실제 HDF5 구조
+
+각 Pack:
+```text
+volume      [NStudy, 96, 384, 384] uint8
+valid_mask  [NStudy, 96]           uint8
+```
+
+`valid_mask=1`:
+- 실제 선택/복호화된 acquisition slice
+
+`valid_mask=0`:
+- 구조적으로 Slot이 없거나 decode가 실패한 위치
+- 이번 실제 build에서는 decode failure가 0이므로 모두 구조적 missing에서 발생
+
+### 96-slice anatomical layout
+
+```text
+S0 SAG_FLUID      26
+S1 SAG_NONFLUID   22
+S2 COR_FLUID      18
+S3 COR_NONFLUID   12
+S4 AXIAL_ANY      18
+TOTAL             96
+```
+
+Series 선택 규칙:
+1. 동일 Study 내 Series 재사용 금지
+2. requested plane 일치
+3. fluid/non-fluid 조건이 있으면 preferred Series 우선
+4. preferred가 없으면 같은 plane의 unused Series fallback
+5. 두 번째 같은-plane Series 자체가 없으면 해당 Slot zero + mask 0
+
+PRE-FLIGHT에서 확인한 전체 구조적 missing:
+- SAG_NONFLUID missing Study: **119**
+- COR_NONFLUID missing Study: **1,124**
+- AXIAL missing: **0**
+- 적어도 1개 Slot missing Study: **1,241**
+
+### 생성 과정
+
+각 선택 Series에서:
+```text
+DICOM physical ordering
+IOP/IPP
+→ InstanceNumber
+→ filename fallback
+```
+
+실제 4-Pack build의 **20,792 selected non-missing Series 전부 IOP_IPP ordering**으로 처리되었다.
+
+그 다음:
+```text
+Series slices
+→ 2~98% span
+→ Slot별 k개 균등 sampling
+→ modality LUT
+→ MONOCHROME1 inversion if needed
+→ selected valid slices 기반 p2/p98 intensity normalization
+→ 140mm physical center crop
+→ cv2.INTER_AREA
+→ 384×384 uint8
+→ Study 고정 96-slice volume
+```
+
+HDF5 compression은 사용하지 않았다.
+
+### QA / reproducibility binding
+
+PRE-FLIGHT global contracts:
+- selected-slot manifest SHA:
+  `2ae3c83c45c7efa46e393d0c23fb266850479830ebca329c3c74c19ff9165f5e`
+- pack partition SHA:
+  `c934b45a305f8e3339a1934332ecd61b32de35160cd8fceb6206ed704752a55c`
+
+Pack partition:
+```text
+sorted StudyInstanceUID
+→ row_index % 4
+→ Pack00/01/02/03
+```
+
+각 Pack에서:
+- Study별 volume + mask SHA 생성
+- HDF5 전체 readback
+- Study SHA 재검증
+- valid_mask sum parity
+- final HDF5 SHA 생성
+을 모두 통과했다.
+
+### CoAtNet loader에서의 사용
+
+Cache 자체는 96개의 2D slice다.
+
+학습/추론 시:
+```text
+96 slices
+→ [c-1, c, c+1] 3-channel window
+```
+
+- train: Study당 stochastic **12 windows/epoch**
+- validation/inference: 가능한 **94 dense overlapping windows**
+- `valid_mask`로 missing 위치가 포함된 window를 제외/마스킹한다.
+
+### 다음 단계
+
+Cache 생성은 완료되었다. 다음 Branch-B 실제 작업은:
+1. 최신 B soft-label artifact의 실제 Kaggle path/SHA 고정
+2. 4개 HDF5 path/SHA input gate
+3. Gold58 train exclusion gate
+4. CoAtNet 16-epoch full-data training notebook 생성
+5. standalone → mirror TTA → A+B rank blend 평가
+
+
 ## 2026-10-17 — Branch-B cache PRE-FLIGHT Notebook 준비
 
 Notebook:
@@ -113,13 +268,13 @@ S11 학습과 병렬 또는 직후:
 4. 140mm/384 + Series p2/p98 normalization parity/sample montage audit
 5. PASS 후 **4개 cache-build Notebook** 생성
 
-현재는 Pack 수/partition/output contract만 확정. 실제 cache build는 아직 NOT_RUN.
+Pack00~03 실제 HDF5 cache build 및 full-readback QA까지 완료. 상세 경로/SHA는 이 문서 최상단의 CACHE_COMPLETE 섹션을 authoritative source로 사용한다.
 
 
 # Branch-B CoAtNet Wide-MRI Expert — Authoritative Design & Roadmap
 
 최종 갱신: **2026-10-17**  
-상태: **DESIGN_FROZEN / NOT_RUN**  
+상태: **CACHE_COMPLETE / TRAIN_NOT_RUN**  
 이 문서는 Branch-B의 authoritative 설계 문서다. 실행 전에 변경이 생기면 여기부터 수정한다.
 
 ---
@@ -644,7 +799,7 @@ Branch-B는 **Wide/Dense MRI coverage expert** 역할을 유지한다.
 3. `COATNET_EXPERIMENT_LOG.md`
 를 읽는다.
 
-현재 바로 다음 작업은 **Branch-B cache를 만들기 전에 최신 B soft-label artifact/path/SHA와 raw competition DICOM 입력을 고정하고, 96×384 cache의 실제 Pack 설계를 만드는 것**이다.
+현재 바로 다음 작업은 **최신 B soft-label artifact의 실제 Kaggle path/SHA를 고정한 뒤, 완료된 4-Pack HDF5를 사용해 CoAtNet 16-epoch 본학습 notebook을 만드는 것**이다.
 
 
 ---
