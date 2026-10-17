@@ -1,3 +1,71 @@
+## 2026-10-17 — S11 Multi-View cache 2-Pack 실제 완료 / 학습 Notebook 준비
+
+### Cache 실제 결과 — PASS
+
+사용자 제공 Kaggle Dataset 경로:
+
+- Pack00: `/kaggle/input/datasets/woniyeon/s11-mv-cache-pack-00/S11_MV_CACHE_PACK_00/multiview_top18_pack00.h5`
+  - Studies **2,204**
+  - Windows **39,672**
+  - HDF5 **14.257 GiB**
+  - SHA256 `3d33e29478f2d2e58cb0d74fd1df9fcb63eecc9fbb27636005afc5347607cc17`
+  - Anchor Series parity **12,223**
+  - Anchor Slice parity **119,016**
+- Pack01: `/kaggle/input/datasets/yhlucas/s11-mv-cache-pack-01/S11_MV_CACHE_PACK_01/multiview_top18_pack01.h5`
+  - Studies **2,203**
+  - Windows **39,654**
+  - HDF5 **14.251 GiB**
+  - SHA256 `4a39538c916fb3c63182d94aba318cd8f1dd594c98c044e1a5b5f79a1513b95b`
+  - Anchor Series parity **12,148**
+  - Anchor Slice parity **118,961**
+
+교차 QA:
+- 총 **4,407 Studies**
+- 총 **79,326 windows**
+- Study overlap **0**
+- Study 누락 **0**
+- 모든 Study **18 windows**
+- selection_order 1..18 exact
+- 두 Review ZIP `testzip=None`
+- 두 HDF5 모두 full readback SHA verification PASS
+- Anchor 130mm/224는 기존 Native224 V3 selected slice와 byte-exact parity PASS
+
+Coverage:
+- DETAIL 110mm: 평균 coverage_min 약 **0.999**, severe(<0.8) 약 **0.2%**
+- CONTEXT 160mm: 평균 coverage_min 약 **0.977**. 실제 촬영 FOV 부족으로 full 160mm 미달 Series는 약 47%지만 severe(<0.8)는 약 **0.4~0.5%**. 이는 no-padding 설계의 정상 결과.
+
+### S11 학습 Notebook
+
+생성: `S11_TOP18_MULTIVIEW_AUG_FT_V1.ipynb`
+
+SHA256:
+`6b92bc8317bdd4523bca598751fa94ac0682df1996c85abe448beeb315714c8d`
+
+정적 QA:
+- nbformat PASS
+- 모든 code cell AST PASS
+- embedded worker compile PASS
+- notebook source **52,973 bytes**, Kaggle 1MB source limit PASS
+
+학습 계약:
+- Init S10 same-fold `last.pt`
+- DETAIL/ANCHOR/CONTEXT shared DINOv2-Base
+- fixed target-wise **logit routing**
+- view별 mild deterministic augmentation
+- V4 Strict loss/class balance 그대로
+- fixed **2 epochs**, no early stop
+- effective Study batch **4**
+- actual T4에서 physical batch / window microbatch / activation checkpoint benchmark
+- window microbatch **>=8**
+- epoch1.pt / epoch2.pt / last.pt 모두 보존
+
+다음 즉시 작업:
+1. Kaggle T4×2 / Internet OFF / Save & Run All로 S11 학습
+2. 실제 benchmark + Fold0/1 train 결과 검증
+3. standalone epoch1 / epoch2(last) Public LB
+4. 우선 hybrid `0.70*S11 + 0.30*S8C Direct`
+
+
 ## 2026-10-17 — Public LB 업데이트: S10+S8C 70:30 = 0.926 / DINOv2-Small = 0.899
 
 ### 새 Public LB 결과
