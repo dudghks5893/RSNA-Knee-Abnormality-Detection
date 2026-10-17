@@ -1,3 +1,35 @@
+## 2026-10-17 — Branch-B cache PRE-FLIGHT Notebook 준비
+
+Notebook:
+`B_COATNET_WIDE96_CACHE_PREFLIGHT_V1.ipynb`
+
+SHA256:
+`4b007a789f5c2937a71a1485b4bbe9ef962acad7befc8de7bbd68766ef3914d8`
+
+정적 QA PASS, 14,716 bytes.
+
+PRE-FLIGHT가 실제 Kaggle에서 확인하는 항목:
+- Competition `train_series.csv` 원래 순서 + shared 24,371-Series metadata merge
+- 5 fixed slots: 26/22/18/12/18
+- used Series 재사용 금지
+- preferred fluid type 없으면 same-plane fallback
+- unused same-plane Series도 없으면 missing slot
+- missing slot = future cache zero + valid_mask=0
+- selected-slot manifest
+- 140mm FOV header-only audit
+- sorted UID modulo-4 partition
+- Pack별 exact byte budget
+- 19GB output safety gate
+
+현재 기존 4,407 metadata에서 확인된 구조적 missing:
+- 두 번째 Sagittal Series가 없는 Study: **119**
+- 두 번째 Coronal Series가 없는 Study: **1,124**
+- Axial Series missing: **0**
+이 값은 실제 PRE-FLIGHT에서 competition-order 기반 manifest로 다시 확인한다.
+
+PRE-FLIGHT PASS 후에만 Pack00~03 실제 pixel cache builder 4종을 생성한다.
+
+
 ## 2026-10-17 — 96×384 cache Pack 수 PRE-FLIGHT 확정
 
 Branch-B cache는 **4 Pack**으로 확정한다.
