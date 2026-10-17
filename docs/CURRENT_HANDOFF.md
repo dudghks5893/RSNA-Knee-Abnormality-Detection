@@ -1,3 +1,18 @@
+### Branch-B training 상태 — 2026-10-17
+
+- Wide96 Native384 cache 4 Pack: **COMPLETE / PASS**
+- supervision: **V4 Routed Broad**, 4,349 Studies, SHA `93863c59f99a70e2fd5c2d1674bc91266f3c459d398755911e033dbdac8d381c`
+- V4 weight: `0.25 + 0.75×confidence`
+- LABEL-V6 B는 Branch-B 학습에 사용하지 않음
+- CoAtNet pretrained input:
+  `/kaggle/input/models/blueberry808/coatnet-rmlp-2-rw-384-sw-in12k-ft-in1k/pytorch/default/1/coatnet_rmlp_2_rw_384_sw_in12k_ft_in1k.pth`
+- CoAtNet feature dim: **1024**
+- authoritative notebook: `B_COATNET_WIDE96_FT_V2.ipynb`
+- notebook SHA: `bd78e9b1c1b0fd5dc65f98c2fde5d67bfb7665440eb49f5eeecdfbd918d1d14c`
+- V1: **DO_NOT_RUN**
+- immediate next: **V2 T4×2 Save & Run All → cache/model/label gates → 16ep training → swa_top3.pt**
+
+
 # RSNA Knee — 현재 인수인계 및 문서 탐색
 
 최종 갱신: **2026-10-17**. DINO·S 계보의 최신 authoritative source는 아래 3개 누적 문서다. 과거 개별 문서의 NEXT/CURRENT는 작성 당시 기록이며 최신 지시가 아니다.
