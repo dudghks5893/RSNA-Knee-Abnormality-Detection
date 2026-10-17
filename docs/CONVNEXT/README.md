@@ -5,8 +5,8 @@
 ## 현재 상태
 
 - Design: C-DESIGN-V3 FROZEN
-- Cache Notebook: READY / STATIC_QA_PASS
-- Cache: NOT_RUN
+- Cache Notebook: **V2 PREFLIGHT READY / STATIC_QA_PASS**
+- Cache: NOT_RUN — **V1 6-Pack은 SUPERSEDED / DO NOT RUN**
 - Training: NOT_RUN
 
 Branch-C는 RSNA Knee 최종 A+B+C 앙상블의 세 번째 독립 전문가다.
@@ -52,3 +52,12 @@ Immediate next:
 - PASS 후 P01~P05 진행
 
 ConvNeXt training Notebook은 cache P00 및 전체 cache QA 후 생성한다.
+
+## C-CACHE-V2 — 현재 실행 항목
+
+- 실행할 Notebook: `C_CACHE_V2_SIZE_PREFLIGHT.ipynb`
+- 목적: Window는 그대로 두고 per-slice 저장 중복만 제거했을 때 실제 전체 cache 용량과 최소 Pack 수 측정
+- 128 Study에서 old triplet vs unique-pixel+index reconstruction bit-parity 검증
+- safe target: 16.5 GiB/Pack, projected total에 15% margin
+- 이 결과 전에는 full cache Pack 수를 확정하지 않는다.
+- 기존 `C_ANATOMY_CACHE320_V1_P00~P05`는 실행 금지.
