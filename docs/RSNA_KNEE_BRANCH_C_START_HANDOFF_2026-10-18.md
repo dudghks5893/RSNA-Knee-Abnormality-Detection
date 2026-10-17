@@ -97,6 +97,163 @@ Full FOV + anatomy-local views
 
 ---
 
+
+# 2.2 과거 실험 계보에서 이미 닫힌 결론
+
+다음 채팅은 아래 축을 근거 없이 다시 처음부터 반복하지 않는다.
+
+## Historical Exp 계보
+
+과거 강한 기준:
+
+```text
+Exp57 Public LB ≈ 0.918
+```
+
+이 계보에서 중요한 구조적 교훈은:
+
+```text
+Top-K final branch
++
+selector/full-MRI direct branch
+```
+
+를 결합한 hybrid가 유효했다는 것이다.
+
+이 경험이 현재:
+
+```text
+S10/S11 70%
++
+S8C Full-MRI Direct 30%
+```
+
+구조의 직접적인 근거다.
+
+## Specialist 계보
+
+최종 Specialist submission:
+
+```text
+Public LB ≈ 0.876
+```
+
+질환별 high-confidence/top-percentile specialist가 일부 local target에서는 높은 Gold score를 보였지만
+전체 submission mainline으로는 현재 DINO 계보보다 낮았다.
+
+따라서 target specialist를 별도 주력 Branch로 되돌리지 않는다.
+
+## 3D / R3D 계보
+
+대표 R3D:
+
+```text
+R3D-13V4 Gold58 Macro AUROC ≈ 0.680
+Public LB ≈ 0.689
+```
+
+3D MedicalNet 계보는 현재 2D/2.5D DINO/CoAtNet 전략보다 크게 낮다.
+
+새 evidence 없이 3D mainline으로 회귀하지 않는다.
+
+## RMIL 초기 계보
+
+대표:
+
+```text
+RMIL-01
+MEAN ≈ 0.576
+Attention ≈ 0.544
+
+RMIL-02 K16 Mean ≈ 0.578
+```
+
+초기 작은 Window 후보에서는 Attention이 오히려 악화된 사례가 있었다.
+
+교훈:
+
+- Attention 자체를 무조건 좋다고 가정하지 않는다.
+- 충분한 후보 coverage와 input quality가 먼저다.
+- 현재 S8B/S8C에서 Attention이 실제 Public LB 0.923까지 올라간 것은 Full-MRI feature/candidate 표현이 개선된 뒤의 결과다.
+
+## DINO Small vs Base
+
+이미 실제 2-Fold/Public LB로 비교했다.
+
+```text
+DINOv2-Base V4 Broad   0.910
+DINOv2-Small V4 Broad  0.899
+```
+
+차이:
+
+```text
+Base +0.011
+```
+
+따라서 현재 DINO Core에서 Small vs Base를 다시 반복하지 않는다.
+
+## S8 MIL progression
+
+```text
+S8A Mean MIL                 0.918
+S8B Window Attention MIL     0.923
+S8C Window+Series Attention  0.923
+```
+
+S8C의 중요한 가치는 단순 standalone score만이 아니다.
+
+```text
+Full-MRI Direct prediction
++
+label-free Top18 selector
+```
+
+를 동시에 제공해 S10/S11 hybrid를 가능하게 한다.
+
+## S10 / S11 progression
+
+```text
+S10 standalone              0.923
+S10 70 + S8C Direct 30      0.926
+S11 standalone              0.926
+S11 70 + S8C Direct 30      현재 제출 중
+```
+
+따라서 현재 Branch-A는 단순히 backbone을 또 바꾸기보다 B/C 독립 expert와 ensemble하는 것이 우선이다.
+
+## LABEL-V6 vs V4
+
+LABEL-V6는 의미 라벨 검토/soft-label 연구로는 중요한 작업이었지만,
+실제 모델 실험에서 V4보다 낮은 0.8대 결과가 나왔다.
+
+현재 학습 supervision mainline:
+
+```text
+Base:
+V4 Routed Broad
+
+High-confidence FT:
+V4 Routed Strict
+```
+
+Branch-B/C에서 “최신 라벨”이라는 이유만으로 LABEL-V6를 자동 채택하지 않는다.
+
+V4 Strict exact path:
+
+```text
+/kaggle/input/datasets/yhlucas/rsna-knee-v4-consensus-dataset/
+rsna_knee_pseudolabels_v4_routed_strict.csv
+```
+
+known SHA:
+
+```text
+bfca4993e5c985d9318d732bf2a0970dd7af9b3beff1d6ff619822042bf7a2c0
+```
+
+---
+
 # 3. Branch-A 상세 파이프라인
 
 ```text
@@ -840,8 +997,7 @@ Branch-B standalone/Strict FT 결과가 나온 다음 수행한다.
 
 A candidate는 그 시점 Branch-A 최고 결과 사용:
 
-- S11 standalone 0.926
-- 또는 S11 70:S8C30 결과가 더 좋으면 그것
+- S11 standalone 0.926- 또는 S11 70:S8C30 결과가 더 좋으면 그것
 - 필요 시 S10 70:S8C30 0.926도 diversity reference로 유지
 
 B candidate:
@@ -997,6 +1153,7 @@ posterior/Baker local
 ```
 
 하지만 V1에서 무조건 모두 넣는 것은 아니다.
+
 ---
 
 # 25. Branch-C thin-stack 처리
@@ -1839,7 +1996,6 @@ https://github.com/dudghks5893/RSNA-Knee-Abnormality-Detection
 현재 기다리는 S11/Branch-B 결과는 건드리지 말고 Branch-C C-DESIGN-V2 상세 설계를 시작해.
 먼저 reference code에서 실제 ConvNeXt backbone, view/cache, anatomy anchor, spatial attention, MIL, fold/train 설정을 추출해서 기존 C-DESIGN-V1과 비교하고 어떤 부분을 채택/수정할지 제안해.
 ```
-
 ---
 
 # 46. 최종 요약
