@@ -1,3 +1,16 @@
+## 2026-10-18 — C-CACHE-V4 5-Pack FULL CACHE COMPLETE / TRAIN READY
+
+- Final audit: [C_CACHE_V4_FINAL_AUDIT.md](C_CACHE_V4_FINAL_AUDIT.md)
+- 5/5 Packs PASS, full readback PASS.
+- 4,407 unique Studies, overlap 0, missing 0.
+- 282,048 valid windows = exactly 64 per Study.
+- decode failure 0 / prep skip 0.
+- dense `64×3×320×320 uint8`, total HDF5 about 80.723 GiB.
+- Kaggle dataset paths and HDF5 SHA256 are frozen in the final audit.
+- rare crop coverage <0.90: 493/282,048 (0.175%), all Axial local views; this is source-FOV<110mm behavior under the frozen available-extent contract, not a regeneration trigger.
+- **Cache status: FINAL / DO NOT REBUILD.**
+- Immediate next: C-BASE ConvNeXt-Small 2-Fold training notebook and actual T4×2 runtime/resource probe.
+
 ## 2026-10-18 Branch-C cache latest
 
 C-CACHE-V3 segmentation-free geometry preflight completed:
