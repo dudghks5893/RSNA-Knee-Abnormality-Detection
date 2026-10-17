@@ -1,3 +1,13 @@
+<!-- CONVNEXT_README_STATUS_2026_10_18 -->
+## 현재 상태 — 2026-10-18
+
+- **NOT_RUN / DESIGN_REVIEW_ACTIVE**
+- 기다리는 S11/Branch-B 결과와 병렬로 C-DESIGN-V2 상세 설계를 진행한다.
+- 기존 `latest B soft-label` / `single full-data` 가정은 확정값이 아니다.
+- V4 Broad Base → V4 Strict FT와 2-Fold 여부를 재검토한다.
+- exact ConvNeXt pretrained / anatomy anchor / cache/view / spatial+MIL 구조를 고정하기 전 실행 Notebook을 만들지 않는다.
+- 상세 cold-start: [../RSNA_KNEE_BRANCH_C_START_HANDOFF_2026-10-18.md](../RSNA_KNEE_BRANCH_C_START_HANDOFF_2026-10-18.md)
+
 # Branch-C — ConvNeXt
 
 이 폴더는 **RSNA Knee 최종 앙상블의 선택적 Branch-C(ConvNeXt Anatomy Expert)** 를 관리한다.
