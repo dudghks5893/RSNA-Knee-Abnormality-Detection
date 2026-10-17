@@ -1,3 +1,38 @@
+# 2026-10-18 — C-CACHE-V3 Preflight V2 실패 / V3 QUOTAFIX
+
+상태: **PREFLIGHT_V2_FAIL_QUOTA_ONLY / V3_READY**
+
+실제 Kaggle V2 PATHFIX 결과:
+- competition root PASS
+- train_series DICOM root PASS
+- 4,407 Study / 24,371 Series 확인 PASS
+- 128/128 preflight Study geometry/header 처리 성공
+- runtime 약 4.7 min
+- 실패 지점: 일부 Study에서 `windows > 64` assertion
+
+원인:
+- Global/Local family target을 각각 32로 두면서도 모든 valid Series/View group에 1개 seed를 먼저 배정했다.
+- family group 수가 32를 넘는 Study에서는 seed 단계만으로 family budget을 초과할 수 있었다.
+- 과학적 데이터 설계 문제가 아니라 allocator hard-cap 누락 버그다.
+
+V3 QUOTAFIX:
+- Global≈32 / Local≈32 우선 유지
+- family group 수가 budget보다 많으면 plane/view strata round-robin으로 coverage group 선택
+- residual은 remaining capacity 기준 deterministic 배분
+- `sum(quota)<=64`, `len(windows)<=64` hard assertion
+- 뒤에서 임의 truncate 금지
+- Branch-B full-cache에서 검증된 reader 패턴 반영: *.dcm only, specific_tags, threaded header read, IOP/IPP→Instance→filename fallback
+- Required Input은 competition 하나만 유지
+
+Notebook:
+- `C_CACHE_V3_GEOMETRY_PREFLIGHT_V3_QUOTAFIX.ipynb`
+- SHA256 `5035315bd91d7db98762d2bd7eaf2710987e2c67863fc6d37960e1ee1101daa8`
+- STATIC_QA_PASS / KAGGLE_NOT_RUN
+
+V1/V2 preflight notebook은 DO_NOT_RUN.
+
+---
+
 ## 2026-10-18 — C-CACHE-V3 Preflight V2 PATHFIX
 
 - V1 preflight bug: Competition DICOM directory를 `train_images/`로 잘못 고정해 첫 input gate에서 실패.
