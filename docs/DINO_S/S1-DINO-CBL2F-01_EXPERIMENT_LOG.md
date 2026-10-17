@@ -33,18 +33,53 @@ S11 standalone 및 S11 70:30 Notebook은 이 hidden-tested robust path를 기반
 - **Study-level 0.5 placeholder 금지.**
 - real-image prediction branch 0개면 fail-fast.
 
-<!-- S11_70_30_SUBMISSION_RUNNING_2026_10_18 -->
-## 2026-10-18 — S11 standalone 0.926 확정 / 70:30 submission 진행 중
+<!-- S11_70_30_SUBMISSION_COMPLETE_2026_10_18 -->
+## 2026-10-18 — S11 LAST 70 + S8C Direct 30 Public LB 0.928 / Branch-A new best
 
-- 사용자 보고 **S11 LAST 2F standalone Public LB = 0.926**.
-- S10 standalone 0.923 대비 +0.003이며, 기존 최고 S10 70% + S8C Direct 30% = 0.926과 standalone으로 동점.
-- 현재 제출 진행 중:
-  `P_FINAL = 0.70 × S11 LAST 2F + 0.30 × S8C Full-MRI Direct 2F`.
+### Public LB
+- 사용자 보고 **S11 LAST 70% + S8C Full-MRI Direct 30% = Public LB 0.928**.
+- 이전 최고:
+  - S10 standalone = 0.923
+  - S10 70 + S8C Direct 30 = 0.926
+  - S11 LAST 2F standalone = 0.926
+- 따라서:
+  - S11 standalone 대비 **+0.002**
+  - 기존 프로젝트 최고 0.926 대비 **+0.002**
+- **Branch-A current main / project best = 0.928**로 승격.
+- 동일 ratio를 더 세밀하게 무분별 탐색하지 않고, 우선 Branch-B/C 독립 expert 및 최종 ensemble diversity 확보를 진행한다.
+
+### Submission contract
 - Notebook: `S11_LAST_70_S8C_DIRECT_30_2F_LB_SUBMISSION_V1.ipynb`
-- SHA: `1936890da1c28fa1e55fdaf3981cc07e71b2b2b651afbcb39b50c63068b5ff5d`
-- **상태: SUBMISSION_RUNNING / PUBLIC_LB_PENDING**.
-- LB >0.926이면 Branch-A main으로 승격. =0.926이면 S11 standalone과 기존 S10 hybrid 둘 다 보존. <0.926이면 S11 standalone 0.926 유지.
-- 이 30%는 사진 30%가 아니라, S8C가 전체 MRI feature로 생성한 Full-MRI Direct probability의 최종 blend weight다.
+- SHA256: `1936890da1c28fa1e55fdaf3981cc07e71b2b2b651afbcb39b50c63068b5ff5d`
+- Formula:
+  `P_FINAL = 0.70 * mean(S11 F0/F1 LAST prob) + 0.30 * mean(S8C F0/F1 Direct prob)`
+- S8C Direct는 selector forward에서 이미 계산되는 Full-MRI probability를 재사용하므로 별도 feature extractor/model pass를 추가하지 않는다.
+- hidden-test robust DICOM / selector / Multi-View path 유지.
+- Study-level neutral 0.5 fallback 없음.
+
+### Visible 3-Study Save & Run All runtime evidence
+실제 저장된 visible test run:
+- Studies **3**
+- Series **15**
+- GPU **Tesla T4 ×2**
+- inference loop runtime **0.40665590035 min ≈ 24.4 sec**
+- 3/3 모두 `NORMAL_S11_LAST_70_S8C_DIRECT_30`
+- branch rescue 0
+- parallel feature fallback 0
+- feature/S8C/S11 fold retry 0
+- multiview series rescue 0
+- max blend arithmetic error 0.0
+- Study-level 0.5 fallback 0
+
+사용자 보고 Save & Run All 전체 wall time은 약 **1분 50초**.
+따라서 visible 3-Study run은 약 24.4초가 Study inference이고, 나머지는 checkpoint load / SHA / setup / notebook overhead가 큰 고정비다.
+
+### Hidden execution wall-time observation
+- Kaggle hidden evaluation은 상세 로그/hidden test row count를 사용자에게 공개하지 않는다.
+- 사용자 UI timestamp 기준 전체 제출 처리 시간은 약 **3.5~4.0시간**으로 추정되며 100% 정밀한 wall time은 아니다.
+- 따라서 이 시간은 직접 benchmark가 아니라 **serving capacity의 거친 실측 상한/참고치**로만 사용한다.
+- 향후 A/B/C 시간 예산은 visible/train proxy exact inference benchmark로 별도 측정한다.
+
 
 ## 2026-10-18 — S11 standalone Public LB 0.926 / S11 70 + S8C Direct 30 제출 준비
 
@@ -687,4 +722,3 @@ STATUS: NOTEBOOKS_STATIC_QA_PASS; CHECKPOINT_DATASET_MOUNT_PENDING; REAL_KAGGLE_
   - Hidden inference reuses the already hidden-tested Stage1/S8C selector + robust DICOM path, then reconstructs exact S11 DETAIL/ANCHOR/CONTEXT views for selected Top18.
   - No Study-level 0.5 fallback. One S11 fold may rescue the other; if both S11 folds fail, notebook intentionally fails.
 - **Next:** submit S11 LAST standalone first. If competitive, test `70% S11 + 30% S8C Direct`. Epoch1 has better Gold58 DEV than LAST and remains a separate candidate if its checkpoint is retained.
-
