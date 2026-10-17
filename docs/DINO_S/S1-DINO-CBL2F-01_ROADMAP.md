@@ -1,3 +1,16 @@
+<!-- S11_ROADMAP_STATUS_2026_10_18 -->
+## 2026-10-18 — Branch-A immediate roadmap
+
+현재:
+- S11 LAST 2F standalone = **0.926 Public LB**.
+- S11 LAST 70 + S8C Direct 30 = **submission 진행 중 / LB 대기**.
+
+다음:
+1. 70:30 LB 기록.
+2. 0.926 초과 시 Branch-A main 갱신.
+3. 동점/하락 시 여러 ratio를 무분별하게 탐색하지 않고 S11 standalone 0.926과 S10 hybrid 0.926을 보존.
+4. Branch-B/C가 나오면 standalone score뿐 아니라 prediction correlation과 rank-space ensemble gain으로 최종 A source를 결정.
+
 ## 2026-10-17 — S11 Multi-View cache 2-Pack 실제 완료 / 학습 Notebook 준비
 
 ### Cache 실제 결과 — PASS
