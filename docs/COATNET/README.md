@@ -1,3 +1,12 @@
+<!-- COATNET_README_ACTUAL_STATUS_2026_10_18 -->
+## 현재 상태 — 2026-10-18
+
+- Wide96 cache: COMPLETE / PASS.
+- **Base V3 2-Fold: TRAIN_RUNNING**.
+- 실행본: `B_COATNET_WIDE96_2F_BASE_V3.ipynb` SHA `bb3527a1...`.
+- V4는 future execution-hardening reference이며 V3를 임의 중단하지 않는다.
+- Base 완료 후 standalone → V4 Strict FT → standalone → A+B ensemble.
+
 # Branch-B — CoAtNet
 
 이 폴더는 **RSNA Knee 최종 앙상블의 독립 Branch-B(CoAtNet Wide-MRI Expert)** 를 관리한다.
