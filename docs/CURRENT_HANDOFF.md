@@ -1,3 +1,20 @@
+## 2026-10-18 — B/C early stopping + best-only checkpoint policy 확정
+
+Branch-B:
+- V3 actual run은 Fold0 NaN → validation crash로 중단.
+- Fold1은 Epoch8 Gold29 Macro AUROC 0.896024까지 개선했으나 2F run은 무효.
+- 다음 실행: `B_COATNET_WIDE96_2F_BASE_V5_STABLE_ES.ipynb`
+- SHA `425ef5c973de1b04513592706416c63ec439d551783f28df7b92f5e8620aa0a5`
+- max16 / min6 / patience3 / own Gold29 Macro AUROC early stop / best.pt only.
+- B V5는 MIL head FP32, head LR1e-3, non-finite fail-fast, sibling terminate 포함.
+
+Branch-C:
+- 다음 실행: `C_CONVNEXT_GEOM64_2F_BASE_V3_ES_STABLE.ipynb`
+- SHA `3800699a9dba69947ebeb4e989ee31a46b874c37e23d4194fbfad174f547451a`
+- max16 / min6 / patience3 / own Gold29 Macro AUROC early stop / best.pt only.
+- no last/epoch/SWA checkpoints.
+- non-finite fail-fast + sibling terminate.
+
 ## 2026-10-18 — C-BASE-01 ConvNeXt Geometry64 2F training notebook READY
 
 상태: **CACHE_COMPLETE / TRAIN_NOTEBOOK_READY / TRAIN_NOT_RUN**
