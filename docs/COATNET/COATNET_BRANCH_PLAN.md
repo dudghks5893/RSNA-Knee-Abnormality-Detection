@@ -1,12 +1,39 @@
+## 2026-10-17 — V3 audit correction / V4 authoritative
+
+상태: **CACHE_COMPLETE / TRAIN_READY_V4 / NOT_RUN**
+
+Authoritative notebook:
+- `B_COATNET_WIDE96_2F_BASE_V4.ipynb`
+- SHA256 `45f77cd959d984577099b0a67f406b0e3f98296a4950d4b1a7dafeccc04f649f`
+- V1/V2/V3: **OBSOLETE / DO_NOT_RUN**
+
+V4 keeps the independent 2-Fold scientific design:
+- GPU0=Fold0 / GPU1=Fold1, **No DDP**
+- Fold0 train = V4 Broad 4,349 + Gold Fold1 29 / val = Gold Fold0 29
+- Fold1 train = V4 Broad 4,349 + Gold Fold0 29 / val = Gold Fold1 29
+- V4 pseudo weight = `0.25 + 0.75 × confidence`
+- pseudo-only class balance power .70 / clip .5–2.5
+- rare-positive Study sampling retained
+- Base checkpoint = Fold별 own Gold29 Macro AUROC `best.pt` 하나만 유지
+- no last / no SWA / no top3 averaging
+
+V3 audit에서 수정한 실행 안정성:
+1. resource probe가 synthetic 320 input이 아니라 **실제 Wide96 HDF5 → 384→320 augmentation → forward/backward/AdamW** 전체 경로를 사용
+2. CoAtNet BatchNorm을 전역 eval/freeze하지 않음. activation-checkpoint recompute에서만 running-stat second update를 차단
+3. physical Study batch `4→2→1`, window microbatch `12→8→6→4→3→2`를 분리 benchmark
+4. 선택된 공통 profile로 **Fold별 128 real Studies optimizer-inclusive throughput** 측정
+5. own Gold29 dense validation 시간까지 포함해 16ep runtime projection
+6. 10% safety margin 포함 projected concurrent wall time > **4.0h** 이면 Epoch1 전에 fail-fast
+
 ## 2026-10-17 — Branch-B Base 학습 구조 교정 / V3 authoritative
 
-상태: **CACHE_COMPLETE / TRAIN_READY_V3 / NOT_RUN**
+상태: **CACHE_COMPLETE / TRAIN_READY_V4 / NOT_RUN**
 
 사용자 최종 결정에 따라 V1/V2의 `single all-data model + T4×2 DDP + SWA` 설계는 폐기한다.
 
 Authoritative notebook:
-- `B_COATNET_WIDE96_2F_BASE_V3.ipynb`
-- SHA256 `bb3527a1c8b6fd6f6585295413420720d341ee4c61b8b04de25ca1ee5a6bf3f4`
+- `B_COATNET_WIDE96_2F_BASE_V4.ipynb`
+- SHA256 `45f77cd959d984577099b0a67f406b0e3f98296a4950d4b1a7dafeccc04f649f`
 - V1/V2: **OBSOLETE / DO_NOT_RUN**
 
 ### Base 2-Fold contract
@@ -65,7 +92,7 @@ Fold별 effective Study batch는 16으로 고정:
 
 ## 2026-10-17 — Branch-B training input 최종 수정 / V2 authoritative
 
-상태: **CACHE_COMPLETE / TRAIN_READY_V3**
+상태: **CACHE_COMPLETE / TRAIN_READY_V4**
 
 ### Supervision 최종 선택
 
@@ -114,11 +141,11 @@ coatnet_rmlp_2_rw_384.sw_in12k_ft_in1k
 
 ### Authoritative training notebook
 
-`B_COATNET_WIDE96_2F_BASE_V3.ipynb`
+`B_COATNET_WIDE96_2F_BASE_V4.ipynb`
 
 SHA256:
 
-`bb3527a1c8b6fd6f6585295413420720d341ee4c61b8b04de25ca1ee5a6bf3f4`
+`45f77cd959d984577099b0a67f406b0e3f98296a4950d4b1a7dafeccc04f649f`
 
 V1/V2는 **OBSOLETE / DO_NOT_RUN**.
 
@@ -180,7 +207,7 @@ Notebook은 둘을 임의 대체하지 않는다.
 
 ## 2026-10-17 — B-CACHE-96S384-V1 실제 생성 완료 / 4-Pack Dataset 고정
 
-상태: **CACHE_COMPLETE / TRAIN_READY_V3**
+상태: **CACHE_COMPLETE / TRAIN_READY_V4**
 
 Branch-B CoAtNet용 Wide96 Native384 본 cache 4개 Pack의 실제 Kaggle 생성 및 full-readback QA가 모두 완료되었다.
 
