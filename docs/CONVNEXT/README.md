@@ -77,3 +77,9 @@ SHA256:
 - 기존 `C_CACHE_V3_GEOMETRY_PREFLIGHT.ipynb`는 **OBSOLETE / DO_NOT_RUN**.
 - 설계(Global+geometry local, max64 overlapping 2.5D, unique-row storage)는 변경 없음.
 
+
+## 2026-10-18 cache preflight current
+- Current: `C_CACHE_V3_GEOMETRY_PREFLIGHT_V3_QUOTAFIX.ipynb`
+- SHA: `5035315bd91d7db98762d2bd7eaf2710987e2c67863fc6d37960e1ee1101daa8`
+- V2 reached 128/128 Study but failed the 64-window hard cap due to allocator overflow.
+- V3 fixes quota allocation and adopts validated Branch-B DICOM reader patterns.
