@@ -1,3 +1,38 @@
+## 2026-10-18 — C-CACHE-V3 Geometry Preflight V3 PASS / V4 full cache ready
+
+실제 Kaggle 결과:
+- status PASS
+- elapsed 1.77 min
+- 128/128 Study, errors 0
+- every Study = 64 windows
+- Global32 / Local32
+- mean groups 20.96, max 49
+- mean unique rows 191.211 / dense 192
+- dedup ratio 0.9959
+- mean payload 18.6766 MiB/Study
+- naive projected full cache mean 80.379 GiB
+- IOP/IPP ordering on all 734 sampled Series
+
+결정:
+1. unique-row/index storage는 절감이 거의 없어 폐기.
+2. dense 64×3×320×320 uint8 cache로 단순화.
+3. exact 19 GB output-cap 계산으로 5-Pack이 최소 feasible.
+4. local 110 mm crop은 shift-to-fit; FOV<110 mm일 때만 available extent.
+5. V4 5-Pack production notebooks static QA PASS, Kaggle NOT_RUN.
+
+V3 preflight artifacts:
+- metrics SHA 06827c88dc9219367f4f9ca3b51e3958478d0c09f7e7c91fd7126fc003c4eb6b
+- capacity plan SHA e62cfed65b153b7ad29a90bb57a1d7c6a73699f2ccd7d80ae7e675125e595265
+- receipt SHA 80b6b31385408aece46aff00128fa234940888c618adbf81fc9041f33ccc7903
+
+V4 Notebook SHA:
+- P00 bc9c96f9bcd50bc0d044e7dee704d968a06021349a4a241b6f1f518f9241c23c
+- P01 301c219edddbc45531f58757ef9bef4ced38ec219e37568b0d1c88feb61c66fb
+- P02 1961f9f57dc85fb4c9c12beee1cbcb655cccdfadeb164b8478bc1d38eee75382
+- P03 588c1d43b602a2e5937a0648034e133cdcd6d14e62183d56437a27e0a4765a8f
+- P04 b346aab589f3cd9e1002c4b4fbad296f5c8d8080c09f23e85c231a491623e1ea
+
+
 ## 2026-10-18 — C-CACHE-V3 V2 PATHFIX 실제 실행 실패, V3 QUOTAFIX 준비
 
 V2 실제 실행은 128/128 Study를 약 4.7분에 geometry/header audit 완료했으나 마지막 `windows<=64` gate에서 FAIL.
