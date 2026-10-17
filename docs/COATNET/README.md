@@ -16,7 +16,7 @@ Branch-B는 DINO Stage1→S8C→S10/S11 뒤에 이어 붙는 Stage4가 아니다
 
 ## 현재 상태 — 2026-10-17
 
-- 상태: **TRAIN_READY_V2 / NOT_RUN**
+- 상태: **TRAIN_READY_V3 / NOT_RUN**
 - Branch-A 현재 최고: **S10 LAST 70% + S8C Full-MRI Direct 30% = Public LB 0.926**
 - Branch-B 목표: DINO selector와 독립적인 Wide-MRI CoAtNet 전문가를 만들고, standalone 성능뿐 아니라 Branch-A와의 **오류 다양성 / ensemble gain**을 확보한다.
 - 안전 실행용 baseline이 목적이 아니다. 처음부터 고득점 가설을 사용한다.
@@ -24,5 +24,8 @@ Branch-B는 DINO Stage1→S8C→S10/S11 뒤에 이어 붙는 Stage4가 아니다
 - 실제 HDF5 경로와 SHA는 `COATNET_BRANCH_PLAN.md` 최상단에 고정
 - supervision: **V4 Routed Broad 고정** (`93863c59...381c`)
 - pretrained: user-mounted `coatnet_rmlp_2_rw_384_sw_in12k_ft_in1k.pth`
-- authoritative notebook: **B_COATNET_WIDE96_FT_V2.ipynb** (`bd78e9b1...1d14c`)
-- 우선순위: **V2 train → standalone LB → mirror TTA → A+B rank blend**
+- authoritative notebook: **B_COATNET_WIDE96_2F_BASE_V3.ipynb** (`bb3527a1...bf3f4`)
+- training mode: **Fold0/GPU0 + Fold1/GPU1 independent, No DDP**
+- checkpoint: **Fold별 best.pt만 유지**
+- Study batch: **4→2→1 실제 benchmark, effective batch/Fold 16**
+- 우선순위: **V3 independent 2F Base train → 2F standalone LB → mirror TTA → A+B rank blend**
