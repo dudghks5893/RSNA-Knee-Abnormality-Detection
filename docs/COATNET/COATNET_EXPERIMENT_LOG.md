@@ -1,3 +1,24 @@
+## 2026-10-17 — B-COAT-WIDE96-2F-BASE-V3 notebook READY
+
+**상태: TRAIN_READY_V3 / NOT_RUN**
+
+Authoritative notebook:
+- `B_COATNET_WIDE96_2F_BASE_V3.ipynb`
+- SHA `bb3527a1c8b6fd6f6585295413420720d341ee4c61b8b04de25ca1ee5a6bf3f4`
+- V1/V2: **OBSOLETE / DO_NOT_RUN**
+
+Training correction:
+- **No DDP**
+- GPU0=Fold0, GPU1=Fold1 independent
+- Fold0 train V4 4,349 + Gold Fold1 29 / val Gold Fold0 29
+- Fold1 train V4 4,349 + Gold Fold0 29 / val Gold Fold1 29
+- physical Study batch is not fixed: 4→2→1 actual optimizer-step benchmark
+- effective Study batch/Fold=16
+- 16 fixed epochs, no early stop
+- checkpoint policy: **best.pt only per Fold**
+- no epoch checkpoints / no last / no SWA / no top3 averaging
+
+
 ## 2026-10-17 — B-COAT-WIDE96-FT-V2 notebook READY
 
 **상태: TRAIN_READY / NOT_RUN**
@@ -264,7 +285,7 @@ S11 학습과 병렬 또는 직후:
 ## Status
 
 - Branch: **B — CoAtNet Wide-MRI Expert**
-- Current state: **TRAIN_READY_V2 / NOT_RUN**
+- Current state: **TRAIN_READY_V3 / NOT_RUN**
 - Design version: **B-DESIGN-V1**
 - Baseline 목적 아님. 첫 실행부터 고득점 가설 설계를 사용한다.
 
@@ -318,7 +339,7 @@ AB-RANK-BLEND-V1
 - 96-slice anatomical slots + wide span + 140mm/384 + CoAtNet + target-specific attention.
 - 4,349 report studies train, Gold58 training 제외.
 - masked confidence-weighted soft BCE + class balance + rare-positive sampling.
-- 16 epoch fixed, all-data single model, top-3 epoch parameter averaging.
+- 16 epoch fixed, independent 2-Fold Base; each Fold keeps only own-Gold29 best checkpoint.
 - standalone → mirror TTA → Branch-A rank blend 순으로 평가.
 
 
