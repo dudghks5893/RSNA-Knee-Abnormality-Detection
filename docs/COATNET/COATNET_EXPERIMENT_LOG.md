@@ -1,3 +1,44 @@
+## 2026-10-17 — B-COAT-WIDE96-FT-V1 본학습 Notebook 생성
+
+Notebook:
+`B_COATNET_WIDE96_FT_V1.ipynb`
+
+Local SHA256:
+`5ba2c615cf6dad9fb573b6929ac45aa236643922e2c61df2a0b680c61b269109`
+
+Static QA:
+- nbformat PASS
+- all code AST PASS
+- embedded DDP worker compile PASS
+- notebook source 50,012 bytes (<1MB)
+
+핵심:
+- 4-Pack Wide96 Native384 SHA gate
+- 4,349 report studies train / Gold58 train 제외
+- CoAtNet `coatnet_rmlp_2_rw_384.sw_in12k_ft_in1k`
+- 2×T4 DDP, single serving model
+- per-GPU Study batch1 × 2 GPU × grad-accum8 = global effective Study batch16
+- 12 stochastic windows/Study/epoch
+- 384→320 random crop + mild affine/intensity augmentation
+- target-specific window attention
+- masked confidence-weighted soft BCE
+- class balance power .70 / cap .5–2.5
+- rare-positive Study sampling
+- 16 fixed epochs / no early stop
+- backbone LR 4e-5 / head LR 2e-3 / WD .06 / cosine / 5% warmup
+- epoch01~16 model checkpoints
+- epoch8~16 Gold58 Macro AUROC global top3 parameter averaging → `swa_top3.pt`
+
+실행 전 아직 외부 입력으로 고정되지 않은 2개:
+1. 최신 최종 B soft-label Kaggle artifact/path/SHA
+2. exact pretrained CoAtNet `model.safetensors`
+
+Notebook은 둘을 임의 대체하지 않는다.
+- B label: 4,349 unique report Study + 12 target + soft/confidence(or weight)/mask schema를 검증해 정확히 1개 후보만 허용
+- pretrained: SHA `91570c7af10fea0af03c1b0a49be3e4775596239890eb4193c75129b3045623e` exact file만 허용
+- random-init / V4 Strict silent fallback 금지
+
+
 ## 2026-10-17 — B-CACHE-96S384-V1 4-Pack 실제 생성 완료
 
 **실행 상태: PASS / CACHE_COMPLETE**
