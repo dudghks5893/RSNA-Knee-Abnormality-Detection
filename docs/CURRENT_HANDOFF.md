@@ -1,3 +1,26 @@
+## 2026-10-18 — Branch-B standalone Public LB 확정 / A+B next
+
+- Branch-B experiment: `B-COAT-WIDE96-2F-BASE-V7-AMP-RECOVERY-ES`
+- Fold0 best Gold29: **0.923407 @ Epoch6**
+- Fold1 best Gold29: **0.915820 @ Epoch9**
+- standalone notebook: `B_COAT_WIDE96_2F_STANDALONE_SUBMISSION_V1.ipynb`
+- notebook SHA256: `4a6941fab1713ce48b186f01b81e21f349c9738e8448f001524ac1ff051191fc`
+- **Public LB = 0.925**
+- hidden 전체 제출 runtime: **약 1시간 30분**
+- 3-Study Save & Run All: **약 1분 5초**
+- Study-level 0.5 fallback 없음.
+
+현재 standalone:
+- Branch-A main: **0.928**
+- Branch-B CoAtNet: **0.925**
+- Branch-C ConvNeXt Geometry: **0.854**
+
+다음 우선순위:
+1. **A+B 60:40 target-wise percentile-rank blend**
+2. gain 확인 후 필요 시 weight 조정
+3. C는 낮은 비중 diversity 후보로만 후순위 검토
+
+
 ## 2026-10-18 — Branch-C standalone Public LB 확정
 
 Branch-C V9 학습 및 standalone hidden 제출 완료.
