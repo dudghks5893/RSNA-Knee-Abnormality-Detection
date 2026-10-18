@@ -1,3 +1,30 @@
+## 2026-10-19 — A+B Public LB 0.934 / 방향 재정렬
+
+### 현재 최고
+- Branch-A current main: **0.928**
+- Branch-B CoAtNet Wide96 Base: **0.925**
+- **A60 + B40 target-wise percentile-rank ensemble: Public LB 0.934**
+- hidden inference runtime: 사용자 추정 **약 3시간 30분**
+- A 대비 +0.006, B 대비 +0.009.
+
+### 의미
+A와 B의 입력/백본 차이가 실제 leaderboard에서 유효한 ensemble diversity를 만들었다.
+따라서 이후 새 Branch의 성공 기준은 standalone LB만이 아니라 **현재 0.934 ensemble에 추가했을 때의 marginal gain**이다.
+
+### 실행 우선순위
+1. **B Strict V1 FT** 완료 → LAST/BEST standalone LB → A와 blend 재평가.
+2. **C2 ConvNeXt 재설계**: 기존 segmentation-free Geometry C(standalone 0.854)를 그대로 미세조정하지 않는다. 공개 강한 ConvNeXt의 anatomy-localized full/local view + 64-window 학습 구조를 재현하는 방향을 우선한다.
+3. B_DINO_WIDE96_MIL_2F_BASE_V1은 **PAUSED / DO_NOT_RUN FOR NOW**. Generic DINOv2 Wide96 비교보다 CoAtNet/ConvNeXt 및 domain-specific foundation 모델의 기대값이 높다고 판단.
+4. **OrthoFoundation / DINOv3-L research lane** 추가:
+   - DINOv3-L에서 시작해 knee/orthopedic 영상으로 continued self-supervised pretraining된 checkpoint라는 점은 높은 관심 대상.
+   - 단, private multicenter pretraining data가 포함되어 있으므로 competition 규정상 pretrained-model accessibility / winner release 의무와 충돌하지 않는지 확인 전에는 mainline 학습에 사용하지 않는다.
+5. 최종 ensemble 목표:
+   - A DINO expert
+   - improved B CoAtNet expert
+   - C2 ConvNeXt 또는 규정상 허용되는 knee-domain foundation expert
+   - per-target percentile-rank blend 우선.
+
+---
 ## 2026-10-18 — Branch-B V4 Strict FT next
 
 Base CoAtNet standalone:
