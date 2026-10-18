@@ -1,35 +1,3 @@
-<!-- COATNET_AB_7030_PREPARED_2026_10_18 -->
-## 2026-10-18 — A+B 70:30 통합 Submission 노트북 준비 (미실행)
-
-상태: **NOTEBOOK_CREATED / STATIC_STRUCTURE_QA / KAGGLE_NOT_RUN / PUBLIC_LB_UNKNOWN**
-
-- 제출 실험: `A_S11_S8C_70_B_COAT_WIDE96_30_V1`
-- Notebook: [A_B_70_30_ENSEMBLE_SUBMISSION_V1.ipynb](A_B_70_30_ENSEMBLE_SUBMISSION_V1.ipynb)
-- Notebook structure: **16 cells / 약 111,969 JSON 문자 / Kaggle 1MB 아래**; A+B 기존 inference code 그대로 연결한 sequential pipeline.
-- Formula: `P_AB = 0.70 * (0.70 * P_S11 + 0.30 * P_S8C_DIRECT) + 0.30 * P_B_COATNET`.
-- Branch-A source: 기존 `S11_LAST_70_S8C_DIRECT_30_2F_LB_SUBMISSION_V1.ipynb`, 독립 Public LB **0.928**.
-- Branch-B source: 기존 `B_COAT_WIDE96_2F_STANDALONE_SUBMISSION_V1.ipynb`, 독립 Public LB **0.925**.
-- B serving input pinned: `/kaggle/input/datasets/yhlucas/b-coat-wide96-2f-base-model/fold{0,1}/best.pt`; F0 SHA `f984bcc7dde0673c54c7d1dea513280d8abd72aed3ebc0343b6511b0e439bc11`, F1 SHA `759ae6916107cc9a78048a4daf18b0ba31759bbf688dc2c5331ad3092982a585` (source notebook contract; Kaggle mount SHA gate will verify).
-- 실행 순서: A 전체 hidden inference → A predictions snapshot → A GPU model release → B 전체 hidden inference → UID/12 targets exact validation → 70:30 probability blend → `/kaggle/working/submission.csv`.
-- A와 B 각각 hidden에서 통과한 전처리/real-image rescue/0.5 placeholder 금지 유지.
-- **실제 Kaggle Save & Run All 결과, runtime, Public LB는 아직 없음**. 단순 파일 생성/구조 QA는 Kaggle inference 성공이 아니다.
-- 런타임 위험: A/B를 직렬 실행하므로 hidden 총 runtime은 상당할 수 있다. Budget 확인 후 실행; A 3.5~4h와 B 약 1.5h 과거 사용자 보고는 UI 기준으로 측정 조건이 달라 합산 시간이 확정적이지 않음.
-- 후속: A+B 제출 실행 중 독립 Notebook에서 B V4 Routed Strict FT 준비. FT 결과를 기존 Base 0.925와 동일 조건에서 비교한 뒤 승격 여부 결정.
-
-<!-- COATNET_STANDALONE_LB_2026_10_18 -->
-## 2026-10-18 — Branch-B standalone Public LB 0.925 (user-confirmed)
-
-**상태: B STANDALONE SUBMITTED / PUBLIC LB CONFIRMED**
-
-- **Public LB: 0.925** (Kaggle submission 결과, 사용자 직접 보고).
-- **Test dataset Save & Run All: 1분 5초** (사용자 보고; visible test 실행 시간).
-- **제출 전체 소요시간: 약 1시간 30분** (사용자 보고; Kaggle 제출 완료까지 체감 총 시간, 실제 hidden inference 순수 runtime으로 오인 금지).
-- Branch-B: CoAtNet Wide-MRI 독립 expert; **standalone** 제출 점수로 기록.
-- 비교: Branch-A S11 LAST 70% + S8C Direct 30% = **0.928**; Branch-B standalone은 **-0.003**이나, 앙상블 기여 여부는 독립 검증이 필요.
-- 이전 B V3 Fold0 NaN으로 중단된 이력은 그대로 유지. 이번 0.925를 V3 결과로 소급 기록하지 않음.
-- **추가 확인 필요:** 이번 제출에 사용된 정확한 B 학습/추론 Notebook 파일명과 SHA256, Kaggle Save Version, Fold0/1 checkpoint 경로·SHA, Gold58 validation 및 rescue/fallback 기록. 확인 전 V5 결과라고 단정하지 않음.
-- **다음 단계:** B 추론/체크포인트 계약 확정 → A(0.928)+B(0.925) 확률/순위 기반 앙상블을 OOF·runtime 검증 → 적은 수의 후보를 제출. B의 Strict FT는 실험 결과를 참고해 별도 판단.
-
 ## 2026-10-18 — B V3 NaN 중단 / V5 STABLE-ES 준비
 
 상태: **V3 ABORTED / V5 NOTEBOOK READY**
@@ -382,14 +350,14 @@ S11 학습과 병렬 또는 직후:
 
 # Branch-B CoAtNet — Cumulative Experiment Log
 
-최종 갱신: **2026-10-18**
+최종 갱신: **2026-10-17**
 
 이 문서는 CoAtNet 관련 실제 실행 결과만 누적한다. 계획은 [COATNET_BRANCH_PLAN.md](COATNET_BRANCH_PLAN.md)에 기록한다.
 
 ## Status
 
 - Branch: **B — CoAtNet Wide-MRI Expert**
-- Current state: **STANDALONE_SUBMITTED / Public LB 0.925** (2026-10-18; notebook/checkpoint ID 미확인)
+- Current state: **TRAIN_READY_V4 / NOT_RUN**
 - Design version: **B-DESIGN-V1**
 - Baseline 목적 아님. 첫 실행부터 고득점 가설 설계를 사용한다.
 
@@ -421,7 +389,7 @@ AB-RANK-BLEND-V1
 
 | Experiment | Model | Public LB | Status |
 |---|---|---:|---|
-| B Wide-MRI standalone (submission version pending verification) | CoAtNet 2-Fold (checkpoint details pending) | **0.925** | **SUBMITTED / USER-CONFIRMED** |
+| — | — | — | NOT_RUN |
 
 ## Cache table
 
