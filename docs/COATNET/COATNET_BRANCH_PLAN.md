@@ -1,3 +1,14 @@
+<!-- COATNET_SUBMISSION_CONFIRMED_OVERRIDE_2026_10_18 -->
+## 최신 실제 결과 / 우선 적용 — 2026-10-18
+
+- Branch-B CoAtNet Wide-MRI **standalone Kaggle Public LB 0.925 확인** (사용자 보고).
+- Test dataset Save & Run All **1분 5초**, 제출 전체 **약 1시간 30분** (사용자 보고; 서로 다른 측정 범위).
+- Branch-A current best 0.928; B 0.925는 A와의 diversity/ensemble gain 후보로 유지.
+- 이전 문서의 `V3 TRAIN_RUNNING`, `Base standalone LB pending` 등은 과거 시점 기록이며 최신 제출 완료 상태보다 우선하지 않는다. V3 NaN 실패 이력은 그대로 유효하다.
+- 이번 제출의 정확한 버전/Checkpoint SHA는 아직 문서에서 검증되지 않아 임의 추정하지 않는다.
+- Next: B submission Notebook/ckpt 식별 및 기록 → A+B probability/rank ensemble의 OOF 성능과 Kaggle runtime 검증 → 후보 제출. Strict FT는 별도 결정.
+- 상세 실측은 [COATNET_EXPERIMENT_LOG.md](COATNET_EXPERIMENT_LOG.md)에 기록.
+
 <!-- COATNET_V3_ACTUAL_RUNNING_2026_10_18 -->
 ## 2026-10-18 — Actual execution override: V3 TRAIN_RUNNING
 
