@@ -1,3 +1,58 @@
+## 2026-10-18 — C-CONVNEXT-GEOM18 V9 standalone 2F Public LB 결과
+
+상태: **TRAIN_COMPLETE / STANDALONE_SUBMITTED / PUBLIC_LB_0.854**
+
+### Training result
+
+Authoritative experiment:
+- `C-CONVNEXT-GEOM18-2F-BASE-V9-AUTOTUNE`
+- Backbone: ConvNeXt-Small
+- Train: geometry-aware rotating **18 / 64 windows**
+- Validation: full **64 / 64 windows**
+- common runtime profile: StudyBatch 2 / WindowChunk 36 / activation checkpoint OFF
+- Fold0 best: **Gold29 Macro AUROC 0.844081**, Epoch 10
+- Fold1 best: **Gold29 Macro AUROC 0.819037**, Epoch 8
+- Fold0 stopped Epoch 13 / Fold1 stopped Epoch 11
+- checkpoint policy: **best.pt only / no last / no SWA**
+
+Frozen best checkpoints:
+- Fold0 SHA256: `84d618a46fdd3e746c089222c99fc6a0e6d0e141f13460cc9e46a2333ea75375`
+- Fold1 SHA256: `b5ff0c38f48dbb8a1919484a95d49a330eb8945f3c5943d880088ac81914c502`
+
+Kaggle model dataset:
+- `/kaggle/input/datasets/woniyeon/c-convnext-geom18-2f-base-model/fold0/best.pt`
+- `/kaggle/input/datasets/woniyeon/c-convnext-geom18-2f-base-model/fold1/best.pt`
+
+### Standalone submission
+
+Notebook:
+- `C_CONVNEXT_GEOM64_2F_STANDALONE_SUBMISSION_V1.ipynb`
+- local SHA256: `3276a0b5070b16b269f00ca1695c5a1026cafa496a3a2c8ffe13fdc26b382556`
+
+Inference contract:
+- hidden DICOM에서 C-CACHE-V4 Geometry64 preprocessing 직접 재구성
+- 64 geometry windows + 8-channel geometry metadata
+- 320 → center 288
+- Fold0/Fold1 probability mean
+- Study-level neutral 0.5 fallback 없음
+- real-image prediction 불가 시 fail-fast
+
+Actual result:
+- **Public LB: 0.854**
+- 사용자 측정 hidden 전체 실행시간: **약 1시간**
+- 공개/샘플 3-Study 기준 Save & Run All: **약 1분 10초**
+
+### Interpretation / next use
+
+- C standalone은 정상 hidden inference까지 완료되어 Branch-C 구현 자체는 검증됨.
+- Public LB 0.854로 현재 Branch-A 주력(0.928)과 큰 격차가 있으므로 C를 단독 주력으로 승격하지 않음.
+- C의 역할은 당분간 **geometry/spatial diversity 후보**로 유지.
+- B standalone LB를 먼저 확인한 뒤 A+B를 우선 평가.
+- A+B가 확정된 후에만 C를 낮은 비중 또는 per-target rank 방식으로 추가해 실제 ensemble gain이 있는지 확인.
+- C standalone 0.854는 이후 C 구조 변경의 공식 baseline으로 보존.
+
+---
+
 ## 2026-10-18 — C Base checkpoint/early-stop policy 수정
 
 상태: **TRAIN_NOTEBOOK_READY_V3 / NOT_RUN**
