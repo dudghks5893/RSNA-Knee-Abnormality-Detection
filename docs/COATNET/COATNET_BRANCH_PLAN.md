@@ -1,35 +1,3 @@
-<!-- COATNET_STRICT_FT_POST_AB_DESIGN_2026_10_18 -->
-## 2026-10-18 — A+B 제출 및 B V4 Strict FT 우선 계획
-
-### 즉시 제출 후보
-- [A_B_70_30_ENSEMBLE_SUBMISSION_V1.ipynb](A_B_70_30_ENSEMBLE_SUBMISSION_V1.ipynb): A current 0.928 ×70% + B standalone 0.925 ×30%, 최종 12타깃 `probability blend`.
-- 원본 A, B의 검증된 inference preprocessing/checkpoint SHA gate를 그대로 보존한다. 순차 실행, A snapshot 저장 후 GPU 해제하고 B 실행.
-- **상태: NOTEBOOK_PREPARED / KAGGLE NOT EXECUTED**, 결과나 제출 성공을 추정하지 않는다.
-- A/B hidden runtime 합산 및 Kaggle time budget 사전 확인 필수. H/W 입력 T4×2, Internet OFF.
-
-### 병렬 연구 트랙: B-COAT-WIDE96-STRICT-FT-V1 (DESIGN / TRAIN NOT RUN)
-- **Init**: 동일 Fold B Base `best.pt` 2개를 별도 보존하고 Strict FT 재초기화; checksum gate F0 `f984bcc7dde0673c54c7d1dea513280d8abd72aed3ebc0343b6511b0e439bc11`, F1 `759ae6916107cc9a78048a4daf18b0ba31759bbf688dc2c5331ad3092982a585`.
-- **Labels**: `/kaggle/input/datasets/yhlucas/rsna-knee-v4-consensus-dataset/rsna_knee_pseudolabels_v4_routed_strict.csv`, SHA `bfca4993e5c985d9318d732bf2a0970dd7af9b3beff1d6ff619822042bf7a2c0`. Strict mask/confidence schema를 실제 마운트 검증; 누락 라벨을 암묵적인 음성으로 대체하지 않음.
-- 기존 **4-Pack Wide96 Native384 cache**, 140mm FOV, 384→320, 12 stochastic 3-slice train Window, 94 dense-val Window, target-specific attention, same 12 targets 유지.
-- Train/val: Fold0 train Strict pseudo + Gold Fold1(29), val Gold Fold0(29); Fold1은 반대로, **own Gold29 학습 금지**. validation-selected checkpoint가 반대 Gold29 train에 사용된 구조적 의존성을 포함할 수 있으므로 Gold58에 대한 엄밀한 앙상블 OOF 주장 금지.
-- Stage1 strict 선례 및 모델 크기를 고려한 첫 후보: backbone LR `2e-6`, head LR `5e-5`, AdamW WD `0.05`, FP16 AMP+GradScaler overflow recovery, grad clip `1.0`, **2 epochs fixed**, no early stopping. 최종 결정 전 실측 probe 및 loss/BatchNorm 호환성 QA 필수.
-- Loss: `mask × (0.25+0.75*confidence) × target soft-BCE × pseudo-only class balancing`, Gold hard BCE weight 3; masked zeros가 denominator/class prevalence를 왜곡하지 않도록 유효 mass만 사용; rare-positive sampler는 masked targets 제외.
-- GPU: Fold0 GPU0 / Fold1 GPU1 independently, no DDP, physical Study batch `4→2→1` benchmark + chunk `12→8→6→4→3→2`; effective Study batch `16/Fold`는 기준선으로 고정하고 runtime budget 프로파일 먼저 수행.
-- **Checkpoint policy**: base best.pt는 immutable 유지, FT `fold0/fold1 best.pt` + `last.pt` 모두 별도 저장, epoch별 Gold29 및 classwise AUROC 기록. Extra epoch model은 실측이 정당화되는 경우에만 추가.
-- 평가: Gold58 pooled **진단용**. Base `0.925`와 Strict FT standalone Public LB 및 A+B 앙상블 gain 분리해서 판단. 작은 Gold29만으로 checkpoint 우열을 과신하지 않음.
-- **주의: 위 값은 학습 제안이며 FT 실행 Notebook/실제 GPU 결과를 의미하지 않음.** 현재 B V7 학습 Notebook과 실제 Strict CSV 컬럼/masK 계약 검증 후 실행 Notebook을 만들어야 한다.
-
-<!-- COATNET_SUBMISSION_CONFIRMED_OVERRIDE_2026_10_18 -->
-## 최신 실제 결과 / 우선 적용 — 2026-10-18
-
-- Branch-B CoAtNet Wide-MRI **standalone Kaggle Public LB 0.925 확인** (사용자 보고).
-- Test dataset Save & Run All **1분 5초**, 제출 전체 **약 1시간 30분** (사용자 보고; 서로 다른 측정 범위).
-- Branch-A current best 0.928; B 0.925는 A와의 diversity/ensemble gain 후보로 유지.
-- 이전 문서의 `V3 TRAIN_RUNNING`, `Base standalone LB pending` 등은 과거 시점 기록이며 최신 제출 완료 상태보다 우선하지 않는다. V3 NaN 실패 이력은 그대로 유효하다.
-- 이번 제출의 정확한 버전/Checkpoint SHA는 아직 문서에서 검증되지 않아 임의 추정하지 않는다.
-- Next: B submission Notebook/ckpt 식별 및 기록 → A+B probability/rank ensemble의 OOF 성능과 Kaggle runtime 검증 → 후보 제출. Strict FT는 별도 결정.
-- 상세 실측은 [COATNET_EXPERIMENT_LOG.md](COATNET_EXPERIMENT_LOG.md)에 기록.
-
 <!-- COATNET_V3_ACTUAL_RUNNING_2026_10_18 -->
 ## 2026-10-18 — Actual execution override: V3 TRAIN_RUNNING
 
