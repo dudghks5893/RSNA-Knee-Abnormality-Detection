@@ -1,3 +1,50 @@
+## 2026-10-19 — B Strict V1 FT V5 training COMPLETE
+
+상태: **TRAIN_COMPLETE / PUBLIC_LB_PENDING**
+
+Experiment:
+- `B-COAT-WIDE96-2F-STRICTV1-FT-V5-WORKERFIX`
+- Init: B Base Fold0/1 best.pt (Base standalone LB 0.925)
+- Supervision: Strict V1 hard 0/1 + target masks
+- Train Studies: 4,181
+- Valid target-study labels: 32,163
+- Gold train: 0 / own Gold29 diagnostic only
+- Fold0 GPU0 + Fold1 GPU1 independent / no DDP
+- PB4 / GradAccum4 / WindowChunk12 / EffectiveBatch16
+- 3 fixed epochs / no early stopping / AMP overflow 0
+
+Fold0:
+- Baseline Gold29 Macro AUC: **0.9234071303**
+- BEST: Epoch1 **0.9266832154** (+0.003276)
+- BEST SHA: `34d2aa4a5e4deb15a000732b18142d2135d45013ba5bf997c80d46c24ec542e7`
+- LAST Epoch3: **0.9256563139** (+0.002249)
+- LAST SHA: `5c6ab3590947d4223f29ea8e1b109ae378a640ccc0e2ceae30d740575e13bcdd`
+- Total: ~126.998 min
+
+Fold1:
+- Baseline Gold29 Macro AUC: **0.9158199413**
+- BEST = LAST Epoch3: **0.9068912776** (-0.008929)
+- BEST SHA: `8b74d8e72f2f14c6cfc8b27edea3bcd3c786d9298a615a5e3087c6f803ef685c`
+- LAST SHA: `4645298f4af78957aac17c418470328bf455e04d5d4e45b99ee5c17eb9471755`
+- Total: ~123.406 min
+
+2-Fold own-Gold29 macro mean:
+- Base: **0.9196135358**
+- FT BEST/BEST: **0.9167872465**
+- FT LAST/LAST: **0.9162737958**
+
+Target-wise tendency (mean of two own-Gold29 folds, LAST vs Base):
+- improved: Synovitis +0.01435, Contusion +0.01345, PF OA +0.01305, Lateral Meniscus +0.01032, Effusion +0.00505
+- roughly neutral: Medial OA +0.00081, Fracture +0.00035, ACL 0, Medial Meniscus 0
+- degraded: MCL -0.00833, Lateral OA -0.03116, Baker's -0.05797
+
+Decision:
+- Local Gold29 evidence alone으로는 Base 0.925를 대체할 근거가 없음.
+- 다만 기존 A 계보에서 local-val와 Public LB가 불일치했던 precedent가 있으므로 **LAST 2F standalone Public LB 1회 확인은 유지**.
+- LAST가 Base 0.925를 넘지 못하면 BEST 추가 제출/추가 Strict FT tuning은 우선 중단.
+- 현재 막판 주력 탐색(public 0.958 stack / OrthoFoundation)보다 우선순위를 높이지 않는다.
+
+---
 ## 2026-10-19 — A+B rank ensemble Public LB 0.934 확정
 
 상태: **SUBMITTED / PUBLIC_LB_0.934 / CURRENT_PROJECT_BEST**
