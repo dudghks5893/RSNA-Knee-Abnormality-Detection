@@ -1,3 +1,17 @@
+<!-- COATNET_STANDALONE_LB_2026_10_18 -->
+## 2026-10-18 — Branch-B standalone Public LB 0.925 (user-confirmed)
+
+**상태: B STANDALONE SUBMITTED / PUBLIC LB CONFIRMED**
+
+- **Public LB: 0.925** (Kaggle submission 결과, 사용자 직접 보고).
+- **Test dataset Save & Run All: 1분 5초** (사용자 보고; visible test 실행 시간).
+- **제출 전체 소요시간: 약 1시간 30분** (사용자 보고; Kaggle 제출 완료까지 체감 총 시간, 실제 hidden inference 순수 runtime으로 오인 금지).
+- Branch-B: CoAtNet Wide-MRI 독립 expert; **standalone** 제출 점수로 기록.
+- 비교: Branch-A S11 LAST 70% + S8C Direct 30% = **0.928**; Branch-B standalone은 **-0.003**이나, 앙상블 기여 여부는 독립 검증이 필요.
+- 이전 B V3 Fold0 NaN으로 중단된 이력은 그대로 유지. 이번 0.925를 V3 결과로 소급 기록하지 않음.
+- **추가 확인 필요:** 이번 제출에 사용된 정확한 B 학습/추론 Notebook 파일명과 SHA256, Kaggle Save Version, Fold0/1 checkpoint 경로·SHA, Gold58 validation 및 rescue/fallback 기록. 확인 전 V5 결과라고 단정하지 않음.
+- **다음 단계:** B 추론/체크포인트 계약 확정 → A(0.928)+B(0.925) 확률/순위 기반 앙상블을 OOF·runtime 검증 → 적은 수의 후보를 제출. B의 Strict FT는 실험 결과를 참고해 별도 판단.
+
 ## 2026-10-18 — B V3 NaN 중단 / V5 STABLE-ES 준비
 
 상태: **V3 ABORTED / V5 NOTEBOOK READY**
@@ -350,14 +364,14 @@ S11 학습과 병렬 또는 직후:
 
 # Branch-B CoAtNet — Cumulative Experiment Log
 
-최종 갱신: **2026-10-17**
+최종 갱신: **2026-10-18**
 
 이 문서는 CoAtNet 관련 실제 실행 결과만 누적한다. 계획은 [COATNET_BRANCH_PLAN.md](COATNET_BRANCH_PLAN.md)에 기록한다.
 
 ## Status
 
 - Branch: **B — CoAtNet Wide-MRI Expert**
-- Current state: **TRAIN_READY_V4 / NOT_RUN**
+- Current state: **STANDALONE_SUBMITTED / Public LB 0.925** (2026-10-18; notebook/checkpoint ID 미확인)
 - Design version: **B-DESIGN-V1**
 - Baseline 목적 아님. 첫 실행부터 고득점 가설 설계를 사용한다.
 
@@ -389,7 +403,7 @@ AB-RANK-BLEND-V1
 
 | Experiment | Model | Public LB | Status |
 |---|---|---:|---|
-| — | — | — | NOT_RUN |
+| B Wide-MRI standalone (submission version pending verification) | CoAtNet 2-Fold (checkpoint details pending) | **0.925** | **SUBMITTED / USER-CONFIRMED** |
 
 ## Cache table
 
