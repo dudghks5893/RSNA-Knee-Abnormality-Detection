@@ -1,3 +1,13 @@
+<!-- COATNET_AB_7030_READY_2026_10_18 -->
+## 신규 A+B 제출 노트북 — 2026-10-18
+
+- [A_B_70_30_ENSEMBLE_SUBMISSION_V1.ipynb](A_B_70_30_ENSEMBLE_SUBMISSION_V1.ipynb)
+- A 0.928 ×70% + B 0.925 ×30% / 12-target probability blend.
+- 기존 A와 B notebook 추론을 순차 실행하고 checkpoint SHA를 검사한다.
+- **GitHub 파일 생성 및 구조 검사 완료 / 실제 Kaggle Save & Run All 및 Public LB 미확인**.
+- Kaggle T4×2, Internet OFF, 원본 A/B 입력 데이터셋 모두 Add Input.
+- B V4 Routed Strict 고신뢰 FT 상세 계약은 [Branch Plan](COATNET_BRANCH_PLAN.md) 참고. FT Notebook은 현재 미제작, GPU 학습 미실행.
+
 <!-- COATNET_STANDALONE_SUBMITTED_STATUS_2026_10_18 -->
 ## 최신 상태 — 2026-10-18 (B standalone 제출 완료)
 
