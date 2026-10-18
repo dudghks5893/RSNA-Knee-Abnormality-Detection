@@ -1,3 +1,55 @@
+## 2026-10-18 — B V4 Strict high-confidence fine-tuning prepared
+
+상태: **NOTEBOOK_READY / NOT_RUN**
+
+목적:
+- Branch-B Base standalone Public LB **0.925**를 기준선으로 고정.
+- Base Fold0/1 `best.pt`에서 시작해 V4 Routed Strict 고신뢰 supervision으로 low-LR fine-tuning.
+- Gold29는 개발 diagnostic으로만 사용하며 **early stopping에는 사용하지 않음**.
+- DINO 계보에서 local-val best와 Public LB best가 일치하지 않았던 사례를 반영해 **best.pt + last.pt 둘 다 보존**.
+
+Notebook:
+- `B_COATNET_WIDE96_2F_V4STRICT_FT_V1.ipynb`
+- SHA256: `11c6a3216c9889946fbf8fe3d41f6bf9d871a7eff74981c4609d16024fc2ad55`
+
+Initialization:
+- Fold0 Base best SHA: `f984bcc7dde0673c54c7d1dea513280d8abd72aed3ebc0343b6511b0e439bc11`
+- Fold1 Base best SHA: `759ae6916107cc9a78048a4daf18b0ba31759bbf688dc2c5331ad3092982a585`
+
+Supervision:
+- `rsna_knee_pseudolabels_v4_routed_strict.csv`
+- SHA256: `bfca4993e5c985d9318d732bf2a0970dd7af9b3beff1d6ff619822042bf7a2c0`
+- 4,349 pseudo Studies
+- 39,792 valid target/study soft labels
+- masked NaN cell은 loss에서 제외하며 음성으로 치환하지 않음
+- pseudo weight: `0.25 + 0.75 × confidence`
+- masked soft class balance: power 0.70 / clip 0.5–2.5
+- target exposure correction: power 0.35
+- opposite Gold29: binary BCE ×3, pseudo class/exposure correction 없음
+
+Training:
+- independent 2-Fold / GPU0→Fold0, GPU1→Fold1 / DDP 없음
+- input/cache/sampling/augmentation/MIL architecture는 Base와 동일
+- train 12 stochastic windows, val 94 dense windows
+- max/fixed epochs: **3**
+- early stopping: **OFF**
+- backbone LR: `2e-6`
+- MIL/head LR: `5e-5`
+- AdamW WD: `0.05`
+- cosine + warmup 5%
+- proven Base resource profile를 우선 probe: StudyBatch4 / GradAccum4 / WindowChunk12 / EffectiveBatch16
+- AMP overflow recovery 및 FP32 backbone retry 유지
+
+Checkpoint policy:
+- `fold0/best.pt`
+- `fold0/last.pt`
+- `fold1/best.pt`
+- `fold1/last.pt`
+- Public LB 비교 시 **last 2F를 먼저 제출**, 필요 시 best 2F 비교.
+- Gold29 metric만으로 serving checkpoint를 확정하지 않음.
+
+---
+
 ## 2026-10-18 — B V7 standalone 2F Public LB 결과
 
 상태: **TRAIN_COMPLETE / STANDALONE_SUBMITTED / PUBLIC_LB_0.925**
