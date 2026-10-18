@@ -1,3 +1,47 @@
+## 2026-10-18 — B V7 standalone 2F Public LB 결과
+
+상태: **TRAIN_COMPLETE / STANDALONE_SUBMITTED / PUBLIC_LB_0.925**
+
+### Training result
+- Experiment: `B-COAT-WIDE96-2F-BASE-V7-AMP-RECOVERY-ES`
+- Backbone: `coatnet_rmlp_2_rw_384.sw_in12k_ft_in1k`
+- Fold0 best: **Gold29 Macro AUROC 0.923407 @ Epoch6**
+- Fold1 best: **Gold29 Macro AUROC 0.915820 @ Epoch9**
+- checkpoint policy: best.pt only / no last / no SWA
+- Fold0 best SHA256: `f984bcc7dde0673c54c7d1dea513280d8abd72aed3ebc0343b6511b0e439bc11`
+- Fold1 best SHA256: `759ae6916107cc9a78048a4daf18b0ba31759bbf688dc2c5331ad3092982a585`
+
+Kaggle model dataset:
+- `/kaggle/input/datasets/yhlucas/b-coat-wide96-2f-base-model/fold0/best.pt`
+- `/kaggle/input/datasets/yhlucas/b-coat-wide96-2f-base-model/fold1/best.pt`
+
+### Standalone submission
+Notebook:
+- `B_COAT_WIDE96_2F_STANDALONE_SUBMISSION_V1.ipynb`
+- local SHA256: `4a6941fab1713ce48b186f01b81e21f349c9738e8448f001524ac1ff051191fc`
+
+Inference:
+- hidden DICOM → frozen Wide96 reconstruction
+- 26 SAG fluid + 22 SAG non-fluid + 18 COR fluid + 12 COR non-fluid + 18 AXIAL
+- 96 slices → 94 dense 3-slice windows
+- native384 preprocessing → center320 model input
+- Fold0/Fold1 probability mean
+- Study-level neutral 0.5 fallback 없음
+
+Actual result:
+- **Public LB: 0.925**
+- 사용자 측정 hidden 전체 제출 runtime: **약 1시간 30분**
+- 공개/샘플 3-Study Save & Run All: **약 1분 5초**
+
+### Decision
+- Branch-B는 standalone으로 Branch-A 주력 0.928에 매우 근접한 강한 독립 expert.
+- A와 입력/백본이 충분히 달라 ensemble diversity 가치가 높음.
+- 다음 실험은 **A+B target-wise percentile-rank blend**.
+- 1차 권장 weight는 **A 60% + B 40%**.
+- C standalone 0.854는 우선 제외하고 A+B gain을 먼저 검증.
+
+---
+
 ## 2026-10-18 — B V3 NaN 중단 / V5 STABLE-ES 준비
 
 상태: **V3 ABORTED / V5 NOTEBOOK READY**
