@@ -1,3 +1,19 @@
+## 2026-10-18 — Branch-B V4 Strict FT next
+
+Base CoAtNet standalone:
+- Public LB **0.925**
+
+다음 실행:
+- `B_COATNET_WIDE96_2F_V4STRICT_FT_V1.ipynb`
+- SHA256 `11c6a3216c9889946fbf8fe3d41f6bf9d871a7eff74981c4609d16024fc2ad55`
+- Base best Fold0/1 → V4 Routed Strict low-LR FT
+- 3 epochs fixed / no early stop
+- best.pt + last.pt 모두 저장
+- first submission candidate = **Strict FT last 2F**
+- second candidate if needed = Strict FT best 2F
+- Gold29는 diagnostic only; Public LB evidence를 함께 사용해 최종 B serving candidate 결정.
+
+
 ## 2026-10-18 — Branch-B standalone Public LB 확정 / A+B next
 
 - Branch-B experiment: `B-COAT-WIDE96-2F-BASE-V7-AMP-RECOVERY-ES`
