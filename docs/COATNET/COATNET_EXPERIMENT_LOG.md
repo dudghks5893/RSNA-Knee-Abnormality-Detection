@@ -1,3 +1,28 @@
+## 2026-10-19 — A+B rank ensemble Public LB 0.934 확정
+
+상태: **SUBMITTED / PUBLIC_LB_0.934 / CURRENT_PROJECT_BEST**
+
+구성:
+- Branch-A current main: Public LB **0.928**
+- Branch-B CoAtNet Wide96 Base: Public LB **0.925**
+- Ensemble: **A 60% + B 40% target-wise percentile-rank blend**
+- Public LB: **0.934**
+- hidden 전체 제출 runtime: 사용자 추정 **약 3시간 30분**
+
+해석:
+- A 단독 0.928 대비 **+0.006**
+- B 단독 0.925 대비 **+0.009**
+- Branch-B는 단독 점수뿐 아니라 A와 다른 오류 패턴을 제공하는 독립 expert임이 실제 Public LB에서 확인됨.
+- 최종 전략은 단일 backbone 최대화보다 **강한 독립 expert + 낮은 오류 상관 + rank ensemble**을 계속 우선한다.
+
+다음 방향:
+1. 진행 중/준비된 **B Strict V1 FT**를 먼저 완료하고 Base 0.925 초과 여부 및 A와의 ensemble gain 확인.
+2. 기존 Branch-C 0.854를 단순 미세조정하지 않고, 공개 0.950 ConvNeXt recipe의 핵심인 anatomy localization / full+local views / 64 train windows를 반영한 **C2 재설계**를 우선 검토.
+3. Generic DINOv2 Wide96 추가 branch는 우선 보류한다.
+4. **OrthoFoundation / DINOv3-L knee-adapted backbone**은 별도 research lane으로 검토하되, competition external-model accessibility / private-pretraining-data 규정 리스크를 먼저 확인한다.
+5. 최종 후보는 A + improved B + C2 또는 규정상 사용 가능한 domain-specific foundation expert의 2~3 branch rank blend.
+
+---
 ## 2026-10-18 — B V4 Strict high-confidence fine-tuning prepared
 
 상태: **NOTEBOOK_READY / NOT_RUN**
