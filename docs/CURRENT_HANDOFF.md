@@ -1,3 +1,14 @@
+<!-- HANDOFF_AB_7030_FT_B_2026_10_18 -->
+## 2026-10-18 — A+B 앙상블 제출 준비 / B Strict FT 차기 실험
+
+- Branch-A 최고 `S11 LAST 70 + S8C Direct 30` **Public LB 0.928**.
+- Branch-B CoAtNet Wide96 standalone **Public LB 0.925**; visible Save & Run All `1분 5초`; 사용자 보고 전체 제출 약 `1시간 30분`.
+- A+B 첫 outer blend: **0.70×A + 0.30×B**. Sequential submission notebook: [COATNET/A_B_70_30_ENSEMBLE_SUBMISSION_V1.ipynb](COATNET/A_B_70_30_ENSEMBLE_SUBMISSION_V1.ipynb).
+- Generated 2026-10-18. State: **NOTEBOOK_READY / NOT_KAGGLE_RUN / LB_PENDING**. 외부 Kaggle 제출 자동 실행은 하지 않았으며 실제 제출/점수 주장 금지.
+- 다음: Kaggle union inputs + T4×2 Internet OFF → Notebook Save & Run All → report/partial/fallback/time QA → 제출 Public LB.
+- **A+B 제출 대기 중 별도 실행:** CoAtNet B Base best 2F → V4 Routed Strict 고신뢰 FT. 기존 V7 AMP overflow recovery 정책 보존, mask-aware pseudo-only balancing, low LR 2epoch, best + last 별도 저장; 자세한 계약은 COATNET/COATNET_BRANCH_PLAN.md.
+- 새로운 Strict FT 실제 Notebook은 아직 미제작·미실행. 현재 저장된 B Base 제출 Notebook에서 serving ckpt SHA를 가져왔으나 Kaggle input 실행 QA로 재확인 필요.
+
 ## 2026-10-18 — Branch-C standalone Public LB 확정
 
 Branch-C V9 학습 및 standalone hidden 제출 완료.
