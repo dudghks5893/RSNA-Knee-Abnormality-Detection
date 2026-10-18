@@ -1,3 +1,30 @@
+## 2026-10-19 — B Strict V1 FT LAST 2F Public LB 0.929 확정
+
+상태: **SUBMITTED / PUBLIC_LB_0.929 / BRANCH_B_STANDALONE_BEST**
+
+Submission:
+- Kaggle Save Version: `B CoAt StrictV1 LAST 2F Submit V1`
+- Notebook: `B_COAT_WIDE96_2F_STRICTV1_LAST_SUBMISSION_V1.ipynb`
+- Checkpoints: Fold0 `last.pt` + Fold1 `last.pt`
+- Source experiment: `B-COAT-WIDE96-2F-STRICTV1-FT-V5-WORKERFIX`
+
+Actual result:
+- **Public LB: 0.929**
+
+Comparison:
+- Branch-B Base standalone **0.925 → 0.929 (+0.004)**
+- Branch-A current main **0.928** 대비 **+0.001**
+- Current project-best A+B rank ensemble **0.934** 대비 **-0.005**
+
+Interpretation / decision:
+- own-Gold29에서는 Strict V1 FT LAST가 Base보다 낮았지만, 실제 hidden Public LB에서는 반대로 **+0.004 개선**되어 local diagnostic과 Public LB의 불일치가 다시 확인됨.
+- Strict V1 FT는 유효한 개선으로 판정하며 **0.929를 Branch-B의 새 standalone 기준점**으로 고정.
+- 기존 Base 0.925보다 우선 사용.
+- 다음 Branch-B 활용 우선순위는 **A + B(StrictV1 LAST) rank ensemble 재평가**.
+- BEST checkpoint 추가 제출은 LAST 0.929 및 ensemble 결과를 본 뒤 우선순위를 결정.
+
+---
+
 ## 2026-10-19 — B Strict V1 FT V5 training COMPLETE
 
 상태: **TRAIN_COMPLETE / PUBLIC_LB_PENDING**
@@ -518,7 +545,7 @@ S11 학습과 병렬 또는 직후:
 
 # Branch-B CoAtNet — Cumulative Experiment Log
 
-최종 갱신: **2026-10-17**
+최종 갱신: **2026-10-19**
 
 이 문서는 CoAtNet 관련 실제 실행 결과만 누적한다. 계획은 [COATNET_BRANCH_PLAN.md](COATNET_BRANCH_PLAN.md)에 기록한다.
 
@@ -557,7 +584,7 @@ AB-RANK-BLEND-V1
 
 | Experiment | Model | Public LB | Status |
 |---|---|---:|---|
-| — | — | — | NOT_RUN |
+| B-COAT-WIDE96-2F-BASE-V7 | CoAtNet Wide96 Base 2F | 0.925 | COMPLETE |\n| B-COAT-WIDE96-2F-STRICTV1-FT-V5 LAST | CoAtNet Wide96 Strict V1 FT LAST 2F | **0.929** | **BRANCH_B_BEST** |
 
 ## Cache table
 
