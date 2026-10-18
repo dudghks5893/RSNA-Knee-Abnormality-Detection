@@ -1,3 +1,13 @@
+<!-- COATNET_STANDALONE_SUBMITTED_STATUS_2026_10_18 -->
+## 최신 상태 — 2026-10-18 (B standalone 제출 완료)
+
+- **Branch-B CoAtNet Wide-MRI standalone Public LB: 0.925** (사용자 보고, confirmed).
+- **Test dataset Save & Run All: 1분 5초** (사용자 보고).
+- **Kaggle 제출 전체: 약 1시간 30분** (사용자 보고; hidden GPU-only runtime과 구분).
+- Branch-A 현재 best 0.928 대비 -0.003; B는 **A+B 앙상블의 독립 expert 후보**로 유지.
+- 이번 제출의 정확한 학습/제출 Notebook, checkpoint 경로·SHA는 **미확인**. B V3 실패 이력을 유지하며 V5 성공으로 임의 매핑 금지.
+- [누적 실험 로그](COATNET_EXPERIMENT_LOG.md) 참고. 다음은 checkpoint/노트북 확인 → A+B OOF 점검 → probability / rank 앙상블 비교.
+
 <!-- COATNET_README_ACTUAL_STATUS_2026_10_18 -->
 ## 현재 상태 — 2026-10-18
 
