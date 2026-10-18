@@ -1,3 +1,20 @@
+## 2026-10-19 — B Strict V1 FT V5 완료 / LB 확인만 진행
+
+- `B-COAT-WIDE96-2F-STRICTV1-FT-V5-WORKERFIX` training COMPLETE.
+- Fold0: Base Gold29 0.923407 → BEST e1 0.926683 / LAST e3 0.925656.
+- Fold1: Base Gold29 0.915820 → BEST=LAST e3 0.906891.
+- Mean own-Gold29 macro: Base 0.919614 → BEST/BEST 0.916787 → LAST/LAST 0.916274.
+- Checkpoints:
+  - F0 BEST `34d2aa4a5e4deb15a000732b18142d2135d45013ba5bf997c80d46c24ec542e7`
+  - F0 LAST `5c6ab3590947d4223f29ea8e1b109ae378a640ccc0e2ceae30d740575e13bcdd`
+  - F1 BEST `8b74d8e72f2f14c6cfc8b27edea3bcd3c786d9298a615a5e3087c6f803ef685c`
+  - F1 LAST `4645298f4af78957aac17c418470328bf455e04d5d4e45b99ee5c17eb9471755`
+- Runtime: concurrent wall ~127 min; AMP overflow 0; PB4/chunk12/effective16.
+- Local diagnostic은 mixed/negative. Base 0.925 자동 교체 금지.
+- 다음: **LAST 2F standalone Public LB 1회 확인**. 0.925 이하이면 BEST 추가 제출 및 추가 FT tuning은 중단.
+- 막판 주력 우선순위는 public 0.958 stack 재현 + OrthoFoundation fast-reader feasibility.
+
+---
 ## 2026-10-19 — A+B Public LB 0.934 / 방향 재정렬
 
 ### 현재 최고
