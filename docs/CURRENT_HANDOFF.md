@@ -1,3 +1,26 @@
+## 2026-10-18 — Branch-C standalone Public LB 확정
+
+Branch-C V9 학습 및 standalone hidden 제출 완료.
+
+- Experiment: `C-CONVNEXT-GEOM18-2F-BASE-V9-AUTOTUNE`
+- Fold0 best Gold29 Macro AUROC: **0.844081 @ Epoch10**
+- Fold1 best Gold29 Macro AUROC: **0.819037 @ Epoch8**
+- standalone submission notebook: `C_CONVNEXT_GEOM64_2F_STANDALONE_SUBMISSION_V1.ipynb`
+- notebook SHA256: `3276a0b5070b16b269f00ca1695c5a1026cafa496a3a2c8ffe13fdc26b382556`
+- model dataset:
+  - `woniyeon/c-convnext-geom18-2f-base-model/fold0/best.pt`
+  - `woniyeon/c-convnext-geom18-2f-base-model/fold1/best.pt`
+- **Public LB = 0.854**
+- hidden 전체 사용자 측정 runtime: **약 1시간**
+- 3-Study Save & Run All: **약 1분 10초**
+- Study-level 0.5 fallback 없음.
+
+판단:
+- C inference path는 hidden에서 정상 작동했지만 standalone 성능은 현재 A 주력보다 낮음.
+- C는 주력 standalone이 아니라 geometry/spatial **ensemble diversity 후보**로 유지.
+- 다음 우선순위: **B standalone LB 확인 → A+B ensemble → 필요 시 낮은 비중 A+B+C / per-target rank 실험**.
+
+
 ## 2026-10-18 — B/C early stopping + best-only checkpoint policy 확정
 
 Branch-B:
