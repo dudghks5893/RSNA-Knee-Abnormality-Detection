@@ -1,11 +1,15 @@
-<!-- COATNET_README_ACTUAL_STATUS_2026_10_18 -->
-## 현재 상태 — 2026-10-18
+<!-- COATNET_README_ACTUAL_STATUS_2026_10_20 -->
+## 현재 상태 — 2026-10-20
 
-- Wide96 cache: COMPLETE / PASS.
-- **Base V3 2-Fold: TRAIN_RUNNING**.
-- 실행본: `B_COATNET_WIDE96_2F_BASE_V3.ipynb` SHA `bb3527a1...`.
-- V4는 future execution-hardening reference이며 V3를 임의 중단하지 않는다.
-- Base 완료 후 standalone → V4 Strict FT → standalone → A+B ensemble.
+- **Branch-B current best: JEV-Blend Mix2F Public LB 0.935.**
+- Submission: `B CoAt JEV Mix2F Submit V1`
+- Source: `B-COAT-W96-JEVBLEND-2F-V1`
+- Checkpoints: Fold0 `best.pt` + Fold1 `top3_avg.pt`
+- 기존 Branch-B Base 0.925 대비 **+0.010**
+- 기존 Strict V1 FT LAST 0.929 대비 **+0.006**
+- 기존 project-best A+B rank ensemble 0.934 대비 **+0.001**
+- 따라서 현재 Branch-B main candidate이자 **프로젝트 최고 Public LB = 0.935**
+- 다음 활용: JEV-Blend Branch-B를 기준으로 A와의 ensemble 재평가. 공개 0.958 reproduction / OrthoFoundation 연구는 별도 lane으로 유지.
 
 # Branch-B — CoAtNet
 
