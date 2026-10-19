@@ -1,3 +1,42 @@
+## 2026-10-20 — B JEV-Blend Mix2F Public LB 0.935 확정
+
+상태: **SUBMITTED / PUBLIC_LB_0.935 / BRANCH_B_STANDALONE_BEST / CURRENT_PROJECT_BEST**
+
+Submission:
+- Kaggle Save Version: `B CoAt JEV Mix2F Submit V1`
+- Notebook: `B_COAT_W96_JEVBLEND_MIX2F_SUBMIT_V1.ipynb`
+- Model dataset: `woniyeon/b-coat-w96-jevblend-2f-v1-models`
+- Source experiment: `B-COAT-W96-JEVBLEND-2F-V1`
+- Fold0 checkpoint: `best.pt`
+- Fold1 checkpoint: `top3_avg.pt`
+- Inference: 기존 Branch-B Wide96 hidden preprocessing / dense 94 windows / CoAtNet RMLP2 / Fold0+Fold1 probability mean 유지
+
+Checkpoint selection:
+- Fold0 `best.pt`: Gold29 Macro AUROC **0.9331525526** @ Epoch14
+- Fold1 `top3_avg.pt`: Gold29 Macro AUROC **0.9145110602**
+  - averaged source epochs: **12 / 13 / 14**
+  - Fold1 single `best.pt` Gold29 Macro AUROC는 **0.9145862166**으로 수치상 약간 높지만, training guardrail은 `top3_avg.pt`를 권장
+- 따라서 이번 제출은 **Fold0 best + Fold1 top3_avg** mixed-checkpoint 2F
+
+Actual result:
+- **Public LB: 0.935**
+
+Comparison:
+- Branch-B Base standalone **0.925 → 0.935 (+0.010)**
+- Branch-B Strict V1 FT LAST **0.929 → 0.935 (+0.006)**
+- Branch-A current main **0.928 대비 +0.007**
+- 기존 project-best A+B rank ensemble **0.934 대비 +0.001**
+
+Interpretation / decision:
+- JEV-Blend supervision이 Branch-B standalone 성능을 명확하게 끌어올린 것으로 판정.
+- **0.935를 Branch-B의 새 standalone 기준점으로 고정**하고, 기존 Strict V1 FT 0.929를 대체.
+- 단일 Branch-B가 기존 A+B rank ensemble 0.934를 넘어 **현재 프로젝트 최고 Public LB 0.935**가 됨.
+- 이후 Branch-B가 필요한 ensemble / 비교 실험에서는 우선 이 JEV-Blend Mix2F 모델을 main candidate로 사용.
+- Fold1 `best.pt` 단독 교체 제출은 checkpoint-policy ablation으로 별도 가치가 있으나, 현재 main은 실제 LB가 확인된 Mix2F 조합.
+- 공개 0.958 solution reproduction 및 OrthoFoundation 연구 lane은 별도로 유지.
+
+---
+
 ## 2026-10-19 — B Strict V1 FT LAST 2F Public LB 0.929 확정
 
 상태: **SUBMITTED / PUBLIC_LB_0.929 / BRANCH_B_STANDALONE_BEST**
@@ -545,14 +584,14 @@ S11 학습과 병렬 또는 직후:
 
 # Branch-B CoAtNet — Cumulative Experiment Log
 
-최종 갱신: **2026-10-19**
+최종 갱신: **2026-10-20**
 
 이 문서는 CoAtNet 관련 실제 실행 결과만 누적한다. 계획은 [COATNET_BRANCH_PLAN.md](COATNET_BRANCH_PLAN.md)에 기록한다.
 
 ## Status
 
 - Branch: **B — CoAtNet Wide-MRI Expert**
-- Current state: **TRAIN_READY_V4 / NOT_RUN**
+- Current state: **JEV_BLEND_MIX2F_SUBMITTED / PUBLIC_LB_0.935 / BRANCH_B_BEST**
 - Design version: **B-DESIGN-V1**
 - Baseline 목적 아님. 첫 실행부터 고득점 가설 설계를 사용한다.
 
@@ -584,7 +623,7 @@ AB-RANK-BLEND-V1
 
 | Experiment | Model | Public LB | Status |
 |---|---|---:|---|
-| B-COAT-WIDE96-2F-BASE-V7 | CoAtNet Wide96 Base 2F | 0.925 | COMPLETE |\n| B-COAT-WIDE96-2F-STRICTV1-FT-V5 LAST | CoAtNet Wide96 Strict V1 FT LAST 2F | **0.929** | **BRANCH_B_BEST** |
+| B-COAT-WIDE96-2F-BASE-V7 | CoAtNet Wide96 Base 2F | 0.925 | COMPLETE |\n| B-COAT-WIDE96-2F-STRICTV1-FT-V5 LAST | CoAtNet Wide96 Strict V1 FT LAST 2F | 0.929 | COMPLETE |\n| B-COAT-W96-JEVBLEND-2F-V1 MIX2F | CoAtNet Wide96 JEV-Blend Fold0 best + Fold1 top3_avg | **0.935** | **BRANCH_B_BEST / PROJECT_BEST** |
 
 ## Cache table
 
