@@ -1,3 +1,45 @@
+## 2026-10-20 — B JEV-Blend → Strict V1 FT V1 notebook READY
+
+상태: **NOTEBOOK_READY / NOT_RUN**
+
+목적:
+- 현재 Branch-B 최고 Public LB **0.935**인 JEV-Blend Mix2F를 초기값으로 사용.
+- 이전 Branch-B에서 Base 0.925 → Strict V1 FT LAST 0.929로 실제 LB 개선이 확인된 동일 Strict V1 FT recipe를 재사용.
+- 실험 축을 최소화하기 위해 FT hyperparameter / Strict V1 supervision / augmentation / balancing은 이전 V5 WORKERFIX와 동일하게 유지하고 **초기 checkpoint만 교체**.
+
+Notebook:
+- `B_COAT_W96_JEVBLEND_STRICTV1_FT_V1.ipynb`
+
+Initialization:
+- Fold0: JEV-Blend `best.pt`
+  - SHA `944eefb2ea969bc5cd6c9abf5a51403278ffd2012ffc2e0b40409ba4af9baa21`
+  - Gold29 Macro AUROC 0.9331525526 @ Epoch14
+- Fold1: JEV-Blend `top3_avg.pt`
+  - SHA `691c2751a0750a48945fe4256a4f64355aec271dc2b15370506150a350a93b65`
+  - Gold29 Macro AUROC 0.9145110602
+  - source epochs 12 / 13 / 14
+- init pair actual standalone Public LB: **0.935**
+
+Supervision / optimization:
+- Strict V1 hard 0/1 + target masks
+- 4,181 train-ready Studies / 32,163 valid target-study labels
+- Gold58 optimizer 제외, Fold별 Gold29 diagnostic only
+- no study oversampling / no majority thinning
+- BOPT sqrt(.50) class balance + exposure(.25)
+- independent Fold0/GPU0 + Fold1/GPU1 / no DDP
+- 12 stochastic train windows / 94 dense val windows
+- 3 fixed epochs / no early stopping
+- backbone LR 2e-6 / head LR 5e-5 / AdamW WD .05 / cosine + 5% warmup
+- moderate window-independent augmentation
+- checkpoint: Fold별 `best.pt` + `last.pt`
+- Public LB policy: **LAST 2F first**, BEST 2F only as comparison if needed
+
+Decision:
+- 이 실험은 JEV-Blend 0.935에 고신뢰 Strict V1 refinement가 추가 gain을 주는지 확인하는 controlled FT.
+- Gold29가 하락하더라도 이전 FT에서 local diagnostic과 Public LB가 불일치했던 precedent가 있으므로 3 epoch를 끝까지 수행하고 LAST/BEST를 보존한다.
+
+---
+
 ## 2026-10-20 — B JEV-Blend Mix2F Public LB 0.935 확정
 
 상태: **SUBMITTED / PUBLIC_LB_0.935 / BRANCH_B_STANDALONE_BEST / CURRENT_PROJECT_BEST**
