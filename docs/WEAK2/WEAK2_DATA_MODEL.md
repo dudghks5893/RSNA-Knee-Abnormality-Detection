@@ -298,6 +298,113 @@ All-Series K16 cache
 - class weight와 oversampling을 동시에 극단적으로 적용하지 않는다.
 - Gold58은 optimization / hyperparameter / checkpoint selection에 사용하지 않는다.
 
+
+### W2D-01 frozen training design — proposed 2026-10-21
+
+#### Architecture
+
+```text
+320×320 grayscale slice
+→ RadImageNet ResNet50 trunk (strict ResNet50.pt load)
+→ 2048-d slice feature
+→ Linear 2048→512 + LayerNorm/GELU
+→ plane / fluid-sensitive / relative-position embedding
+→ 1-layer Slice Transformer (d=512, 8 heads, FFN=1024)
+→ target-specific gated Slice Attention
+→ target-specific gated Series Attention
+→ independent Synovitis / Lateral OA binary heads
+```
+
+The model remains one checkpoint. Slice/Series attention is internal to the predictor and is not a separate selector.
+
+#### Slice policy
+
+Cache K16 is preserved. Training uses **K8 stochastic-stratified slices per Series**:
+- ordered K16 is divided into 8 spatial bins
+- one valid slice is sampled from each bin
+- order is preserved
+- no random spatial crop / no horizontal flip / no geometric rotation
+- mild Series-consistent intensity augmentation only
+
+Inference/diagnostic uses all valid K16 slices.
+
+#### Imbalance sampler
+
+Each epoch contains 1,024 study draws:
+
+```text
+Synovitis-focused lane: 512
+  341 positive + 171 negative
+
+Lateral-OA-focused lane: 512
+  171 positive + 341 negative
+```
+
+Sampling is deterministic from `SEED + epoch`, with replacement only when the requested class draw count exceeds its unique pool. Every repeated study gets a newly sampled K8 slice set and new mild intensity augmentation.
+
+All available target labels on a drawn study are still used; mask=0 remains excluded.
+
+Loss:
+- masked BCEWithLogits
+- Synovitis: positive weight 1.0 / negative weight 2.0
+- Lateral OA: positive weight 2.0 / negative weight 1.0
+- per-target weighted loss is normalized by valid weight sum
+- final loss = 0.5 × Synovitis loss + 0.5 × Lateral-OA loss
+- no focal/asymmetric loss in V1
+
+#### Optimizer / LR
+
+```text
+Optimizer: AdamW
+Weight decay: 1e-4
+Gradient clip: 1.0
+AMP: FP16
+Epochs: fixed 10
+Early stopping: OFF
+Warmup: 5% optimizer steps
+Scheduler: cosine decay to 0.1 × initial LR
+```
+
+Discriminative LR:
+- stem + layer1: 1e-6
+- layer2: 2e-6
+- layer3: 5e-6
+- layer4: 1e-5
+- projection / Transformer / attention / heads: 1e-4
+
+Epoch 1 freezes stem through layer2; Epoch 2–10 unfreezes all convolution weights. BatchNorm running statistics remain frozen to pretrained RadImageNet statistics; affine parameters follow the layer trainability.
+
+#### DDP batch policy
+
+T4×2 DDP. Training K8 gives approximately 44.8 slices/study on average and at most 96 slices/study in the current cache.
+
+The notebook profiles worst-case high-Series studies with actual forward/backward/optimizer for at least 2 consecutive optimizer steps.
+
+Candidates:
+- per-GPU Study Batch 1 / GradAccum 4 → Global Effective Batch 8
+- per-GPU Study Batch 2 / GradAccum 2 → Global Effective Batch 8
+- per-GPU Study Batch 4 / GradAccum 1 → Global Effective Batch 8
+
+The highest-throughput configuration that passes VRAM and stability gates is selected automatically. Batch size is not reduced pre-emptively.
+
+#### Checkpoint policy
+
+No validation-based `best.pt` is used because Gold58 is untouched and the scarce 35 Synovitis negatives are not removed for a noisy internal holdout.
+
+- every epoch: overwrite `w2d01_resume_last.pt`
+  - raw model
+  - EMA model
+  - optimizer / scheduler / GradScaler
+  - epoch / global step
+  - RNG states
+  - sampler seed/state
+  - full config / input paths / cache SHA lineage
+- EMA starts when full backbone is unfrozen; decay = 0.995
+- final deploy checkpoint: `w2d01_r50_ema_e10.pt`
+- raw epoch-10 checkpoint is also saved as a safety artifact but is not the primary submission model
+
+Gold58 is evaluated only after the final checkpoint is frozen and is not used to choose epoch, LR, sampler or checkpoint.
+
 ## 7. Documentation policy
 
 이 계보는 `docs/WEAK2/`에만 누적한다.
