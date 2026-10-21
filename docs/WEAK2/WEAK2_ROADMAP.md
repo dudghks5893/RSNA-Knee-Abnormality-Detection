@@ -154,8 +154,8 @@ Gold58은 W2D 계보의 train/cache selection/optimization/checkpoint choice에 
 
 - W2D-00 cache contract가 맞지 않으면 GPU 학습 금지
 - DDP smoke가 2 optimizer step 이상 통과하지 못하면 본학습 금지
-- 예상 single-run 학습시간이 4시간을 크게 초과하면 batch/I/O를 먼저 최적화
-- 8시간 이상 예상이면 본학습 시작 금지
+- OOM / non-finite loss / non-finite gradient / checkpoint-resume failure는 본학습 금지
+- **예상 runtime만으로는 더 이상 학습을 중단하지 않는다.**
 
 
 ## W2D-01 proposed run contract
@@ -253,3 +253,35 @@ Effective Global Batch = 8
 ```
 
 Local-cache warm-up과 representative timed probe 후 10-epoch 예상시간이 4시간 이내일 때만 Epoch 1을 시작한다.
+
+
+## W2D-01 V4 execution plan — 2026-10-21
+
+V4는 사용자의 GPU-headroom 지시에 따라 runtime gate와 batch policy를 수정한다.
+
+```text
+HDF5 local staging: /kaggle/temp/w2d01_cache
+Encoder chunk: 64 fixed
+Batch candidates after staging:
+  B1 / Accum4 → Effective Global 8
+  B2 / Accum2 → Effective Global 8
+  B4 / Accum1 → Effective Global 8
+  B8 / Accum1 → Effective Global 16
+```
+
+Selection:
+- actual local-cache forward/backward/optimizer throughput 기준
+- reserved VRAM < 92%
+- OOM/failed candidate 제외
+- best throughput의 5% 이내라면 더 큰 per-GPU Study Batch 우선
+
+Runtime:
+- 예상시간은 로그에만 출력
+- 4 h / 8 h projected-runtime gate 제거
+- actual numerical / OOM / resume safety gate만 유지
+
+Notebook delivery:
+```text
+W2D-01_RadImageNet_R50_DDP_Strict_V4.ipynb
+Save Version: W2D-01 R50 Weak2 DDP Strict V4
+```
