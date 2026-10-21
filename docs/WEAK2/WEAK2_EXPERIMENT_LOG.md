@@ -262,3 +262,52 @@ V5:
 - encoder chunk fixed at 64
 - candidates run real forward/backward/optimizer profiling
 - among candidates within 5% of fastest throughput, prefer the larger Study Batch
+
+
+## 2026-10-21 — W2D-01 V5 partial run / V6 transition fix
+
+V5 advanced beyond all preflight/profiling gates and reached real training.
+
+Measured V5 local-cache DDP:
+```text
+T4 x2 DDP
+B1/A4 = 3.3115 studies/s
+B2/A2 = 3.2483 studies/s
+B4/A1 = 3.2364 studies/s
+B8/A1 = 3.4417 studies/s  <-- selected
+representative B8/A1 = 3.6468 studies/s
+peak reserved = 8.99 GiB / 14.56 GiB
+```
+
+Epoch1 head warm-up completed:
+```text
+epoch=1
+effective global batch=16
+train loss=0.55959
+elapsed=1.33 min
+Synovitis sampled AUC=0.73128
+Lateral OA sampled AUC=0.80042
+checkpoint saved: w2d01_resume_last.pt
+```
+
+V5 failed at the first Epoch2 full-backbone step:
+```text
+RuntimeError: Non-finite grad norm at epoch=2 step=65
+```
+
+Interpretation:
+- Not an OOM, DDP, HDF5 or runtime-limit failure.
+- The failing gradient is computed before the optimizer LR update, so this specific first-step non-finite gradient cannot be attributed to LR magnitude applied by that step.
+- The problematic transition reused the Epoch1 head-only optimizer/scheduler/GradScaler state when the full RadImageNet backbone was unfrozen.
+- The head-only phase allowed the AMP scaler to evolve under a much easier gradient path; carrying that scaler into the first backbone backward is numerically fragile.
+
+V6 fix:
+- Keep measured fastest config fixed: T4x2, B8/GPU, Accum1, encoder chunk64, global batch16.
+- Remove redundant profiling/smoke reruns.
+- Epoch1 -> Epoch2 loads model weights only.
+- Full-FT optimizer and scheduler are recreated.
+- Full-FT GradScaler restarts at init_scale=1024.
+- Standard AMP overflow behavior is respected: skip optimizer step and back off the scaler.
+- Hard fail only after 8 consecutive overflow skips.
+- LR contract unchanged: backbone max 4e-5, new modules 1e-3.
+- Runtime-limit gate remains disabled.
