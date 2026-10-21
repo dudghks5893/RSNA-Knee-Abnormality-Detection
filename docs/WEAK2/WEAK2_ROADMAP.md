@@ -225,3 +225,15 @@ The notebook automatically:
 - writes `w2d01_resume_last.pt`, `w2d01_r50_raw_e10.pt`, and primary `w2d01_r50_ema_e10.pt`
 
 GitHub remains documentation-only; notebook source is not committed.
+
+
+### W2D-01 V2 status — 2026-10-21
+
+V1 did not reach Epoch 1. DDP profiling passed, but the resume-smoke load failed because PyTorch 2.6 defaults `torch.load` to `weights_only=True` while the internally generated resume checkpoint contains optimizer/RNG state.
+
+V2:
+- trusted internal resume checkpoints: explicit `weights_only=False`
+- RadImageNet external weight: weights-only strict load unchanged
+- near-tied encoder chunks use lower-VRAM tie-break. V1 measurements make chunk64 the expected selection instead of chunk96.
+- per-GPU Study Batch1 / GradAccum4 remains the expected batch winner from V1 profile.
+- full training settings/LR/epochs/EMA remain unchanged.
