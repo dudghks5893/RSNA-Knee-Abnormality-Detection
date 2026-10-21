@@ -156,3 +156,30 @@ Gold58은 W2D 계보의 train/cache selection/optimization/checkpoint choice에 
 - DDP smoke가 2 optimizer step 이상 통과하지 못하면 본학습 금지
 - 예상 single-run 학습시간이 4시간을 크게 초과하면 batch/I/O를 먼저 최적화
 - 8시간 이상 예상이면 본학습 시작 금지
+
+
+## W2D-01 proposed run contract
+
+```text
+Epochs: 10 fixed
+Early stopping: OFF
+Train draws/epoch: 1,024
+Train slices/Series: stochastic-stratified K8 from cached K16
+Inference slices/Series: K16
+Optimizer: AdamW
+AMP: FP16
+Gradient clip: 1.0
+Scheduler: 5% warmup + cosine
+Primary checkpoint: EMA decay 0.995, frozen after Epoch 10
+```
+
+DDP preflight chooses among per-GPU Study Batch 1/2/4 while holding Global Effective Batch at 8 using gradient accumulation. The candidate must complete at least two full optimizer steps and report peak allocated/reserved VRAM plus throughput before the full run begins.
+
+Primary checkpoint naming:
+
+```text
+w2d01_r50_ema_e10.pt
+w2d01_resume_last.pt
+```
+
+No Gold58 metric is used during training or checkpoint selection.
