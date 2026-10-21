@@ -236,3 +236,29 @@ V4 changes:
 - actual OOM / non-finite / resume failure만 hard stop
 
 No Epoch 1 training from V1/V2/V3 is reused.
+
+
+## 2026-10-21 — W2D-01 V4 orchestration failure / V5 fix
+
+상태: **V4 ABORTED BEFORE TRAIN / V5 NOTEBOOK READY**
+
+V4 actual:
+- input preflight PASS
+- HDF5 local staging PASS: 7.66 GiB copied to `/kaggle/temp/w2d01_cache` in 1.71 min
+- failure before any GPU profiling/training
+- root cause: notebook refactor removed controller helper definitions `run_profile()` and `torchrun_cmd()`
+- observed exception: `NameError: name 'run_profile' is not defined`
+- no Epoch 1 training was started
+
+V5:
+- restores `torchrun_cmd()` + `run_profile()` in the same profiling cell to remove cell-order/refactor dependency
+- keeps T4×2 DDP and local HDF5 staging
+- runtime hard limit remains disabled
+- local-cache batch candidates:
+  - B1 / Accum4 → effective global 8
+  - B2 / Accum2 → effective global 8
+  - B4 / Accum1 → effective global 8
+  - B8 / Accum1 → effective global 16
+- encoder chunk fixed at 64
+- candidates run real forward/backward/optimizer profiling
+- among candidates within 5% of fastest throughput, prefer the larger Study Batch
