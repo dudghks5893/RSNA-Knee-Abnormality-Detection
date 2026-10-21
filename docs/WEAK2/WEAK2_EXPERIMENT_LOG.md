@@ -180,3 +180,32 @@ V2 fix:
 - internally generated trusted resume checkpoints use explicit `weights_only=False`
 - external `ResNet50.pt` still uses strict weights-only loading
 - encoder-chunk selection changed so that candidates within 3% of the fastest throughput prefer lower VRAM; the V1 profile implies chunk64 is preferable to chunk96 because throughput is effectively tied while VRAM is much lower.
+
+## 2026-10-21 — W2D-01 V2 runtime-gate stop / V3 I/O fix
+
+상태: **V2 STOPPED BEFORE TRAINING / V3 NOTEBOOK READY**
+
+V2 checkpoint-resume smoke는 정상 통과했다.
+
+실측 DDP 설정:
+
+```text
+encoder chunk 64 : 1.7507 studies/s, reserved 7.01 GiB/GPU
+encoder chunk 96 : 1.7459 studies/s, reserved 9.92 GiB/GPU
+Study Batch 1 / Accum 4 : 1.7507 studies/s
+Study Batch 2 / Accum 2 : 1.6417 studies/s
+Study Batch 4 / Accum 1 : 1.5202 studies/s
+selected = per-GPU Study Batch 1 / Accum 4 / chunk 64 / Effective Global Batch 8
+```
+
+V2 representative probe는 새로운 study 집합을 `/kaggle/input` HDF5에서 random-read 할 때 약 **92.14 s data wait**가 발생해 throughput이 0.3118 studies/s로 떨어졌고, 10 epoch runtime이 10.49 h로 과대 추정되어 의도된 4 h gate에서 중단됐다.
+
+이는 model/DDP/checkpoint 오류가 아니며 **Epoch 1 본학습은 시작되지 않았다**.
+
+V3 수정:
+- 4개 HDF5 shard를 먼저 `/kaggle/temp/w2d01_cache`로 sequential staging
+- 이후 모든 random training read는 local temp storage 사용
+- V2에서 이미 측정한 최적 DDP config를 고정하여 profiling 반복 제거
+- local-cache warm-up 후 representative 6 optimizer-step probe
+- trusted internal checkpoint는 `weights_only=False`로 resume smoke
+- local representative runtime이 4 h gate를 통과해야 본학습 시작
