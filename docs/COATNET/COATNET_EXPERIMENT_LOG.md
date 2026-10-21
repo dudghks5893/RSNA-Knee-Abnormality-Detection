@@ -718,3 +718,29 @@ Artifacts:
 - ZIP `a32b6d45f13f2e25cfedf7ffe9b06e472333e87379e081053c0e5ca75e928f65`
 
 **완료:** Pack00~03 실제 cache 생성 및 full-readback 검증 PASS. **다음:** 최신 B soft-label path/SHA 고정 → CoAtNet 16ep training.
+
+## 2026-10-21 — S12 Target-Balanced CoAt384 + S6F0 submission
+
+상태: **PUBLIC LB 0.955 / runtime regression observed**
+
+Submission description:
+
+```text
+Target-balanced CoAt384 + S6F0 percentile-rank blend.
+Adjusted weights for ACL, meniscus, Lateral OA, PF OA, and Fracture
+based on Gold58 target diagnostics.
+```
+
+Result:
+
+```text
+Public LB = 0.955
+Observed submission runtime ≈ 4 hours
+Prior exact 50:50 CoAt384 + S6F0 submission runtime < 3 hours
+```
+
+Interpretation:
+- Target-wise rank weights preserved the same rounded Public LB as the verified 50:50 lineage; this does not establish target-wise equality or Private-LB equivalence.
+- Blend arithmetic itself is negligible and cannot explain the ~1 hour runtime increase.
+- The readable S12 notebook changed execution orchestration: CoAt component A runs inside the persistent notebook process before S6, whereas the original K1 50:50 lineage runs component A as an isolated subprocess and exits it before component B. This can leave CUDA contexts / allocator state resident in the notebook process and may reduce S6 resources or otherwise alter runtime.
+- For the next optimized target-balanced submission, preserve the original K1 A/B execution path byte-for-byte and change only the final per-target percentile-rank blend weights. Runtime should then be compared stage-by-stage from the receipts/logs; Kaggle I/O variance remains possible.
