@@ -209,3 +209,30 @@ V3 수정:
 - local-cache warm-up 후 representative 6 optimizer-step probe
 - trusted internal checkpoint는 `weights_only=False`로 resume smoke
 - local representative runtime이 4 h gate를 통과해야 본학습 시작
+
+
+## 2026-10-21 — W2D-01 V4 prepared after batch-policy review
+
+상태: **V4 NOTEBOOK READY / TRAINING NOT STARTED YET**
+
+V2 실측에서 per-GPU Study Batch 1이 선택된 이유는 VRAM 부족이 아니라 throughput이었다.
+
+```text
+B1 / Accum4 = 1.7507 studies/s
+B2 / Accum2 = 1.6417 studies/s
+B4 / Accum1 = 1.5202 studies/s
+```
+
+따라서 Study Batch 1은 당시 profiler 기준으로 합리적인 선택이었지만, 해당 측정은 remote HDF5 I/O 영향을 받았다. 사용자의 요청에 따라 V4에서는 local HDF5 staging 이후 다시 batch를 비교한다.
+
+V4 changes:
+- 4 h projected-runtime gate 제거
+- runtime estimate는 informational only
+- encoder chunk 64 고정
+- local-cache candidates: B1/A4, B2/A2, B4/A1, B8/A1
+- B8는 Effective Global Batch 16으로 허용
+- best throughput의 5% 이내에서는 더 큰 real Study Batch를 우선
+- local-cache representative probe와 resume smoke는 유지
+- actual OOM / non-finite / resume failure만 hard stop
+
+No Epoch 1 training from V1/V2/V3 is reused.
