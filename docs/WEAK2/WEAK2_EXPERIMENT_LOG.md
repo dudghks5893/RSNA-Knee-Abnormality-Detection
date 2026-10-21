@@ -6,7 +6,7 @@
 
 ## W2D-00 — Strict All-Series CPU Cache
 
-상태: **PREPARED / NOT EXECUTED ON KAGGLE YET**
+상태: **PASS — Kaggle CPU cache completed**
 
 ### Frozen design
 
@@ -66,14 +66,51 @@ Raw image cache payload estimate:
 
 ### Actual execution result
 
-아직 Kaggle 실행 전이다.
+Kaggle CPU 실행 완료 / **PASS**.
 
-실행 후 이 섹션에 다음을 기록한다.
+Dataset:
 
-- actual selected studies/series
-- DICOM header/decode failures
-- missing PixelSpacing/laterality counts
-- actual shard sizes
-- runtime
-- output SHA256
-- PASS/FAIL
+```text
+/kaggle/input/datasets/yhlucas/rsna-knee-w2d00-strict-allseries-cache320-v1
+```
+
+Measured:
+
+```text
+runtime = 30.08 min
+studies = 1,075
+series = 6,014
+Synovitis = 511P / 35N
+Lateral OA = 66P / 700N
+Gold58 overlap = 0
+selected-slice decode failures = 0
+PixelSpacing missing on selected slices = 0
+unknown laterality Series = 492
+```
+
+HDF5 structural gate: **PASS**
+
+Shard sizes:
+
+```text
+00: 1,505 Series / 23,958 valid slices / 1.906 GiB
+01: 1,501 Series / 23,947 valid slices / 1.902 GiB
+02: 1,504 Series / 23,954 valid slices / 1.929 GiB
+03: 1,504 Series / 23,957 valid slices / 1.920 GiB
+```
+
+Ordering:
+
+```text
+IPP_axis0 = 2,500 Series
+IPP_axis1 = 2,039 Series
+IPP_axis2 = 1,475 Series
+```
+
+All 6,014 Series used ImagePositionPatient anatomical ordering. No filename / InstanceNumber fallback was needed in the final selected pool.
+
+Important audit note:
+- 492 Series had unresolved laterality, so those Series were cached without left/right normalization.
+- This is not a cache integrity failure, but because Lateral OA is side-sensitive it must be explicitly tracked in W2D-01 diagnostics rather than silently ignored.
+
+Output cache SHA256 values are stored in `w2d00_sha256.csv` inside the dataset.
