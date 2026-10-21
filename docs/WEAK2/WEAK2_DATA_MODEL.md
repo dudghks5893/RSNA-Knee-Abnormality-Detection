@@ -365,14 +365,16 @@ Warmup: 5% optimizer steps
 Scheduler: cosine decay to 0.1 × initial LR
 ```
 
-Discriminative LR:
-- stem + layer1: 1e-6
-- layer2: 2e-6
-- layer3: 5e-6
-- layer4: 1e-5
-- projection / Transformer / attention / heads: 1e-4
+Discriminative LR — revised after CoAt lineage review:
+- stem + layer1: **5e-6**
+- layer2: **1e-5**
+- layer3: **2e-5**
+- layer4: **4e-5**
+- projection / Transformer / attention / heads: **1e-3**
 
-Epoch 1 freezes stem through layer2; Epoch 2–10 unfreezes all convolution weights. BatchNorm running statistics remain frozen to pretrained RadImageNet statistics; affine parameters follow the layer trainability.
+Rationale: the successful CoAt branch used a much stronger newly-initialized MIL/head LR (2e-3, later stabilized at 1e-3) while keeping the pretrained backbone substantially lower (4e-5). W2D-01 follows that separation rather than applying 1e-3 to the pretrained RadImageNet trunk.
+
+Epoch 1 is a true **head warm-up**: the entire RadImageNet backbone is frozen and only the newly initialized projection / Transformer / attention / heads train at 1e-3. Epoch 2–10 rebuild DDP with the full backbone trainable and the discriminative LRs above. BatchNorm running statistics remain frozen to pretrained RadImageNet statistics; affine parameters follow the layer trainability.
 
 #### DDP batch policy
 
@@ -380,12 +382,15 @@ T4×2 DDP. Training K8 gives approximately 44.8 slices/study on average and at m
 
 The notebook profiles worst-case high-Series studies with actual forward/backward/optimizer for at least 2 consecutive optimizer steps.
 
-Candidates:
-- per-GPU Study Batch 1 / GradAccum 4 → Global Effective Batch 8
-- per-GPU Study Batch 2 / GradAccum 2 → Global Effective Batch 8
-- per-GPU Study Batch 4 / GradAccum 1 → Global Effective Batch 8
+Profiling is two-stage and uses actual T4×2 DDP forward/backward/optimizer work.
 
-The highest-throughput configuration that passes VRAM and stability gates is selected automatically. Batch size is not reduced pre-emptively.
+1. Encoder slice-microbatch candidates: 32 / 64 / 96 / 128 slices.
+2. With the fastest safe encoder chunk fixed, per-GPU Study Batch candidates:
+   - 1 / GradAccum 4 → Global Effective Batch 8
+   - 2 / GradAccum 2 → Global Effective Batch 8
+   - 4 / GradAccum 1 → Global Effective Batch 8
+
+Every candidate must complete at least 2 consecutive optimizer steps. The selected configuration then runs a representative balanced-data probe and a real save→load→continue resume smoke before full training. The highest-throughput configuration that passes VRAM and stability gates is selected automatically. Batch size is not reduced pre-emptively.
 
 #### Checkpoint policy
 
