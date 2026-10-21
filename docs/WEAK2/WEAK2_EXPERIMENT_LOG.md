@@ -114,3 +114,69 @@ Important audit note:
 - This is not a cache integrity failure, but because Lateral OA is side-sensitive it must be explicitly tracked in W2D-01 diagnostics rather than silently ignored.
 
 Output cache SHA256 values are stored in `w2d00_sha256.csv` inside the dataset.
+
+
+## W2D-01 — RadImageNet R50 DDP Strict
+
+### V1 preflight / profile run — aborted before training
+
+상태: **ABORTED BEFORE EPOCH 1 / resume-smoke loader bug**
+
+입력 preflight는 PASS했다.
+
+```text
+T4 x2 detected
+Study = 1,075
+Series = 6,014
+Synovitis = 511P / 35N
+Lateral OA = 66P / 700N
+Gold58 overlap = 0
+RadImageNet SHA256 = 08629f7e7bd3e29b8ee9522ca3f65ce4d010a7ddf74f0ea3c7e3f3d0bbab0734
+```
+
+DDP profiler 실측:
+
+| Encoder chunk | Global Study/s | Peak reserved GiB |
+| ---: | ---: | ---: |
+| 32 | 0.659 | 3.604 |
+| 64 | 1.775 | 7.012 |
+| 96 | 1.776 | 9.920 |
+| 128 | 1.756 | 9.920 |
+
+Study-batch profiler at chunk96:
+
+| Per-GPU Study Batch | GradAccum | Global Study/s | Peak reserved GiB |
+| ---: | ---: | ---: | ---: |
+| 1 | 4 | 1.776 | 9.920 |
+| 2 | 2 | 1.702 | 11.670 |
+| 4 | 1 | 1.689 | 10.584 |
+
+Representative balanced probe:
+
+```text
+per-GPU Study Batch = 1
+GradAccum = 4
+Encoder chunk = 96
+Global Study/s = 1.338
+Peak reserved = 11.049 GiB / 14.562 GiB
+```
+
+Failure occurred only at the following resume-smoke load step:
+
+```text
+torch.load(w2d01_smoke_resume.pt)
+_pickle.UnpicklingError
+PyTorch 2.6 default weights_only=True
+Unsupported numpy._core.multiarray._reconstruct
+```
+
+Root cause:
+- W2D resume checkpoints intentionally include optimizer, scheduler, scaler and NumPy/Python RNG states.
+- PyTorch 2.6 changed `torch.load` default to `weights_only=True`.
+- The checkpoint itself was written successfully; the loader did not explicitly opt out of weights-only mode.
+- **No Epoch 1 training started and no learned checkpoint from this failed run is used.**
+
+V2 fix:
+- internally generated trusted resume checkpoints use explicit `weights_only=False`
+- external `ResNet50.pt` still uses strict weights-only loading
+- encoder-chunk selection changed so that candidates within 3% of the fastest throughput prefer lower VRAM; the V1 profile implies chunk64 is preferable to chunk96 because throughput is effectively tied while VRAM is much lower.
