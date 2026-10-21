@@ -1,0 +1,144 @@
+# Weak2 Direct Specialist — Roadmap
+
+최종 업데이트: 2026-10-21
+
+## Current goal
+
+CoAt384 + S6F0의 약한 두 타깃인 **Synovitis / Lateral OA**만 보강하는 selector-free single model을 만든다.
+
+Backbone:
+
+```text
+RadImageNet ResNet50
+```
+
+Final operating contract:
+
+```text
+1 additional predictor model
+2 target outputs
+0 learned selector checkpoints
+0 fold ensemble
+```
+
+## Current status
+
+### W2D-00 — Strict All-Series CPU Cache
+
+상태: **Notebook prepared / Kaggle execution pending**
+
+목적:
+
+- Strict V1 hard 0/1만 사용
+- Gold58 완전 제외
+- 1,075-study frozen train pool 생성
+- 모든 Series 보존
+- 150 mm center FOV / 320px / K16 per Series cache 생성
+- GPU quota 0 사용
+
+Expected contract:
+
+```text
+Studies = 1,075
+Series  = 6,014 expected from Strict metadata
+Synovitis = 511P / 35N
+Lateral OA = 66P / 700N
+```
+
+Kaggle setting:
+
+```text
+Accelerator: None (CPU)
+Internet: Off
+Save & Run All
+Save Version: W2D-00 Strict All-Series Cache 320
+```
+
+실행 후 확인:
+
+1. final summary cell
+2. `w2d00_cache_summary.json`
+3. `w2d00_selection_audit.csv`
+4. `w2d00_sha256.csv`
+5. HDF5 shard 실제 파일 크기와 runtime
+
+## Next — W2D-01 RadImageNet R50 DDP
+
+W2D-00 PASS 뒤 진행한다.
+
+목표:
+
+```text
+single RadImageNet R50
++ target-specific slice/series attention
++ Synovitis head
++ Lateral OA head
+```
+
+GPU:
+
+```text
+T4 ×2
+DDP
+single model
+```
+
+학습 전에 반드시:
+
+- full pipeline DDP 2 optimizer-step smoke
+- actual GPU peak allocated/reserved
+- studies/sec, series/sec, slices/sec
+- DataLoader/HDF5 wait time
+- batch candidate throughput benchmark
+- 예상 epoch / total runtime
+- checkpoint save/load/resume dry-run
+
+을 확인한다.
+
+## Training data imbalance policy — planned
+
+Cache에는 unique study를 한 번만 저장한다.
+
+학습 때만 dynamic sampler를 사용한다.
+
+### Synovitis
+
+Raw strict pool:
+
+```text
+511 positive
+35 negative
+```
+
+- 35 negative를 모두 보존
+- minority negative를 여러 번 draw
+- draw마다 slice subset / mild intensity augmentation을 새로 생성
+- moderate class weight 추가
+- oversampling × class weight를 동시에 inverse-frequency 수준으로 과도하게 적용하지 않음
+
+### Lateral OA
+
+Frozen pool:
+
+```text
+66 positive
+700 negative
+```
+
+- positive dynamic oversampling
+- negative 700은 fixed V1 pool
+- positive draw마다 다른 slice/intensity realization
+- moderate positive class weight
+
+## Gold58 policy
+
+Gold58은 W2D 계보의 train/cache selection/optimization/checkpoint choice에 사용하지 않는다.
+
+최종 checkpoint를 먼저 고정한 뒤 diagnostic comparison을 1회 수행한다.
+
+## Stop conditions
+
+- W2D-00 cache contract가 맞지 않으면 GPU 학습 금지
+- DDP smoke가 2 optimizer step 이상 통과하지 못하면 본학습 금지
+- 예상 single-run 학습시간이 4시간을 크게 초과하면 batch/I/O를 먼저 최적화
+- 8시간 이상 예상이면 본학습 시작 금지
