@@ -167,7 +167,11 @@ Train draws/epoch: 1,024
 Train slices/Series: stochastic-stratified K8 from cached K16
 Inference slices/Series: K16
 Optimizer: AdamW
-AMP: FP16
+Head/new-module LR: 1e-3
+Backbone max LR: 4e-5 (layer-wise 5e-6 / 1e-5 / 2e-5 / 4e-5)
+Epoch 1: backbone frozen, new modules only
+Epoch 2–10: full backbone discriminative FT
+AMP: FP16 backbone + FP32 aggregation/head
 Gradient clip: 1.0
 Scheduler: 5% warmup + cosine
 Primary checkpoint: EMA decay 0.995, frozen after Epoch 10
