@@ -246,9 +246,34 @@ Final gate:
 - 4 HDF5 shard 모두 readable
 - SHA256 출력
 
-## 6. Planned model — W2D-01
+## 6. W2D-00 measured cache / W2D-01 model contract
 
-Cache가 PASS한 뒤에만 GPU 학습으로 이동한다.
+W2D-00 cache는 **PASS**했고 다음 Dataset으로 게시되었다.
+
+```text
+/kaggle/input/datasets/yhlucas/rsna-knee-w2d00-strict-allseries-cache320-v1
+```
+
+Measured cache:
+- 1,075 studies
+- 6,014 Series
+- runtime 30.08 min CPU
+- decode failures 0
+- selected-slice PixelSpacing missing 0
+- unknown laterality 492 Series
+- HDF5 structural gate PASS
+
+W2D-01 pretrained backbone input:
+
+```text
+Kaggle Dataset: marwanmath/resnet-50-radimagenet-marwan
+File: ResNet50.pt
+Backbone: RadImageNet ResNet50
+```
+
+Kaggle에서는 **Add Input → Datasets**에서 위 Dataset을 추가한다.
+
+GPU 학습 구조:
 
 ```text
 All-Series K16 cache
