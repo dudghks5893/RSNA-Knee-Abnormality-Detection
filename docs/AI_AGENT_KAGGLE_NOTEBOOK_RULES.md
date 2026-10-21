@@ -1,13 +1,13 @@
-## 2026-10-16 — 최우선 규칙: Exp / Specialist / ResNet·RMIL / DINO·S 네 폴더로 분리 (이전 3개 통합문서 정책 대체)
+## 2026-10-21 — Weak2 Direct 계열 추가 / 문서-only GitHub 정책
 
-2026-10-16 사용자 요청에 따라 실험별 기록 위치를 **4개의 계열 폴더**로 변경했다. 실험 결과는 해당 계열 기존 누적 로그, 진행상황은 계열별 Roadmap, 데이터/체크포인트 계약은 해당 계열 모델 문서로 관리한다.
+기존 4개 연구 계열은 유지하고, 사용자 명시 요청으로 **Weak2 Direct Specialist(W2D)**를 별도 계열로 추가한다. 목적은 Synovitis + Lateral OA 전용 selector-free 단일 predictor를 다른 Specialist SS 계보와 구분하는 것이다. 실험 결과는 해당 계열 누적 로그, 진행상황은 Roadmap, 데이터/체크포인트 계약은 Data Model 문서로 관리한다. **W2D Kaggle notebook 소스/코드는 repository에 저장하지 않고 문서만 남긴다.**
 
 - Exp: [EXP_EXPERIMENT_HISTORY.md](EXP/EXP_EXPERIMENT_HISTORY.md)
 - Specialist: [SPECIALIST_EXPERIMENT_LOG.md](SPECIALIST/SPECIALIST_EXPERIMENT_LOG.md), [Roadmap](SPECIALIST/SPECIALIST_EXPERIMENT_ROADMAP.md)
 - ResNet·RMIL: [EXPERIMENT_HISTORY.md](RESNET_RMIL/EXPERIMENT_HISTORY.md), [Roadmap](RESNET_RMIL/CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md)
-- DINO·S: [S1-DINO 로그](DINO_S/S1-DINO-CBL2F-01_EXPERIMENT_LOG.md), [Roadmap](DINO_S/S1-DINO-CBL2F-01_ROADMAP.md), [Data Model](DINO_S/S1-DINO-CBL2F-01_DATA_MODEL.md)
+- DINO·S: [S1-DINO 로그](DINO_S/S1-DINO-CBL2F-01_EXPERIMENT_LOG.md), [Roadmap](DINO_S/S1-DINO-CBL2F-01_ROADMAP.md), [Data Model](DINO_S/S1-DINO-CBL2F-01_DATA_MODEL.md)\n- Weak2 Direct: [실험 로그](WEAK2/WEAK2_EXPERIMENT_LOG.md), [Roadmap](WEAK2/WEAK2_ROADMAP.md), [Data Model](WEAK2/WEAK2_DATA_MODEL.md)
 
-**이 아래의 2026-10-12~16 '실험을 공통 3개 파일에만 누적' 지시는 과거 변경 이력으로 보존하며 현행 규칙이 아니다.** 신규 실험마다 새로운 `.md` 문서를 생성하지 않는 원칙은 계속 유효하다. 공통 노트북/GPU 규칙은 이 파일에 유지하고, 라벨 작업 자료는 특정 실험군에 억지로 포함하지 않고 docs 상위에 유지한다. RMIL 실험 내의 DINO-Small 비교는 DINO·S가 아니라 RMIL의 실험 계보로 분류한다.
+**W2D에서도 실험마다 새 `.md`를 추가하지 않고 위 3개 파일에만 누적한다.** 이 아래의 2026-10-12~16 '실험을 공통 3개 파일에만 누적' 지시는 과거 변경 이력으로 보존하며 현행 분류표와 충돌할 경우 최신 분류표를 따른다. 신규 실험마다 새로운 `.md` 문서를 생성하지 않는 원칙은 계속 유효하다. 공통 노트북/GPU 규칙은 이 파일에 유지하고, 라벨 작업 자료는 특정 실험군에 억지로 포함하지 않고 docs 상위에 유지한다. RMIL 실험 내의 DINO-Small 비교는 DINO·S가 아니라 RMIL의 실험 계보로 분류한다.
 
 ---
 
