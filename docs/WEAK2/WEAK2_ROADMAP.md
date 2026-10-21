@@ -25,7 +25,7 @@ Final operating contract:
 
 ### W2D-00 — Strict All-Series CPU Cache
 
-상태: **Notebook prepared / Kaggle execution pending**
+상태: **PASS — cache dataset published**
 
 목적:
 
@@ -54,17 +54,22 @@ Save & Run All
 Save Version: W2D-00 Strict All-Series Cache 320
 ```
 
-실행 후 확인:
+실행 결과:
 
-1. final summary cell
-2. `w2d00_cache_summary.json`
-3. `w2d00_selection_audit.csv`
-4. `w2d00_sha256.csv`
-5. HDF5 shard 실제 파일 크기와 runtime
+```text
+Dataset: /kaggle/input/datasets/yhlucas/rsna-knee-w2d00-strict-allseries-cache320-v1
+Runtime: 30.08 min
+Studies: 1,075
+Series: 6,014
+HDF5 structural gate: PASS
+Decode failures: 0
+PixelSpacing missing: 0
+Unknown laterality Series: 492
+```
 
 ## Next — W2D-01 RadImageNet R50 DDP
 
-W2D-00 PASS 뒤 진행한다.
+W2D-00가 PASS했으므로 다음 단계로 진행한다.
 
 목표:
 
@@ -82,6 +87,15 @@ T4 ×2
 DDP
 single model
 ```
+Model pretraining input for W2D-01:
+
+```text
+Kaggle Dataset: marwanmath/resnet-50-radimagenet-marwan
+Required file: ResNet50.pt
+```
+
+This is added through Kaggle **Add Input → Datasets**, not Kaggle Models. The W2D-01 notebook must resolve the exact mounted path under that dataset root and strict-load the RadImageNet ResNet50 trunk.
+
 
 학습 전에 반드시:
 
