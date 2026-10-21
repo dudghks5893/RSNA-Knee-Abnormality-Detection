@@ -1,15 +1,15 @@
 # RSNA Knee — Rules for AI coding agents
 
-**2026-10-16 이후 최우선 문서 정책:** 연구 계열을 네 폴더로 분리하여 **기존 누적 문서에만 기록**한다. 과거 단일 공통 History/Roadmap/Rules 3문서에 모두 기록하던 정책은 이 규칙으로 대체되었다.
+**2026-10-21 이후 최우선 문서 정책:** 기존 계열에 더해 사용자 지시로 **Weak2 Direct Specialist**를 독립 계열로 분리한다. 각 계열은 **기존 누적 문서에만 기록**하며, Weak2도 아래 3개 누적 문서만 갱신한다.
 
 | 실험 계열 | 실제 결과 누적 | 로드맵 / 계약 |
 | --- | --- | --- |
 | Exp01~Exp63 | `docs/EXP/EXP_EXPERIMENT_HISTORY.md` | `docs/EXP/FINAL_5FOLD_PARALLEL_EXPERIMENT_PLAN.md` (역사적) |
 | Specialist SS | `docs/SPECIALIST/SPECIALIST_EXPERIMENT_LOG.md` | `docs/SPECIALIST/SPECIALIST_EXPERIMENT_ROADMAP.md` |
 | R3D, R2D, RMIL | `docs/RESNET_RMIL/EXPERIMENT_HISTORY.md` | `docs/RESNET_RMIL/CURRENT_EXPERIMENT_STATE_AND_ROADMAP.md` |
-| S1, S1FT02, S7, S8 및 이후 S | `docs/DINO_S/S1-DINO-CBL2F-01_EXPERIMENT_LOG.md` | `docs/DINO_S/S1-DINO-CBL2F-01_ROADMAP.md`, `docs/DINO_S/S1-DINO-CBL2F-01_DATA_MODEL.md` |
+| S1, S1FT02, S7, S8 및 이후 S | `docs/DINO_S/S1-DINO-CBL2F-01_EXPERIMENT_LOG.md` | `docs/DINO_S/S1-DINO-CBL2F-01_ROADMAP.md`, `docs/DINO_S/S1-DINO-CBL2F-01_DATA_MODEL.md` |\n| Weak2 Direct (W2D) | `docs/WEAK2/WEAK2_EXPERIMENT_LOG.md` | `docs/WEAK2/WEAK2_ROADMAP.md`, `docs/WEAK2/WEAK2_DATA_MODEL.md` |
 
-- RMIL-04C02의 ResNet vs DINO-Small 비교는 모델 종류가 아니라 **RMIL 실험 번호** 기준으로 ResNet·RMIL에 보관한다.
+- Weak2 Direct는 기존 selector 기반 Specialist SS와 분리한다. 목적은 **Synovitis + Lateral OA 전용 selector-free 단일 predictor**이며, Kaggle notebook source는 GitHub에 저장하지 않고 문서만 남긴다.\n- RMIL-04C02의 ResNet vs DINO-Small 비교는 모델 종류가 아니라 **RMIL 실험 번호** 기준으로 ResNet·RMIL에 보관한다.
 - **새로운 실험, QA 또는 버그 수정마다 새 Markdown 보고서를 생성하지 않는다.** 해당 계열 누적 파일을 업데이트한다.
 - 공통 노트북/GPU/라벨 정책은 `docs/`에 둔다. [현재 인수인계](docs/CURRENT_HANDOFF.md), [Kaggle 규칙](docs/AI_AGENT_KAGGLE_NOTEBOOK_RULES.md), [GPU 정책](docs/GPU_BATCH_RESOURCE_MANDATORY_POLICY.md)부터 확인한다.
 - 과거 개별 보고서의 `NEXT`, `CURRENT` 등은 해당 문서 작성 당시 상태로, 현재 최신 결정과 충돌 시 과거 기록으로 취급한다.
