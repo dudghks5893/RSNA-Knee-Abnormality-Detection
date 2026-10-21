@@ -237,3 +237,19 @@ V2:
 - near-tied encoder chunks use lower-VRAM tie-break. V1 measurements make chunk64 the expected selection instead of chunk96.
 - per-GPU Study Batch1 / GradAccum4 remains the expected batch winner from V1 profile.
 - full training settings/LR/epochs/EMA remain unchanged.
+
+## W2D-01 V3 execution plan
+
+V2는 resume smoke까지 PASS했으나 remote HDF5 random I/O 때문에 runtime gate에서 중단되었다. 본학습은 시작되지 않았다.
+
+V3는 다음을 고정한다.
+
+```text
+HDF5 stage: /kaggle/input → /kaggle/temp/w2d01_cache
+per-GPU Study Batch = 1
+GradAccum = 4
+Encoder chunk = 64
+Effective Global Batch = 8
+```
+
+Local-cache warm-up과 representative timed probe 후 10-epoch 예상시간이 4시간 이내일 때만 Epoch 1을 시작한다.
