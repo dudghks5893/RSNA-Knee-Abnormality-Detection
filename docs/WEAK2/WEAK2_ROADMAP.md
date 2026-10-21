@@ -187,3 +187,41 @@ w2d01_resume_last.pt
 ```
 
 No Gold58 metric is used during training or checkpoint selection.
+
+
+### W2D-01 Notebook prepared — 2026-10-21
+
+상태: **Notebook prepared / Kaggle execution pending**
+
+Notebook delivery name:
+
+```text
+W2D-01_RadImageNet_R50_DDP_Strict.ipynb
+```
+
+Recommended Kaggle Save Version:
+
+```text
+W2D-01 R50 Weak2 DDP Strict V1
+```
+
+Runtime:
+
+```text
+Accelerator: T4 x2
+Internet: Off
+Save & Run All
+```
+
+The notebook automatically:
+- verifies exact cache / Strict / RadImageNet inputs
+- profiles encoder slice microbatch 32/64/96/128
+- profiles per-GPU Study Batch 1/2/4 at Global Effective Batch 8
+- runs a representative throughput probe
+- runs real save→load→continue resume smoke
+- stops before training when projected runtime exceeds the 4-hour W2D gate
+- trains Epoch1 head-only at LR 1e-3
+- trains Epoch2–10 full discriminative FT with backbone max LR 4e-5 and new modules LR 1e-3
+- writes `w2d01_resume_last.pt`, `w2d01_r50_raw_e10.pt`, and primary `w2d01_r50_ema_e10.pt`
+
+GitHub remains documentation-only; notebook source is not committed.
