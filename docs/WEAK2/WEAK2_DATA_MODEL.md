@@ -385,12 +385,16 @@ The notebook profiles worst-case high-Series studies with actual forward/backwar
 Profiling is two-stage and uses actual T4×2 DDP forward/backward/optimizer work.
 
 1. Encoder slice-microbatch candidates: 32 / 64 / 96 / 128 slices.
-2. With the fastest safe encoder chunk fixed, per-GPU Study Batch candidates:
-   - 1 / GradAccum 4 → Global Effective Batch 8
-   - 2 / GradAccum 2 → Global Effective Batch 8
-   - 4 / GradAccum 1 → Global Effective Batch 8
+2. Encoder chunk is fixed to **64** for V4 because V2 measured chunk64 and chunk96 at essentially identical throughput while chunk64 used much less reserved VRAM.
+3. After staging HDF5 shards to `/kaggle/temp/w2d01_cache`, re-profile per-GPU Study Batch:
+   - 1 / GradAccum 4 → Effective Global Batch 8
+   - 2 / GradAccum 2 → Effective Global Batch 8
+   - 4 / GradAccum 1 → Effective Global Batch 8
+   - 8 / GradAccum 1 → Effective Global Batch 16
 
-Every candidate must complete at least 2 consecutive optimizer steps. The selected configuration then runs a representative balanced-data probe and a real save→load→continue resume smoke before full training. The highest-throughput configuration that passes VRAM and stability gates is selected automatically. Batch size is not reduced pre-emptively.
+Each candidate runs actual forward/backward/optimizer work from the local staged cache. OOM/failed candidates are discarded. Among candidates within 5% of the best throughput, V4 prefers the **larger real Study Batch** to make better use of available GPU headroom.
+
+The previous 4-hour projected-runtime stop condition is removed. Runtime estimates are informational only and never stop training.
 
 #### Checkpoint policy
 
