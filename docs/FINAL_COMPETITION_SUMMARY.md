@@ -15,13 +15,10 @@
 | 최종 MAIN 제출 Private LB | **0.941** |
 | 최종 순위 | **949위** |
 | 대회 중 Public leaderboard 최고 위치 | **약 240위** |
-| 자체 제출 중 확인된 더 높은 Private 점수 | **0.942** |
-| 해당 제출 | 기존 **70:30 비율 변경 제출** |
 
 마지막 제출 세트에서는 **MAIN 버전만 정상 제출에 성공**했고 Public LB는 기존 최고와 동일한 **0.958**이었다.
 
 대회 종료 후 Private leaderboard가 공개되면서 최종 MAIN 제출은 **Private 0.941**로 확정되었다.
-그보다 앞서 제출했던 **70:30 비율 변경 버전이 Private 0.942**로 0.001 더 높았다.
 
 공식 최종 순위는 **949위**다.
 
@@ -36,8 +33,6 @@ Final MAIN
 Public  = 0.958
 Private = 0.941
 
-Earlier 70:30 ratio submission
-Private = 0.942
 ```
 
 로 마무리되었다.
@@ -48,7 +43,6 @@ Private = 0.942
 - **Public peak rank:** 약 240위
 - **Final Private score:** 0.941
 - **Final official rank:** 949위
-- **Best known Private among our submissions:** 0.942 (70:30 ratio submission)
 
 Public 0.958만을 최종 대회 성적으로 표현하지 않는다.
 
@@ -99,6 +93,29 @@ Gold58 diagnostic:
 
 W2D-03을 기존 CoAt384 + S6 계보의 Synovitis/Lateral OA에만 추가한 제출은 **Public LB 0.955**로, 기존 0.955 계보 대비 leaderboard 상승은 확인되지 않았다.
 
+
+### 3.3 마지막 W2D-05 보강 모델과 최종 MAIN
+
+활막염과 외측 골관절염 성능을 개선하기 위해 **W2D-05**를 후속 학습했다.
+마지막 모델은 다음 두 가중치를 선택했다.
+
+| 소견 | 가중치 | Gold58 내부 ROC-AUC |
+|---|---|---:|
+| 활막염 (Synovitis) | Stage A RAW | **0.807646** |
+| 외측 골관절염 (Lateral OA) | Stage B RAW | **0.822050** |
+
+두 타깃 모두 Gold58 개발 AUC가 0.8 이상이었다. Gold58(n=58)은 공식 테스트가 아니라 내부 개발 검증이다.
+
+**최종 MAIN:** 공개 CoAt + R6 기본 예측을 유지하고, 두 타깃에 W2D-05를
+**27.5% 비율**로 percentile-rank blend했다. 다른 10개 타깃에는 기본 예측을 유지했다.
+
+- MAIN Public LB **0.958** — 추가 전 0.958과 동일
+- MAIN Private LB **0.941**
+- 공식 최종 순위 **949위**
+- 마지막 제출 세트에서 성공적으로 제출된 버전은 MAIN이었다.
+
+이는 내부 개발 성능 상승이 최종 leaderboard 상승을 반드시 보장하지는 않음을 보여준다.
+
 ## 4. Submission robustness에서 확정된 원칙
 
 프로젝트 후반 hidden-test 오류 대응 과정에서 아래 원칙을 확정했다.
@@ -111,7 +128,7 @@ W2D-03을 기존 CoAt384 + S6 계보의 Synovitis/Lateral OA에만 추가한 제
 6. 실제 이미지 기반 prediction branch가 하나도 남지 않으면 fail-fast한다.
 7. submission 생성 성공 여부만 보지 않고 rescue/failure audit를 함께 확인한다.
 
-마지막 정상 MAIN 제출에서도 이 방향의 robustness를 유지했다.
+최종 정상 MAIN은 CoAt + R6에 W2D-05를 두 타깃 27.5%로 결합한 구성이었다.
 
 ## 5. 프로젝트에서 얻은 핵심 결론
 
@@ -125,7 +142,7 @@ W2D-03을 기존 CoAt384 + S6 계보의 Synovitis/Lateral OA에만 추가한 제
 
 - 작은 Gold58 validation은 방향성 확인에는 유용하지만 leaderboard generalization을 완전히 대변하지 못했다.
 - Public leaderboard에서의 미세한 개선 또는 동일 점수도 Private에서 순서가 바뀔 수 있었다.
-- 실제로 최종 MAIN은 Public **0.958 / Private 0.941**, 이전 70:30 제출은 Private **0.942**였다.
+- 최종 MAIN은 Public **0.958 / Private 0.941**이었다. 보강 모델 추가로 Public 점수의 상승이 확인되지는 않았다.
 - 따라서 future competition에서는 Public LB 최적화보다 OOF/holdout robustness와 단순한 ensemble의 재현성을 더 강하게 우선한다.
 
 ### 엔지니어링
@@ -167,7 +184,6 @@ Project state: ARCHIVED / DOCUMENTATION ONLY
 Public best / final MAIN Public : 0.958
 Public peak position            : ~240
 Final MAIN Private              : 0.941
-Best known Private submission   : 0.942 (earlier 70:30 ratio)
 Official final rank             : 949
 Competition status              : CLOSED
 ```
