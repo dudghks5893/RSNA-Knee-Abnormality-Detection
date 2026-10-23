@@ -1,6 +1,20 @@
 # Weak2 Direct Specialist — Data / Model Contract
 
-최종 업데이트: 2026-10-21
+최종 업데이트: 2026-10-23
+
+## 0. Archive note
+
+> **Competition closed / contract archived.**
+>
+> 이 문서는 W2D-00/W2D-01 계열의 data/model contract를 재현하기 위해 보존한다.
+> 대회 후반에는 동일 1,075-study source를 기반으로 한 **W2D-03 SoftReg**가 후속 specialist로 실행되었으며,
+> 최종 실행 결과와 leaderboard 결과는 [WEAK2_EXPERIMENT_LOG.md](WEAK2_EXPERIMENT_LOG.md)에 기록되어 있다.
+>
+> W2D-03 Gold58 EMA E6: macro **0.779490**, Synovitis **0.756272**, Lateral OA **0.802708**.
+> W2D-03 target injection submission은 Public **0.955**로 base 대비 상승하지 않았다.
+> 대회 최종 공식 결과는 [../FINAL_COMPETITION_SUMMARY.md](../FINAL_COMPETITION_SUMMARY.md)를 따른다.
+>
+> 이 문서의 proposed/future 설정은 더 이상 active plan이 아니다.
 
 ## 1. 목적
 
