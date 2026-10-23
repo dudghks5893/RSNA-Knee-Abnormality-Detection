@@ -19,6 +19,7 @@ Kaggle RSNA Knee MRI 연구 결과는 다음 **7개 실험 계열/Branch 폴더*
 - Study/Series/Slice, 판독문 기반 약지도 학습, MIL/Attention, Public/Private Macro-AUC 등 핵심 용어를 설명하며, 내부 실험 번호 대신 방법과 성과 중심으로 구성.
 - 자체 학습 연구와 외부 공개 checkpoint를 활용한 최종 앙상블을 분리해 서술.
 - 최종 공식 성적: **Private 0.941 / 949위**. 최종 MAIN Public **0.958**, Public 최고 위치 약 **240위**.
+- 마지막 W2D-05의 Gold58 ROC-AUC: 활막염 **0.8076**, 외측 골관절염 **0.8221** (내부 개발 검증).
 - 개발용 Gold58 검증과 공식 Public/Private 점수를 구별하고, 공개 pretrained/reader 활용을 자체 모델 연구와 구분함.
 
 ## 대회 최종 결과 — 2026-10-23
@@ -30,13 +31,11 @@ Kaggle RSNA Knee MRI 연구 결과는 다음 **7개 실험 계열/Branch 폴더*
 |---|---:|
 | 최종 MAIN Public LB | **0.958** |
 | 최종 MAIN Private LB | **0.941** |
-| 자체 제출 중 best known Private | **0.942** — 이전 70:30 비율 변경 제출 |
 | Public leaderboard 최고 위치 | **약 240위** |
 | 공식 최종 순위 | **949위** |
 
-- 마지막 제출 세트에서는 **MAIN 버전만 정상 제출에 성공**했고 Public LB는 기존 최고와 동일한 **0.958**이었다.
+- 마지막 제출 세트에서는 **MAIN 버전만 정상 제출에 성공**했다. MAIN은 공개 CoAt + R6 예측에 자체 W2D-05 보강 모델을 **활막염·외측 골관절염 두 타깃에 각각 27.5%** 결합한 구성으로, Public LB는 기존 최고와 동일한 **0.958**이었다.
 - 대회 종료 후 Private leaderboard 공개 결과, 최종 MAIN은 **0.941**.
-- 이전의 단순 **70:30 비율 변경 제출이 Private 0.942**로 최종 MAIN보다 0.001 높았다.
 - Public 0.958은 대회 중 최고 성과이지만 최종 공식 성적은 **Private 0.941 / 949위**로 기록한다.
 - 모든 기존 문서의 `NEXT`, `RUNNING`, `CURRENT` 표기는 역사적 기록이며 더 이상 실행 지시가 아니다.
 - 추가 Kaggle 실험/제출은 종료하며 저장소는 재현성과 포트폴리오 회고용으로 보존한다.
