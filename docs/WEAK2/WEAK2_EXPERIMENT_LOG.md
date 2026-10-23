@@ -1,6 +1,6 @@
 # Weak2 Direct Specialist — Experiment Log
 
-최종 업데이트: 2026-10-21
+최종 업데이트: 2026-10-23
 
 이 문서는 Weak2 계보의 **실제 실행 결과만 누적**한다. 예정/추정은 Roadmap/Data Contract와 구분한다.
 
@@ -311,3 +311,94 @@ V6 fix:
 - Hard fail only after 8 consecutive overflow skips.
 - LR contract unchanged: backbone max 4e-5, new modules 1e-3.
 - Runtime-limit gate remains disabled.
+
+
+## W2D-03 — Soft-Label + Diversity Regularization
+
+상태: **PASS / TRAINING COMPLETE / GOLD58 DIAGNOSTIC COMPLETE**
+
+W2D-01에서 확인된 과적합과 score saturation을 완화하기 위한 후속 specialist다.
+
+Training source:
+- W2D-00과 동일한 **1,075 studies / 6,014 Series**
+- Gold58은 training에 사용하지 않음
+- source Strict CSV의 hard 0/1 자체는 수정하지 않음
+
+Training-time soft target:
+```text
+Synovitis   : 0 -> 0.10 / 1 -> 0.90
+Lateral OA  : 0 -> 0.05 / 1 -> 0.95
+```
+
+Regularization / sampling:
+```text
+draws per epoch     = 1,200
+max repeat/study    = 2
+train K             = stochastic 6 / 8 / 10 / 12
+slice dropout       = 0.10
+series dropout      = 0.15
+random crop         = OFF
+horizontal flip     = OFF
+Transformer dropout = 0.20
+Head dropout        = 0.30
+epochs              = 6 fixed
+EMA decay           = 0.995
+```
+
+Primary checkpoint:
+```text
+w2d03_r50_ema_e6.pt
+```
+
+Gold58 diagnostic:
+
+| variant | Macro AUROC (2 target) | Synovitis AUROC | Lateral OA AUROC |
+|---|---:|---:|---:|
+| **EMA E6** | **0.779490** | **0.756272** | **0.802708** |
+| RAW E6 | 0.771753 | 0.756272 | 0.787234 |
+
+Gold58는 checkpoint training/selection에 사용하지 않고 학습 종료 후 diagnostic으로만 평가했다.
+
+### S13 hidden submission
+
+W2D-03을 기존 CoAt384 + S6 target-balanced percentile-rank base에 두 target만 추가했다.
+
+```text
+Synovitis:
+80% Base + 20% W2D-03
+
+Lateral OA:
+65% Base + 35% W2D-03
+```
+
+Fast subprocess 구조로 CoAt → S6 → W2D를 순차 실행하고 각 stage 종료 후 CUDA context를 정리했다.
+
+실행 결과:
+- submission generation PASS
+- test preview 기준 controller runtime 약 **5.5 min**
+- fixed Study-level 0.5 final fallback 사용하지 않음
+- **Public LB = 0.955**
+
+결론:
+- W2D-03은 Gold58 diagnostic에서는 W2D-01 대비 개선된 specialist signal을 보였지만,
+- 기존 0.955 CoAt384 + S6 계보에 추가했을 때 leaderboard 상승은 확인되지 않았다.
+
+
+## 2026-10-23 — Competition close / final leaderboard
+
+상태: **COMPETITION CLOSED / NO FURTHER EXPERIMENTS**
+
+마지막 submission set:
+- **MAIN 버전만 정상 제출 성공**
+- MAIN Public LB = **0.958**
+- 대회 중 Public leaderboard 최고 위치 = **약 240위**
+
+대회 종료 후 Private:
+- Final MAIN Private LB = **0.941**
+- 이전 **70:30 비율 변경 제출 Private LB = 0.942**
+- 공식 최종 순위 = **949위**
+
+따라서 Public 0.958은 대회 중 최고 Public 성과로 기록하되,
+최종 공식 결과는 **Private 0.941 / 949위**로 고정한다.
+
+Weak2 포함 모든 후속 tuning은 종료한다.
