@@ -12,6 +12,13 @@ Kaggle RSNA Knee MRI 연구 결과는 다음 **7개 실험 계열/Branch 폴더*
 | **06 — ConvNeXt / Branch-C** | [ConvNeXt 실험 로그](docs/CONVNEXT/CONVNEXT_EXPERIMENT_LOG.md) | [ConvNeXt 설계/로드맵](docs/CONVNEXT/CONVNEXT_BRANCH_PLAN.md) |
 | **07 — Weak2 Direct Specialist** | [Weak2 실험 로그](docs/WEAK2/WEAK2_EXPERIMENT_LOG.md) | [Weak2 Roadmap](docs/WEAK2/WEAK2_ROADMAP.md) |
 
+## 3페이지 연구 성과 PDF
+
+- [RSNA Knee 연구 성과 최종 보고서 (PDF)](RSNA_Knee_Research_Final_Report_2026.pdf)
+- 대회 연구 목표, Stage/Branch별 핵심 설계, 주요 Public LB, 공식 Private 결과, 기술적 교훈을 요약.
+- 최종 공식 성적: **Private 0.941 / 949위**. 최종 MAIN Public **0.958**, Public 최고 위치 약 **240위**.
+- 개발용 Gold58 검증과 공식 Public/Private 점수를 구별하고, 공개 pretrained/reader 활용을 자체 모델 연구와 구분함.
+
 ## 대회 최종 결과 — 2026-10-23
 
 > **Competition closed / project archived.**  
