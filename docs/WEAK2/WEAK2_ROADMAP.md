@@ -14,8 +14,9 @@ Weak2 최종 흐름:
 - W2D-03 SoftReg specialist training PASS
 - W2D-03 Gold58 EMA E6: Synovitis **0.756272**, Lateral OA **0.802708**, macro **0.779490**
 - W2D-03 target injection submission: **Public 0.955**, 기존 0.955 base 대비 gain 없음
+- **W2D-05 final specialist:** Gold58 활막염 Stage A RAW **0.807646**, 외측 골관절염 Stage B RAW **0.822050** (두 타깃 모두 0.8 이상)
+- 마지막 MAIN: 공개 CoAt + R6 base에 W2D-05를 두 타깃 각각 **27.5%** 혼합, Public **0.958** (기존과 동일), Private **0.941**
 - 이후 최종 전체 계보의 MAIN submission은 **Public 0.958 / Private 0.941**
-- 이전 70:30 비율 변경 제출은 **Private 0.942**
 - 공식 최종 순위 **949위**
 
 결론:
