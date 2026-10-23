@@ -1,6 +1,28 @@
 # Weak2 Direct Specialist — Roadmap
 
-최종 업데이트: 2026-10-21
+최종 업데이트: 2026-10-23
+
+## FINAL STATUS — Competition closed
+
+> **ARCHIVED / NO NEXT RUN**
+>
+> 대회는 2026-10-23 기준 종료되었다. 이 문서 아래의 `Next`, `execution plan`, `training pending`은 당시 계획을 보존한 역사적 기록이며 더 이상 실행하지 않는다.
+
+Weak2 최종 흐름:
+- W2D-00 all-Series cache PASS
+- W2D-01 계열에서 loader / I/O / orchestration / AMP transition 문제를 진단 및 수정
+- W2D-03 SoftReg specialist training PASS
+- W2D-03 Gold58 EMA E6: Synovitis **0.756272**, Lateral OA **0.802708**, macro **0.779490**
+- W2D-03 target injection submission: **Public 0.955**, 기존 0.955 base 대비 gain 없음
+- 이후 최종 전체 계보의 MAIN submission은 **Public 0.958 / Private 0.941**
+- 이전 70:30 비율 변경 제출은 **Private 0.942**
+- 공식 최종 순위 **949위**
+
+결론:
+- Weak2 추가 실험은 종료.
+- Public LB를 위한 추가 specialist weight search를 하지 않는다.
+- 향후 아이디어 재사용 시 별도 프로젝트로 분리한다.
+- 대회 최종 요약은 [../FINAL_COMPETITION_SUMMARY.md](../FINAL_COMPETITION_SUMMARY.md)를 따른다.
 
 ## Current goal
 
