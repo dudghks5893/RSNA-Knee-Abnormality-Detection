@@ -384,6 +384,26 @@ Fast subprocess 구조로 CoAt → S6 → W2D를 순차 실행하고 각 stage �
 - 기존 0.955 CoAt384 + S6 계보에 추가했을 때 leaderboard 상승은 확인되지 않았다.
 
 
+
+## W2D-05 — Final selected target specialists
+
+**Status: GOLD58 DEVELOPMENT DIAGNOSTIC COMPLETE / MAIN SUBMITTED**
+
+W2D-03 이후 추가된 최종 보강 실험에서 두 타깃의 별도 Stage checkpoint를 선택했다.
+
+| Target | Selected checkpoint | Gold58 ROC-AUC |
+|---|---|---:|
+| Synovitis | Stage A RAW | **0.807646** |
+| Lateral OA | Stage B RAW | **0.822050** |
+
+- Gold58 개발 평가(n=58)는 공식 hidden-test/Private 점수가 아니다.
+- 기존 W2D-03 Gold58 EMA 0.756272/0.802708은 이전 실험 이력으로 보존한다.
+- 최종 MAIN은 공개 CoAt + R6 base에 위 W2D-05를 두 타깃 각각 **27.5%** percentile-rank 혼합.
+- 해당 타깃: `Final = 0.725 × Base rank + 0.275 × W2D-05 rank`.
+- 다른 10개 타깃은 기존 base 예측 유지.
+- 최종 정상 MAIN 제출: **Public 0.958 / Private 0.941**, 공식 최종 순위 **949위**.
+- Public 0.958은 기존 점수와 동일해 추가 Public 상승은 확인되지 않았다.
+
 ## 2026-10-23 — Competition close / final leaderboard
 
 상태: **COMPETITION CLOSED / NO FURTHER EXPERIMENTS**
@@ -395,7 +415,6 @@ Fast subprocess 구조로 CoAt → S6 → W2D를 순차 실행하고 각 stage �
 
 대회 종료 후 Private:
 - Final MAIN Private LB = **0.941**
-- 이전 **70:30 비율 변경 제출 Private LB = 0.942**
 - 공식 최종 순위 = **949위**
 
 따라서 Public 0.958은 대회 중 최고 Public 성과로 기록하되,
