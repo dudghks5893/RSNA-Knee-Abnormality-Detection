@@ -1,3 +1,77 @@
+# RSNA Knee — FINAL HANDOFF
+
+최종 갱신: **2026-10-23**
+
+> **AUTHORITATIVE STATUS: COMPETITION CLOSED / PROJECT ARCHIVED**
+>
+> 이 섹션이 현재 상태의 최우선 source다. 아래에 남아 있는 과거 `NEXT`, `RUNNING`, `CURRENT` 표기는 당시의 진행 기록이며 더 이상 실행 지시가 아니다.
+>
+> 최종 회고 문서: [FINAL_COMPETITION_SUMMARY.md](FINAL_COMPETITION_SUMMARY.md)
+
+## 최종 공식 결과
+
+| 항목 | 결과 |
+|---|---:|
+| 최종 MAIN Public LB | **0.958** |
+| 최종 MAIN Private LB | **0.941** |
+| Public leaderboard 최고 위치 | **약 240위** |
+| 공식 최종 순위 | **949위** |
+| 자체 제출 중 best known Private | **0.942** — 이전 70:30 비율 변경 제출 |
+
+- 마지막 제출 세트에서는 **MAIN 버전만 정상 제출 성공**.
+- MAIN의 Public 점수는 기존 최고와 동일한 **0.958**.
+- 대회 종료 후 Private 공개 결과 MAIN은 **0.941**.
+- 이전에 **비율만 70:30으로 변경했던 제출이 Private 0.942**로 MAIN보다 +0.001 높았음.
+- 따라서 프로젝트의 최종 공식 기록은 **Private 0.941 / 949위**이며, Public 0.958 / 약 240위는 대회 중 최고 Public 성과로 별도 보존한다.
+
+## 종료 직전 실험 흐름
+
+### 자체 CoAt384 + S6F0 계보
+- 50:50 percentile-rank blend로 **Public 0.955** 확보.
+- target-wise 비율 조정 후에도 **0.955**.
+- 이후 공개 고득점 계보를 재현/조합하면서 Public **0.958** 단계까지 도달.
+
+### Weak2 / W2D-03
+W2D-01 계열의 AMP/I/O/orchestration 문제를 수정한 뒤, Synovitis와 Lateral OA를 위한 W2D-03 specialist를 별도로 학습했다.
+
+Gold58 diagnostic:
+- EMA E6 2-target Macro AUROC **0.779490**
+- Synovitis AUROC **0.756272**
+- Lateral OA AUROC **0.802708**
+
+W2D-03을 CoAt384 + S6 base에 target-specific으로 추가한 제출:
+- Synovitis W2D weight 20%
+- Lateral OA W2D weight 35%
+- **Public LB 0.955**
+- 기존 0.955 계보 대비 leaderboard gain 없음.
+
+### 마지막 submission robustness
+과거 Study-level 고정 `0.5` fallback은 폐기했다.
+
+최종 원칙:
+- physical DICOM sorting 우선
+- slice → Series → Fold → Branch 순으로 real-image rescue
+- 한 branch 실패 시 살아 있는 실제 예측 사용
+- 실제 MRI prediction이 0개면 fail-fast
+- 고정 0.5 placeholder로 inference failure를 숨기지 않음
+
+마지막 정상 MAIN 제출은 이 robustness 방향을 유지해 성공했다.
+
+## 현재 액션
+
+```text
+New training       : NONE
+New submission     : NONE
+Leaderboard tuning : NONE
+Competition work   : COMPLETE
+Repository mode    : ARCHIVE / DOCUMENTATION
+```
+
+새 채팅에서도 이 프로젝트에 대해 “다음 실험”을 자동 제안하지 않는다.
+추후 재사용 시에는 별도의 후속 프로젝트로 분리한다.
+
+---
+
 ## 2026-10-19 — B Strict V1 FT V5 완료 / LB 확인만 진행
 
 - `B-COAT-WIDE96-2F-STRICTV1-FT-V5-WORKERFIX` training COMPLETE.
