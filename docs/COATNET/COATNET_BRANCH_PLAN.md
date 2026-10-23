@@ -1,3 +1,8 @@
+> **PROJECT ARCHIVED — 2026-10-23**  
+> RSNA Knee competition is closed. Final official result: **Private 0.941 / rank 949**; final MAIN Public **0.958**, Public peak about **240th**. An earlier 70:30 ratio submission scored **Private 0.942**.  
+> All `NEXT`, `RUNNING`, `READY`, and future experiment instructions below are historical records only. Do not resume them as active competition work.  
+> Authoritative closure: [FINAL_COMPETITION_SUMMARY.md](../FINAL_COMPETITION_SUMMARY.md) and [CURRENT_HANDOFF.md](../CURRENT_HANDOFF.md).
+
 <!-- COATNET_V3_ACTUAL_RUNNING_2026_10_18 -->
 ## 2026-10-18 — Actual execution override: V3 TRAIN_RUNNING
 
