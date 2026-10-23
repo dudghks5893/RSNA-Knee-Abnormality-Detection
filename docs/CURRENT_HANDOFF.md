@@ -16,12 +16,10 @@
 | 최종 MAIN Private LB | **0.941** |
 | Public leaderboard 최고 위치 | **약 240위** |
 | 공식 최종 순위 | **949위** |
-| 자체 제출 중 best known Private | **0.942** — 이전 70:30 비율 변경 제출 |
 
-- 마지막 제출 세트에서는 **MAIN 버전만 정상 제출 성공**.
+- 마지막 제출 세트에서는 **MAIN 버전만 정상 제출 성공**. 공개 CoAt + R6 기본 예측에 W2D-05를 두 타깃 각각 27.5%로 결합.
 - MAIN의 Public 점수는 기존 최고와 동일한 **0.958**.
 - 대회 종료 후 Private 공개 결과 MAIN은 **0.941**.
-- 이전에 **비율만 70:30으로 변경했던 제출이 Private 0.942**로 MAIN보다 +0.001 높았음.
 - 따라서 프로젝트의 최종 공식 기록은 **Private 0.941 / 949위**이며, Public 0.958 / 약 240위는 대회 중 최고 Public 성과로 별도 보존한다.
 
 ## 종료 직전 실험 흐름
@@ -44,6 +42,15 @@ W2D-03을 CoAt384 + S6 base에 target-specific으로 추가한 제출:
 - Lateral OA W2D weight 35%
 - **Public LB 0.955**
 - 기존 0.955 계보 대비 leaderboard gain 없음.
+
+
+### W2D-05 — 최종 채택 보강 모델
+
+- Gold58 개발 ROC-AUC: 활막염 Stage A RAW **0.807646**, 외측 골관절염 Stage B RAW **0.822050**.
+- 공개 CoAt + R6 base 예측에 두 타깃 각각 **W2D-05 27.5% / Base 72.5%**로 percentile-rank blend.
+- 다른 10개 타깃은 기존 CoAt + R6 base 구성 그대로 유지.
+- 최종 정상 MAIN 제출 **Public 0.958 (추가 전과 동일) / Private 0.941**, 최종 949위.
+- Gold58 값은 내부 개발 검증이며 공식 리더보드 점수가 아니다.
 
 ### 마지막 submission robustness
 과거 Study-level 고정 `0.5` fallback은 폐기했다.
