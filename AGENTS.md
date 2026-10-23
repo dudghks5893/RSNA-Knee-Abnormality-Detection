@@ -1,5 +1,19 @@
 # RSNA Knee — Rules for AI coding agents
 
+## Competition status — 2026-10-23
+
+**CLOSED / ARCHIVED.**
+
+- Final MAIN: Public **0.958**, Private **0.941**
+- Public leaderboard peak: about **240th**
+- Official final rank: **949**
+- Best known Private among our submissions: **0.942** from the earlier 70:30 ratio submission
+- No active training, submission, or leaderboard tuning remains.
+- Never interpret historical `NEXT` sections as current instructions.
+- Read `docs/FINAL_COMPETITION_SUMMARY.md` first, then `docs/CURRENT_HANDOFF.md`.
+- Any future reuse must be treated as a new project rather than continuation of this competition.
+
+
 **2026-10-21 이후 최우선 문서 정책:** 기존 계열에 더해 사용자 지시로 **Weak2 Direct Specialist**를 독립 계열로 분리한다. 각 계열은 **기존 누적 문서에만 기록**하며, Weak2도 아래 3개 누적 문서만 갱신한다.
 
 | 실험 계열 | 실제 결과 누적 | 로드맵 / 계약 |
